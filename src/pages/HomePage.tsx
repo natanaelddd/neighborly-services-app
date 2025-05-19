@@ -8,13 +8,13 @@ const HomePage = () => {
     <div>
       <HeroSection />
       
-      <div className="container-custom py-16 bg-gradient-to-b from-background to-black/60">
+      <div className="container-custom py-16 bg-gradient-to-b from-white to-gray-50">
         <div className="flex flex-col md:flex-row items-center gap-8">
           <div className="md:w-1/2">
             <img 
               src="/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png"
               alt="Casas do Evidence Resort" 
-              className="rounded-2xl shadow-lg glass-morphism p-1"
+              className="rounded-2xl shadow-lg border border-gray-100 p-1"
             />
           </div>
           <div className="md:w-1/2">

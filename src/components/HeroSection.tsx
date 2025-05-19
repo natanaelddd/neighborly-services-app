@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
-    <section className="bg-gradient-to-br from-blue-900/40 to-blue-950/50 py-16 md:py-24">
+    <section className="bg-gradient-to-br from-brand-light-blue to-blue-100 py-16 md:py-24">
       <div className="container-custom">
         <div className="flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 md:pr-12 mb-8 md:mb-0">
@@ -31,7 +31,7 @@ const HeroSection = () => {
             <img 
               src="/lovable-uploads/6e14ad1d-a7ee-4102-8b93-afcfdc189f62.png" 
               alt="Evidence Resort Condomínio - Vista aérea"
-              className="rounded-2xl shadow-lg w-full h-auto object-cover glass-morphism p-1 mb-4" 
+              className="rounded-2xl shadow-lg w-full h-auto object-cover p-1 border border-gray-100 mb-4" 
             />
           </div>
         </div>
