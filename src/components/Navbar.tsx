@@ -15,8 +15,8 @@ const Navbar = () => {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container-custom py-4 flex justify-between items-center">
         <Link to="/" className="text-xl font-semibold text-brand-blue flex items-center">
-          <span className="mr-2">🏠</span>
-          CondoServ
+          <span className="mr-2">🏡</span>
+          Evidence Resort
         </Link>
 
         {/* Desktop Menu */}

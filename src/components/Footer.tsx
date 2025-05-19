@@ -5,16 +5,16 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="bg-gray-100 py-10 mt-auto">
+    <footer className="bg-gray-50 py-10 mt-auto border-t border-gray-100">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link to="/" className="text-xl font-semibold text-brand-blue flex items-center mb-4">
-              <span className="mr-2">🏠</span>
-              CondoServ
+              <span className="mr-2">🏡</span>
+              Evidence Resort
             </Link>
             <p className="text-gray-600 max-w-xs">
-              Conectando moradores e serviços dentro do seu condomínio.
+              Conectando moradores e serviços dentro do Evidence Resort, seu condomínio de casas de alto padrão.
             </p>
           </div>
           
@@ -42,7 +42,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-medium mb-4">Contato</h3>
             <p className="text-gray-600 mb-2">
-              Precisa de ajuda?
+              Administração do Evidence Resort
             </p>
             <Link 
               to="/contact" 
@@ -55,7 +55,7 @@ const Footer = () => {
         
         <div className="border-t border-gray-200 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm mb-4 md:mb-0">
-            © {currentYear} CondoServ. Todos os direitos reservados.
+            © {currentYear} Evidence Resort. Todos os direitos reservados.
           </p>
           <div className="flex space-x-6">
             <Link to="/terms" className="text-gray-500 text-sm hover:text-brand-blue transition-colors">

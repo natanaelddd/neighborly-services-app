@@ -31,16 +31,16 @@ const CategoryList = () => {
   };
 
   return (
-    <div className="py-6">
-      <h2 className="text-2xl font-semibold mb-6">Categorias</h2>
+    <div className="py-12">
+      <h2 className="text-3xl font-semibold mb-8 text-center">Categorias de Serviços</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {categories.map((category) => (
           <Link
             key={category.id}
             to={`/categories/${category.id}`}
-            className="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-center group"
+            className="flex flex-col items-center justify-center p-6 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow text-center group"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-brand-light-blue rounded-full mb-3 text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
+            <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-br from-brand-light-blue to-blue-100 rounded-full mb-4 text-brand-blue group-hover:bg-brand-blue group-hover:from-brand-blue group-hover:to-blue-600 group-hover:text-white transition-all duration-300">
               {getIcon(category.icon)}
             </div>
             <span className="font-medium text-gray-800">{category.name}</span>
