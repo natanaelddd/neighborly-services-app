@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { categories } from '@/data/mockData';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from "@/hooks/useAuth";
 
 const formSchema = z.object({
   title: z.string().min(5, {
@@ -29,17 +30,21 @@ const formSchema = z.object({
   whatsapp: z.string().min(10, {
     message: "Número de WhatsApp inválido.",
   }),
-  block: z.string().min(1, {
-    message: "Informe o bloco.",
-  }),
+  block: z.string().refine(val => {
+    const num = parseInt(val);
+    return !isNaN(num) && num >= 1 && num <= 5;
+  }, { message: "Informe um bloco válido entre 1 e 5." }),
   unit: z.string().min(1, {
-    message: "Informe o apartamento.",
+    message: "Informe a casa.",
   }),
+  logoUrl: z.string().optional(),
 });
 
 const ServiceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,16 +52,28 @@ const ServiceForm = () => {
       title: "",
       description: "",
       categoryId: "",
-      whatsapp: "",
-      block: "",
-      unit: "",
+      whatsapp: user?.houseNumber ? user.whatsapp : "",
+      block: user?.block || "",
+      unit: user?.houseNumber || "",
+      logoUrl: "",
     },
   });
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real application, you would upload this to your storage service
+      // For now, we'll just create a local URL for preview
+      const url = URL.createObjectURL(file);
+      setLogoPreview(url);
+      form.setValue("logoUrl", url);
+    }
+  };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     
-    // Simulando envio para API
+    // Simulating envio para API
     setTimeout(() => {
       console.log(values);
       toast.success("Serviço cadastrado com sucesso! Aguardando aprovação.");
@@ -75,7 +92,7 @@ const ServiceForm = () => {
             <FormItem>
               <FormLabel>Título do Serviço</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Ex: Limpeza Profissional de Apartamentos" />
+                <Input {...field} placeholder="Ex: Limpeza Profissional de Casas" />
               </FormControl>
               <FormDescription>
                 Um título claro e objetivo para seu serviço.
@@ -105,6 +122,32 @@ const ServiceForm = () => {
             </FormItem>
           )}
         />
+        
+        <div>
+          <FormLabel className="block mb-2">Logo ou Imagem do Serviço</FormLabel>
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <Input 
+                type="file" 
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="cursor-pointer"
+              />
+              <FormDescription>
+                Adicione uma logo ou imagem que represente seu serviço.
+              </FormDescription>
+            </div>
+            {logoPreview && (
+              <div className="w-24 h-24 rounded-md overflow-hidden border border-gray-200">
+                <img 
+                  src={logoPreview} 
+                  alt="Logo preview" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
@@ -139,7 +182,7 @@ const ServiceForm = () => {
               <FormItem>
                 <FormLabel>WhatsApp</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="(11) 99999-9999" />
+                  <Input {...field} placeholder="(16) 99999-9999" />
                 </FormControl>
                 <FormDescription>
                   Número para os clientes entrarem em contato.
@@ -158,8 +201,11 @@ const ServiceForm = () => {
               <FormItem>
                 <FormLabel>Bloco</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Ex: A" />
+                  <Input {...field} type="number" min="1" max="5" placeholder="Ex: 1" />
                 </FormControl>
+                <FormDescription>
+                  Número do bloco (1-5)
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -170,10 +216,13 @@ const ServiceForm = () => {
             name="unit"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Apartamento</FormLabel>
+                <FormLabel>Casa</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Ex: 101" />
                 </FormControl>
+                <FormDescription>
+                  Número da sua casa
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

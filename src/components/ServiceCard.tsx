@@ -16,12 +16,22 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
     <Card className="service-card h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div>
+          <div className="flex-1">
             <div className="text-xs text-primary font-medium mb-1">
               {service.category?.name}
             </div>
             <h3 className="font-medium text-lg text-foreground">{service.title}</h3>
           </div>
+          
+          {service.photoUrl && (
+            <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 ml-2">
+              <img 
+                src={service.photoUrl} 
+                alt={`Logo de ${service.title}`}
+                className="w-full h-full object-cover" 
+              />
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex-grow">

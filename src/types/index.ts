@@ -1,12 +1,16 @@
 
 export interface User {
-  id: number;
-  phone: string;
+  id?: number;
+  phone?: string;
   name?: string;
   email?: string;
-  isAdmin: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isAdmin?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  block?: string;
+  houseNumber?: string;
+  whatsapp?: string;
+  isLoggedIn?: boolean;
 }
 
 export interface Unit {
@@ -33,6 +37,7 @@ export interface Service {
   title: string;
   description: string;
   photoUrl?: string;
+  logoUrl?: string;
   whatsapp: string;
   status: 'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
