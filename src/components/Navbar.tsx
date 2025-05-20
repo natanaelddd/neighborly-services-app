@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const toggleMenu = () => {
@@ -26,7 +26,7 @@ const Navbar = () => {
       <nav className="container-custom py-4 flex justify-between items-center">
         <Link to="/" className="text-xl font-semibold text-primary flex items-center">
           <span className="mr-2">🏡</span>
-          Evidence Resort
+          Vitrine Evidence
         </Link>
 
         {/* Desktop Menu */}
@@ -38,6 +38,11 @@ const Navbar = () => {
           
           {user ? (
             <div className="flex items-center gap-4">
+              {isAdmin && (
+                <Button asChild variant="outline">
+                  <Link to="/admin">Painel Admin</Link>
+                </Button>
+              )}
               <Button asChild>
                 <Link to="/services/new">Cadastrar Serviço</Link>
               </Button>
@@ -97,6 +102,16 @@ const Navbar = () => {
             
             {user ? (
               <>
+                {isAdmin && (
+                  <Button 
+                    asChild 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Link to="/admin">Painel Admin</Link>
+                  </Button>
+                )}
                 <Button asChild className="w-full">
                   <Link to="/services/new" onClick={() => setIsOpen(false)}>
                     Cadastrar Serviço

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import HomePage from "@/pages/HomePage";
@@ -17,6 +18,7 @@ import CategoryPage from "@/pages/CategoryPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import ContactPage from "@/pages/ContactPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +41,11 @@ const App = () => (
                   <ProtectedRoute>
                     <NewServicePage />
                   </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <AdminRoute>
+                    <AdminDashboardPage />
+                  </AdminRoute>
                 } />
                 <Route path="/categories" element={<ServicesListPage />} />
                 <Route path="/categories/:categoryId" element={<CategoryPage />} />

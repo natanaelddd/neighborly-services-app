@@ -3,8 +3,14 @@ import HeroSection from "@/components/HeroSection";
 import CategoryList from "@/components/CategoryList";
 import FeaturedServices from "@/components/FeaturedServices";
 import FeaturedAd from "@/components/FeaturedAd";
+import { useEffect } from "react";
 
 const HomePage = () => {
+  // Update document title
+  useEffect(() => {
+    document.title = "Vitrine Evidence - Serviços para o seu condomínio";
+  }, []);
+
   return (
     <div>
       <HeroSection />

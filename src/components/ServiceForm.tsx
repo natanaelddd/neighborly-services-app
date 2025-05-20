@@ -52,7 +52,7 @@ const ServiceForm = () => {
       title: "",
       description: "",
       categoryId: "",
-      whatsapp: user?.houseNumber ? user.whatsapp : "",
+      whatsapp: user?.whatsapp || "",
       block: user?.block || "",
       unit: user?.houseNumber || "",
       logoUrl: "",
@@ -76,7 +76,13 @@ const ServiceForm = () => {
     // Simulating envio para API
     setTimeout(() => {
       console.log(values);
-      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação.");
+      
+      // Simulate sending WhatsApp message
+      const whatsappMessage = `Olá! Seu serviço "${values.title}" foi cadastrado com sucesso no site Vitrine Evidence. Em breve ele passará por aprovação. Obrigado!`;
+      console.log("WhatsApp message:", whatsappMessage);
+      console.log("Would send to:", values.whatsapp);
+      
+      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação. Uma notificação foi enviada para seu WhatsApp.");
       setIsSubmitting(false);
       navigate("/");
     }, 1000);
