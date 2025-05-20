@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Menu, X, LogIn, LogOut, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -10,6 +10,15 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [showRecommendations, setShowRecommendations] = useState(false);
+
+  // Check if recommendations feature is enabled
+  useEffect(() => {
+    const storedValue = localStorage.getItem("showRecommendationsMenu");
+    if (storedValue) {
+      setShowRecommendations(JSON.parse(storedValue));
+    }
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -35,6 +44,10 @@ const Navbar = () => {
           <Link to="/categories" className="text-foreground hover:text-primary font-medium">Categorias</Link>
           <Link to="/about" className="text-foreground hover:text-primary font-medium">Sobre</Link>
           <Link to="/contact" className="text-foreground hover:text-primary font-medium">Contato</Link>
+          
+          {showRecommendations && (
+            <Link to="/recommendations" className="text-foreground hover:text-primary font-medium">Indicações</Link>
+          )}
           
           {user ? (
             <div className="flex items-center gap-4">
@@ -99,6 +112,16 @@ const Navbar = () => {
             >
               Contato
             </Link>
+            
+            {showRecommendations && (
+              <Link 
+                to="/recommendations" 
+                className="text-foreground hover:text-primary font-medium py-2"
+                onClick={() => setIsOpen(false)}
+              >
+                Indicações
+              </Link>
+            )}
             
             {user ? (
               <>
