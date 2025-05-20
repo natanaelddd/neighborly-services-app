@@ -1,13 +1,6 @@
 
 import { createContext, useState, useEffect, ReactNode } from "react";
-
-interface User {
-  name?: string;
-  email: string;
-  block?: string;
-  houseNumber?: string;
-  isLoggedIn: boolean;
-}
+import { User } from "@/types";
 
 interface AuthContextType {
   user: User | null;
@@ -47,7 +40,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     return new Promise((resolve) => {
       setTimeout(() => {
-        const newUser = { email, isLoggedIn: true };
+        const newUser: User = { 
+          email, 
+          isLoggedIn: true,
+          whatsapp: "" // Adding whatsapp property with empty string as default
+        };
         setUser(newUser);
         localStorage.setItem("user", JSON.stringify(newUser));
         setIsLoading(false);
