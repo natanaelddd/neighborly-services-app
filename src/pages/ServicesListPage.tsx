@@ -6,6 +6,7 @@ import { ServiceWithProvider } from "@/types";
 import ServiceList from "@/components/ServiceList";
 import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ServicesListPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -63,14 +64,16 @@ const ServicesListPage = () => {
       </div>
       
       <Tabs defaultValue={activeCategory} value={activeCategory} onValueChange={handleCategoryChange} className="mb-8">
-        <TabsList className="flex flex-nowrap overflow-x-auto pb-2 mb-4">
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          {categories.map(category => (
-            <TabsTrigger key={category.id} value={category.id.toString()}>
-              {category.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList className="flex flex-nowrap mb-4 w-max min-w-full">
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            {categories.map(category => (
+              <TabsTrigger key={category.id} value={category.id.toString()}>
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </ScrollArea>
         
         {/* O TabsContent é apenas um wrapper, o conteúdo será sempre o mesmo */}
         <TabsContent value={activeCategory}>

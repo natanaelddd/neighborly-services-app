@@ -24,7 +24,7 @@ const AboutPage = () => {
       <section className="py-16 bg-background">
         <div className="container-custom">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
+            <div className="col-span-2">
               <h2 className="text-3xl font-bold mb-6 text-foreground">Nossa Comunidade</h2>
               <p className="text-muted-foreground mb-4">
                 O Evidence Resort é um condomínio exclusivo que conta com 5 blocos, numerados de 1 a 5, 
@@ -42,13 +42,6 @@ const AboutPage = () => {
                 Explorar serviços disponíveis
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-            </div>
-            <div className="rounded-2xl overflow-hidden shadow-lg glass-morphism">
-              <img 
-                src="https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&q=80&w=700" 
-                alt="Imagem ilustrativa do condomínio Evidence Resort" 
-                className="w-full h-auto object-cover"
-              />
             </div>
           </div>
         </div>
@@ -90,21 +83,6 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Condominium Details */}
-      <section className="py-16 bg-background">
-        <div className="container-custom">
-          <h2 className="text-3xl font-bold mb-8 text-center text-foreground">Estrutura do Evidence Resort</h2>
-          <div className="grid md:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((block) => (
-              <div key={block} className="p-6 rounded-xl glass-morphism text-center">
-                <h3 className="text-xl font-semibold mb-2 text-foreground">Bloco {block}</h3>
-                <p className="text-muted-foreground">Casas residenciais</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-16 bg-secondary/30">
         <div className="container-custom max-w-4xl">
@@ -115,7 +93,7 @@ const AboutPage = () => {
               profissionais confiáveis dentro do condomínio, nossa plataforma é o lugar ideal.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/services" className="inline-block px-8 py-3 bg-secondary text-white font-medium rounded-lg hover:bg-secondary/90 transition-colors">
+              <Link to="/services" className="inline-block px-8 py-3 bg-white text-blue-800 font-medium rounded-lg hover:bg-white/90 transition-colors">
                 Explorar Serviços
               </Link>
               <Link to="/services/new" className="inline-block px-8 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors">

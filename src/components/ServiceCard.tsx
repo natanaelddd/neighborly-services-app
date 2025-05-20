@@ -9,7 +9,7 @@ interface ServiceCardProps {
 
 const ServiceCard = ({ service }: ServiceCardProps) => {
   const handleContactWhatsApp = () => {
-    window.open(`https://wa.me/${service.whatsapp}?text=Olá! Vi seu serviço de ${service.title} no CondoServ e gostaria de mais informações.`, '_blank');
+    window.open(`https://wa.me/${service.whatsapp}?text=Olá! Vi seu serviço de ${service.title} no Vitrine Evidence e gostaria de mais informações.`, '_blank');
   };
 
   return (

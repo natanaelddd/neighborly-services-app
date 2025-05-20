@@ -54,9 +54,15 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-muted-foreground text-sm mb-4 md:mb-0">
-            © {currentYear} Evidence Resort. Todos os direitos reservados.
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
+            <p className="text-muted-foreground text-sm mb-2 md:mb-0">
+              © {currentYear} Evidence Resort. Todos os direitos reservados.
+            </p>
+            <p className="text-muted-foreground text-sm mb-4 md:mb-0">
+              Desenvolvido por <a href="https://www.natanael.com.br" target="_blank" rel="noreferrer" className="text-primary hover:text-primary/80">Natanael Silva</a>. 
+              <a href="https://wa.me/5516992701617" target="_blank" rel="noreferrer" className="text-primary hover:text-primary/80 ml-1">(16) 99270-1617</a>
+            </p>
+          </div>
           <div className="flex space-x-6">
             <Link to="/terms" className="text-muted-foreground text-sm hover:text-primary transition-colors">
               Termos de Uso
