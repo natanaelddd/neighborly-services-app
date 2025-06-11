@@ -1,4 +1,3 @@
-
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,30 +73,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               
               if (error) {
                 console.error('Erro ao buscar perfil:', error);
-                // Se não encontrou perfil e é login com Google, criar perfil básico
+                // Se não encontrou perfil e é login com Google, redirecionar para registro
                 if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
-                  console.log('Criando perfil para usuário do Google...');
-                  const { error: insertError } = await supabase
-                    .from('profiles')
-                    .insert({
-                      id: session.user.id,
-                      name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Usuário',
-                      email: session.user.email || '',
-                      block: '1', // Valor padrão temporário
-                      house_number: '0' // Valor padrão temporário
-                    });
-                  
-                  if (insertError) {
-                    console.error('Erro ao criar perfil:', insertError);
-                  } else {
-                    // Buscar o perfil recém-criado
-                    const { data: newProfile } = await supabase
-                      .from('profiles')
-                      .select('*')
-                      .eq('id', session.user.id)
-                      .single();
-                    setProfile(newProfile);
-                  }
+                  console.log('Usuário do Google sem perfil, redirecionando para registro...');
+                  toast.info("Complete seu cadastro para continuar");
+                  // Redirecionar para página de registro externa
+                  window.location.href = 'https://www.condoindico.com.br/register';
+                  return;
                 }
               } else {
                 setProfile(profileData);

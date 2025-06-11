@@ -21,9 +21,9 @@ const HeroSection = () => {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/services/new">
+                <a href="https://www.condoindico.com.br/register" target="_blank" rel="noopener noreferrer">
                   Oferecer Serviço
-                </Link>
+                </a>
               </Button>
             </div>
           </div>
