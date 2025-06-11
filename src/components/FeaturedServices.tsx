@@ -38,7 +38,7 @@ const FeaturedServices = () => {
           categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
-          photoUrl: service.photo_url || '', // Campo para imagem do serviço
+          photoUrl: service.photo_url || '', // Agora usando o campo correto do banco
           whatsapp: service.whatsapp,
           status: service.status as 'pending' | 'approved' | 'rejected',
           createdAt: service.created_at,
