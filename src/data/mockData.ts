@@ -1,3 +1,4 @@
+
 import { Category, Service, ServiceWithProvider } from "@/types";
 
 export const mockCategories: Category[] = [
@@ -116,3 +117,13 @@ export const mockServicesWithProvider: ServiceWithProvider[] = mockServices.map(
   block: `${service.unitId}A`,
   number: `${service.unitId * 10}`,
 }));
+
+// Legacy function exports for backward compatibility
+export const getAllCategories = () => mockCategories;
+export const services = mockServices;
+export const getServiceById = (id: number) => mockServices.find(service => service.id === id);
+export const getServicesByCategory = (categoryId: number) => mockServices.filter(service => service.categoryId === categoryId);
+export const searchServices = (query: string) => mockServices.filter(service => 
+  service.title.toLowerCase().includes(query.toLowerCase()) ||
+  service.description.toLowerCase().includes(query.toLowerCase())
+);

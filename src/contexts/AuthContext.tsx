@@ -1,29 +1,15 @@
-import { createContext, useState, useEffect, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-interface Profile {
-  id: string;
-  name: string;
-  email: string;
-  block: string;
-  house_number: string;
-  whatsapp?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  profile: Profile | null;
-  session: Session | null;
-  isAdmin: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
-  signup: (email: string, password: string, name: string, block: string, houseNumber: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isLoading: boolean;
-  forgotPassword: (email: string) => Promise<void>;
-}
+import { createContext, ReactNode } from "react";
+import { AuthContextType } from "@/types/auth";
+import { useAuthState } from "@/hooks/useAuthState";
+import { isUserAdmin } from "@/utils/authHelpers";
+import { 
+  loginWithEmail, 
+  loginWithGoogle, 
+  signupWithEmail, 
+  resetPassword, 
+  signOut 
+} from "@/services/authService";
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -43,85 +29,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Lista de emails de administradores - adicionado natanaelddd@gmail.com
-  const adminEmails = ['admin@evidence.com', 'adm@evidence.com', 'natanaelddd@gmail.com'];
-  
-  const isAdmin = profile ? adminEmails.includes(profile.email) : false;
-
-  useEffect(() => {
-    // Configurar listener de mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Buscar perfil do usuário
-          setTimeout(async () => {
-            try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-              
-              if (error) {
-                console.error('Erro ao buscar perfil:', error);
-                // Se não encontrou perfil e é login com Google, redirecionar para registro
-                if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
-                  console.log('Usuário do Google sem perfil, redirecionando para registro...');
-                  toast.info("Complete seu cadastro para continuar");
-                  // Redirecionar para página de registro externa
-                  window.location.href = 'https://www.condoindico.com.br/register';
-                  return;
-                }
-              } else {
-                setProfile(profileData);
-              }
-            } catch (error) {
-              console.error('Erro ao buscar perfil:', error);
-            }
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // Verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, profile, session, isLoading, setIsLoading } = useAuthState();
+  const isAdmin = isUserAdmin(profile);
 
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        toast.success("Login realizado com sucesso!");
-        // Redirecionar para home após login
-        window.location.href = '/';
-      }
+      await loginWithEmail(email, password);
     } catch (error) {
       console.error('Erro no login:', error);
       throw error;
@@ -130,19 +44,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const loginWithGoogle = async (): Promise<void> => {
+  const handleLoginWithGoogle = async (): Promise<void> => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`
-        }
-      });
-      
-      if (error) throw error;
+      await loginWithGoogle();
     } catch (error) {
       console.error('Erro no login com Google:', error);
-      toast.error("Erro ao fazer login com Google");
       throw error;
     }
   };
@@ -155,28 +61,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     houseNumber: string
   ): Promise<void> => {
     setIsLoading(true);
-    
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            name,
-            block,
-            house_number: houseNumber,
-          }
-        }
-      });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
-      }
+      await signupWithEmail(email, password, name, block, houseNumber);
     } catch (error) {
       console.error('Erro no cadastro:', error);
       throw error;
@@ -187,15 +73,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const forgotPassword = async (email: string): Promise<void> => {
     setIsLoading(true);
-    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) throw error;
-      
-      toast.success("Um link de recuperação foi enviado para seu email");
+      await resetPassword(email);
     } catch (error) {
       console.error('Erro ao recuperar senha:', error);
       throw error;
@@ -206,16 +85,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       setUser(null);
       setProfile(null);
       setSession(null);
-      toast.success("Logout realizado com sucesso!");
-      // Redirecionar para home após logout
-      window.location.href = '/';
     } catch (error) {
       console.error('Erro no logout:', error);
-      toast.error("Erro ao fazer logout");
     }
   };
 
@@ -226,7 +101,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       session,
       isAdmin,
       login,
-      loginWithGoogle,
+      loginWithGoogle: handleLoginWithGoogle,
       signup,
       logout, 
       isLoading, 
