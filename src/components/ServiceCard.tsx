@@ -8,8 +8,30 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = ({ service }: ServiceCardProps) => {
+  const getWhatsAppMessage = () => {
+    const baseMessage = `Olá! Vim do site Condo Indico e vi seu serviço de ${service.title}.`;
+    
+    // Categorias que normalmente requerem orçamento
+    const serviceCategories = [
+      'manutenção', 'reforma', 'construção', 'jardinagem', 'pintura', 
+      'eletricista', 'encanador', 'marceneiro', 'pedreiro', 'serralheiro'
+    ];
+    
+    const categoryName = service.category?.name?.toLowerCase() || '';
+    const isServiceCategory = serviceCategories.some(cat => 
+      categoryName.includes(cat) || service.title.toLowerCase().includes(cat)
+    );
+    
+    if (isServiceCategory) {
+      return `${baseMessage} Gostaria de solicitar um orçamento. Você está disponível para conversar?`;
+    } else {
+      return `${baseMessage} Gostaria de mais informações sobre seus serviços. Você está disponível para conversar?`;
+    }
+  };
+
   const handleContactWhatsApp = () => {
-    window.open(`https://wa.me/${service.whatsapp}?text=Olá! Vi seu serviço de ${service.title} no Condo Indico e gostaria de mais informações.`, '_blank');
+    const message = getWhatsAppMessage();
+    window.open(`https://wa.me/${service.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
