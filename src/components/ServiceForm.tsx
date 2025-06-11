@@ -1,223 +1,166 @@
 
-import { useState, useEffect } from 'react';
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
-const formSchema = z.object({
-  title: z.string().min(5, {
-    message: "Título deve ter pelo menos 5 caracteres.",
-  }).max(100, {
-    message: "Título deve ter no máximo 100 caracteres.",
-  }),
-  description: z.string().min(20, {
-    message: "Descrição deve ter pelo menos 20 caracteres.",
-  }).max(500, {
-    message: "Descrição deve ter no máximo 500 caracteres.",
-  }),
-  categoryId: z.string().min(1, {
-    message: "Selecione uma categoria.",
-  }),
-  whatsapp: z.string().min(10, {
-    message: "Número de WhatsApp inválido.",
-  }),
-});
-
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-}
+import { useAuth } from "@/hooks/useAuth";
 
 const ServiceForm = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { profile, user } = useAuth();
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      categoryId: "",
-      whatsapp: profile?.whatsapp || "",
-    },
-  });
+  const { user, profile } = useAuth();
 
-  // Buscar categorias do banco de dados
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .order('name');
-        
-        if (error) {
-          console.error('Erro ao buscar categorias:', error);
-          toast.error("Erro ao carregar categorias");
-        } else {
-          setCategories(data || []);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar categorias:', error);
-        toast.error("Erro ao carregar categorias");
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    };
+  const categories = [
+    { id: 1, name: "Limpeza", icon: "🧹" },
+    { id: 2, name: "Jardinagem", icon: "🌱" },
+    { id: 3, name: "Manutenção", icon: "🔧" },
+    { id: 4, name: "Beleza", icon: "💄" },
+    { id: 5, name: "Educação", icon: "📚" },
+    { id: 6, name: "Saúde", icon: "🏥" },
+    { id: 7, name: "Tecnologia", icon: "💻" },
+    { id: 8, name: "Alimentação", icon: "🍕" },
+    { id: 9, name: "Transporte", icon: "🚗" },
+    { id: 10, name: "Pet Care", icon: "🐕" },
+    { id: 11, name: "Consultoria", icon: "💼" },
+    { id: 12, name: "Outros", icon: "🔧" }
+  ];
 
-    fetchCategories();
-  }, []);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user || !profile) {
       toast.error("Você precisa estar logado para cadastrar um serviço");
+      navigate("/login");
       return;
     }
 
-    setIsSubmitting(true);
-    
+    setIsLoading(true);
+
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('services')
         .insert({
-          unit_id: user.id,
-          category_id: parseInt(values.categoryId),
-          title: values.title,
-          description: values.description,
-          whatsapp: values.whatsapp,
-          status: 'pending'
-        })
-        .select()
-        .single();
+          title,
+          description,
+          whatsapp,
+          category_id: parseInt(categoryId),
+          photo_url: photoUrl,
+          unit_id: profile.id,
+          status: 'approved' // Serviços são aprovados automaticamente
+        });
 
-      if (error) {
-        console.error('Erro ao cadastrar serviço:', error);
-        toast.error("Erro ao cadastrar serviço. Tente novamente.");
-        return;
-      }
+      if (error) throw error;
 
-      console.log('Serviço cadastrado:', data);
-      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação.");
-      navigate("/");
-    } catch (error) {
+      toast.success("Serviço cadastrado com sucesso!");
+      navigate("/services");
+    } catch (error: any) {
       console.error('Erro ao cadastrar serviço:', error);
-      toast.error("Erro ao cadastrar serviço. Tente novamente.");
+      toast.error(error.message || "Erro ao cadastrar serviço");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título do Serviço</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Ex: Limpeza Profissional de Casas" />
-              </FormControl>
-              <FormDescription>
-                Um título claro e objetivo para seu serviço.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="container-custom py-10">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center text-gradient">
+          Cadastrar Novo Serviço
+        </h1>
         
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  {...field} 
-                  placeholder="Descreva seu serviço em detalhes..." 
-                  className="min-h-[120px]" 
-                />
-              </FormControl>
-              <FormDescription>
-                Descreva seu serviço, experiência e diferenciais.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Categoria</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={isLoadingCategories ? "Carregando..." : "Selecione uma categoria"} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.icon} {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="whatsapp"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>WhatsApp</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="(16) 99999-9999" />
-                </FormControl>
-                <FormDescription>
-                  Número para os clientes entrarem em contato.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <div className="bg-muted/50 p-4 rounded-lg">
-          <p className="text-sm text-muted-foreground mb-2">
-            <strong>Informações do seu perfil:</strong>
-          </p>
-          <p className="text-sm">Bloco: {profile?.block || 'Não informado'}</p>
-          <p className="text-sm">Casa: {profile?.house_number || 'Não informado'}</p>
-        </div>
-        
-        <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
-          {isSubmitting ? "Cadastrando..." : "Cadastrar Serviço"}
-        </Button>
-      </form>
-    </Form>
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-lg shadow-sm border border-gray-100">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium mb-2">
+              Título do Serviço *
+            </label>
+            <Input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Aulas de Piano"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium mb-2">
+              Descrição *
+            </label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descreva seu serviço em detalhes..."
+              rows={4}
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium mb-2">
+              Categoria *
+            </label>
+            <Select value={categoryId} onValueChange={setCategoryId} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.icon} {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label htmlFor="whatsapp" className="block text-sm font-medium mb-2">
+              WhatsApp *
+            </label>
+            <Input
+              id="whatsapp"
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(11) 99999-9999"
+              required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="photo" className="block text-sm font-medium mb-2">
+              URL da Foto (opcional)
+            </label>
+            <Input
+              id="photo"
+              type="url"
+              value={photoUrl}
+              onChange={(e) => setPhotoUrl(e.target.value)}
+              placeholder="https://exemplo.com/foto.jpg"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full bg-brand-blue hover:bg-blue-700"
+            disabled={isLoading}
+          >
+            {isLoading ? "Cadastrando..." : "Cadastrar Serviço"}
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 };
 
