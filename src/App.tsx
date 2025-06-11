@@ -13,6 +13,7 @@ import HomePage from "@/pages/HomePage";
 import ServicesListPage from "@/pages/ServicesListPage";
 import ServiceDetailPage from "@/pages/ServiceDetailPage";
 import NewServicePage from "@/pages/NewServicePage";
+import UserDashboardPage from "@/pages/UserDashboardPage";
 import AboutPage from "@/pages/AboutPage";
 import CategoryPage from "@/pages/CategoryPage";
 import LoginPage from "@/pages/LoginPage";
@@ -43,6 +44,11 @@ const App = () => (
                 <Route path="/services/new" element={
                   <ProtectedRoute>
                     <NewServicePage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <UserDashboardPage />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin" element={

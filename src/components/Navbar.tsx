@@ -1,199 +1,216 @@
 
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { Menu, X, LogIn, LogOut, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Menu, X, User, Settings, LogOut, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, logout, isLoading, isAdmin } = useAuth();
+  const { user, profile, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
-  const [showRecommendations, setShowRecommendations] = useState(false);
-
-  // Check if recommendations feature is enabled
-  useEffect(() => {
-    const storedValue = localStorage.getItem("showRecommendationsMenu");
-    if (storedValue) {
-      setShowRecommendations(JSON.parse(storedValue));
-    }
-  }, []);
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
 
   const handleLogout = async () => {
     await logout();
-    setIsOpen(false);
+    navigate('/');
   };
-
-  const handleLogin = () => {
-    navigate("/login");
-    setIsOpen(false);
-  };
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <header className="bg-card/50 backdrop-blur-lg border-b border-border sticky top-0 z-50">
-        <nav className="container-custom py-4 flex justify-between items-center">
-          <Link to="/" className="text-xl font-semibold text-primary flex items-center">
-            <img 
-              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
-              alt="Condo Indico" 
-              className="w-8 h-8 mr-2"
-            />
-            Condo Indico
-          </Link>
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-        </nav>
-      </header>
-    );
-  }
 
   return (
-    <header className="bg-card/50 backdrop-blur-lg border-b border-border sticky top-0 z-50">
-      <nav className="container-custom py-4 flex justify-between items-center">
-        <Link to="/" className="text-xl font-semibold text-primary flex items-center">
-          <img 
-            src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
-            alt="Condo Indico" 
-            className="w-8 h-8 mr-2"
-          />
-          Condo Indico
-        </Link>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-foreground hover:text-primary font-medium">Início</Link>
-          <Link to="/categories" className="text-foreground hover:text-primary font-medium">Categorias</Link>
-          <Link to="/about" className="text-foreground hover:text-primary font-medium">Sobre</Link>
-          <Link to="/contact" className="text-foreground hover:text-primary font-medium">Contato</Link>
-          
-          {showRecommendations && (
-            <Link to="/recommendations" className="text-foreground hover:text-primary font-medium">Indicações</Link>
-          )}
-          
-          {user ? (
-            <div className="flex items-center gap-4">
-              {profile && (
-                <span className="text-sm text-muted-foreground">
-                  Olá, {profile.name}
-                </span>
-              )}
-              {isAdmin && (
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/admin">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Admin
-                  </Link>
-                </Button>
-              )}
-              <Button asChild>
-                <Link to="/services/new">Cadastrar Serviço</Link>
-              </Button>
-              <Button onClick={handleLogout} variant="outline">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </Button>
+    <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+      <div className="container-custom">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">CR</span>
             </div>
-          ) : (
-            <Button onClick={handleLogin}>
-              <LogIn className="mr-2 h-4 w-4" />
-              Entrar
-            </Button>
-          )}
-        </div>
+            <span className="text-xl font-bold text-gradient">Condo Indico</span>
+          </Link>
 
-        {/* Mobile Menu Button */}
-        <button className="md:hidden" onClick={toggleMenu}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </nav>
-
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-card/90 backdrop-blur-lg py-4 px-6 shadow-inner animate-fade-in">
-          <div className="flex flex-col space-y-4">
-            <Link 
-              to="/" 
-              className="text-foreground hover:text-primary font-medium py-2"
-              onClick={() => setIsOpen(false)}
-            >
-              Início
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/services" className="text-gray-700 hover:text-brand-blue transition-colors">
+              Serviços
             </Link>
-            <Link 
-              to="/categories" 
-              className="text-foreground hover:text-primary font-medium py-2"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/categories" className="text-gray-700 hover:text-brand-blue transition-colors">
               Categorias
             </Link>
-            <Link 
-              to="/about" 
-              className="text-foreground hover:text-primary font-medium py-2"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/about" className="text-gray-700 hover:text-brand-blue transition-colors">
               Sobre
             </Link>
-            <Link 
-              to="/contact" 
-              className="text-foreground hover:text-primary font-medium py-2"
-              onClick={() => setIsOpen(false)}
-            >
+            <Link to="/contact" className="text-gray-700 hover:text-brand-blue transition-colors">
               Contato
             </Link>
-            
-            {showRecommendations && (
-              <Link 
-                to="/recommendations" 
-                className="text-foreground hover:text-primary font-medium py-2"
-                onClick={() => setIsOpen(false)}
-              >
-                Indicações
-              </Link>
-            )}
-            
+          </div>
+
+          {/* User Menu */}
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <>
-                {profile && (
-                  <span className="text-sm text-muted-foreground py-2">
-                    Olá, {profile.name}
-                  </span>
-                )}
-                {isAdmin && (
-                  <Button asChild variant="outline" className="w-full">
-                    <Link to="/admin" onClick={() => setIsOpen(false)}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Admin
-                    </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>{profile?.name || 'Usuário'}</span>
                   </Button>
-                )}
-                <Button asChild className="w-full">
-                  <Link to="/services/new" onClick={() => setIsOpen(false)}>
-                    Cadastrar Serviço
-                  </Link>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair
-                </Button>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Meu Painel
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/services/new" className="flex items-center">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Novo Serviço
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center">
+                          <Shield className="mr-2 h-4 w-4" />
+                          Administração
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Button onClick={handleLogin} className="w-full">
-                <LogIn className="mr-2 h-4 w-4" />
-                Entrar
-              </Button>
+              <div className="space-x-2">
+                <Button variant="ghost" asChild>
+                  <Link to="/login">Entrar</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/register">Cadastrar</Link>
+                </Button>
+              </div>
             )}
           </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
-      )}
-    </header>
+
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="md:hidden py-4 border-t border-gray-100">
+            <div className="flex flex-col space-y-4">
+              <Link
+                to="/services"
+                className="text-gray-700 hover:text-brand-blue transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Serviços
+              </Link>
+              <Link
+                to="/categories"
+                className="text-gray-700 hover:text-brand-blue transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Categorias
+              </Link>
+              <Link
+                to="/about"
+                className="text-gray-700 hover:text-brand-blue transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Sobre
+              </Link>
+              <Link
+                to="/contact"
+                className="text-gray-700 hover:text-brand-blue transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Contato
+              </Link>
+              
+              {user ? (
+                <>
+                  <div className="border-t border-gray-100 pt-4">
+                    <p className="text-sm text-gray-500 mb-2">Olá, {profile?.name || 'Usuário'}!</p>
+                    <div className="space-y-2">
+                      <Link
+                        to="/dashboard"
+                        className="block text-gray-700 hover:text-brand-blue transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Meu Painel
+                      </Link>
+                      <Link
+                        to="/services/new"
+                        className="block text-gray-700 hover:text-brand-blue transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Novo Serviço
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          className="block text-gray-700 hover:text-brand-blue transition-colors"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Administração
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsOpen(false);
+                        }}
+                        className="block text-gray-700 hover:text-brand-blue transition-colors"
+                      >
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="border-t border-gray-100 pt-4 space-y-2">
+                  <Link
+                    to="/login"
+                    className="block text-gray-700 hover:text-brand-blue transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="block text-gray-700 hover:text-brand-blue transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Cadastrar
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
   );
 };
 
