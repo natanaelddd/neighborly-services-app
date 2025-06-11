@@ -32,6 +32,9 @@ export const useAuthState = () => {
                 if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
                   console.log('Usuário do Google sem perfil, criando automaticamente...');
                   
+                  // Mostrar toast de boas-vindas antes de criar o perfil
+                  toast.success("🎉 Bem-vindo ao Evidence Resort!");
+                  
                   // Criar perfil automaticamente para usuário do Google
                   const { data: newProfile, error: createError } = await supabase
                     .from('profiles')
@@ -50,16 +53,30 @@ export const useAuthState = () => {
                     toast.error("Erro ao criar perfil de usuário");
                   } else {
                     setProfile(newProfile);
-                    toast.success("Perfil criado automaticamente! Complete seus dados quando necessário.");
-                    // Redirecionar para página de cadastro de serviços
-                    window.location.href = '/services/new';
+                    // Toast informativo sobre próximos passos
+                    toast.success("✅ Cadastro realizado com sucesso! Agora você pode cadastrar seus serviços.", {
+                      duration: 4000,
+                    });
+                    
+                    // Aguardar um pouco antes de redirecionar para o usuário ver as mensagens
+                    setTimeout(() => {
+                      window.location.href = '/services/new';
+                    }, 1500);
                   }
+                } else {
+                  // Outros tipos de erro
+                  toast.error("Erro ao carregar dados do usuário");
                 }
               } else {
                 setProfile(profileData);
+                // Usuário existente fazendo login
+                if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'google') {
+                  toast.success(`Bem-vindo de volta, ${profileData.name}!`);
+                }
               }
             } catch (error) {
               console.error('Erro ao buscar perfil:', error);
+              toast.error("Erro inesperado ao carregar dados");
             }
           }, 0);
         } else {
