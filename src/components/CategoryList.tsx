@@ -106,7 +106,7 @@ const CategoryList = () => {
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione uma categoria..." />
           </SelectTrigger>
-          <SelectContent className="bg-white border shadow-lg z-50">
+          <SelectContent className="bg-white border shadow-lg z-[100] max-h-80">
             {categories.map((category) => (
               <SelectItem key={category.id} value={category.id.toString()}>
                 <div className="flex items-center gap-2">

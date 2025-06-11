@@ -31,7 +31,7 @@ export const mockServices: Service[] = [
     categoryId: 2,
     title: "Reparo de Ar Condicionado",
     description: "Manutenção e reparo de sistemas de ar condicionado.",
-    photoUrl: "https://source.unsplash.com/300x200/?air-conditioning",
+    photoUrl: "",
     whatsapp: "5511999999998",
     status: "approved",
     createdAt: "2024-01-11T00:00:00Z",
@@ -55,7 +55,7 @@ export const mockServices: Service[] = [
     categoryId: 4,
     title: "Babá para Crianças",
     description: "Serviço de babá para cuidar de crianças de todas as idades.",
-    photoUrl: "https://source.unsplash.com/300x200/?babysitting",
+    photoUrl: "",
     whatsapp: "5511999999996",
     status: "approved",
     createdAt: "2024-01-13T00:00:00Z",
@@ -79,7 +79,7 @@ export const mockServices: Service[] = [
     categoryId: 6,
     title: "Transporte de Pequenos Objetos",
     description: "Serviço de transporte para pequenos objetos e encomendas.",
-    photoUrl: "https://source.unsplash.com/300x200/?delivery",
+    photoUrl: "",
     whatsapp: "5511999999994",
     status: "approved",
     createdAt: "2024-01-15T00:00:00Z",
@@ -103,7 +103,7 @@ export const mockServices: Service[] = [
     categoryId: 8,
     title: "Aulas de Reforço Escolar",
     description: "Aulas de reforço escolar em diversas matérias para alunos do ensino fundamental e médio.",
-    photoUrl: "https://source.unsplash.com/300x200/?tutoring",
+    photoUrl: "",
     whatsapp: "5511999999992",
     status: "approved",
     createdAt: "2024-01-17T00:00:00Z",
@@ -111,19 +111,65 @@ export const mockServices: Service[] = [
   },
 ];
 
-export const mockServicesWithProvider: ServiceWithProvider[] = mockServices.map(service => ({
-  ...service,
-  providerName: `Morador ${service.unitId}`,
-  block: `${service.unitId}A`,
-  number: `${service.unitId * 10}`,
-}));
+export const mockServicesWithProvider: ServiceWithProvider[] = mockServices.map(service => {
+  const category = mockCategories.find(cat => cat.id === service.categoryId);
+  return {
+    ...service,
+    providerName: `Morador ${service.unitId}`,
+    block: `${service.unitId}A`,
+    number: `${service.unitId * 10}`,
+    category: category
+  };
+});
 
 // Legacy function exports for backward compatibility
 export const getAllCategories = () => mockCategories;
 export const services = mockServices;
-export const getServiceById = (id: number) => mockServices.find(service => service.id === id);
-export const getServicesByCategory = (categoryId: number) => mockServices.filter(service => service.categoryId === categoryId);
-export const searchServices = (query: string) => mockServices.filter(service => 
-  service.title.toLowerCase().includes(query.toLowerCase()) ||
-  service.description.toLowerCase().includes(query.toLowerCase())
-);
+export const getServiceById = (id: number) => {
+  const service = mockServices.find(service => service.id === id);
+  if (!service) return null;
+  
+  const category = mockCategories.find(cat => cat.id === service.categoryId);
+  return {
+    ...service,
+    providerName: `Morador ${service.unitId}`,
+    block: `${service.unitId}A`,
+    number: `${service.unitId * 10}`,
+    category: category
+  };
+};
+
+export const getServicesByCategory = (categoryId: number | null) => {
+  const filteredServices = categoryId 
+    ? mockServices.filter(service => service.categoryId === categoryId)
+    : mockServices;
+    
+  return filteredServices.map(service => {
+    const category = mockCategories.find(cat => cat.id === service.categoryId);
+    return {
+      ...service,
+      providerName: `Morador ${service.unitId}`,
+      block: `${service.unitId}A`,
+      number: `${service.unitId * 10}`,
+      category: category
+    };
+  });
+};
+
+export const searchServices = (query: string) => {
+  const filteredServices = mockServices.filter(service => 
+    service.title.toLowerCase().includes(query.toLowerCase()) ||
+    service.description.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  return filteredServices.map(service => {
+    const category = mockCategories.find(cat => cat.id === service.categoryId);
+    return {
+      ...service,
+      providerName: `Morador ${service.unitId}`,
+      block: `${service.unitId}A`,
+      number: `${service.unitId * 10}`,
+      category: category
+    };
+  });
+};

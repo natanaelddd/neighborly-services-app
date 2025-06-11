@@ -45,15 +45,17 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
             <h3 className="font-medium text-lg text-foreground">{service.title}</h3>
           </div>
           
-          {service.photoUrl && (
-            <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 ml-2">
-              <img 
-                src={service.photoUrl} 
-                alt={`Logo de ${service.title}`}
-                className="w-full h-full object-cover" 
-              />
-            </div>
-          )}
+          <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 ml-2">
+            <img 
+              src={service.photoUrl || "/placeholder.svg"} 
+              alt={service.photoUrl ? `Logo de ${service.title}` : "Logo Condo Indico"}
+              className="w-full h-full object-cover" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/placeholder.svg";
+              }}
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
