@@ -1,18 +1,63 @@
 
+import { useState, useEffect } from 'react';
 import { getAllCategories } from "@/data/mockData";
 import { Link } from "react-router-dom";
 import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const CategoryList = () => {
-  const categories = getAllCategories();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data: categoriesData, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+
+        if (error) {
+          console.error('Erro ao buscar categorias:', error);
+          // Fallback para categorias mock se houver erro
+          setCategories(getAllCategories());
+        } else {
+          setCategories(categoriesData || []);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+        // Fallback para categorias mock se houver erro
+        setCategories(getAllCategories());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   
-  // Função para obter o ícone baseado no nome do ícone
+  // Função para obter o ícone baseado no nome do ícone ou emoji
   const getIcon = (iconName?: string) => {
+    // Se for um emoji, retorna diretamente
+    if (iconName && iconName.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName)) {
+      return <span className="text-xl">{iconName}</span>;
+    }
+
+    // Fallback para ícones Lucide
     switch (iconName) {
       case 'home':
         return <Home size={20} />;
@@ -39,6 +84,17 @@ const CategoryList = () => {
     setSelectedCategory(categoryId);
     navigate(`/categories/${categoryId}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="py-12">
+        <h2 className="text-3xl font-semibold mb-8 text-center text-foreground">Categorias de Serviços</h2>
+        <div className="flex justify-center p-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-12">
