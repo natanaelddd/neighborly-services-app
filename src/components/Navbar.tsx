@@ -34,8 +34,12 @@ const Navbar = () => {
     <header className="bg-card/50 backdrop-blur-lg border-b border-border sticky top-0 z-50">
       <nav className="container-custom py-4 flex justify-between items-center">
         <Link to="/" className="text-xl font-semibold text-primary flex items-center">
-          <span className="mr-2">🏡</span>
-          Vitrine Evidence
+          <img 
+            src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+            alt="Condo Indico" 
+            className="w-8 h-8 mr-2"
+          />
+          Condo Indico
         </Link>
 
         {/* Desktop Menu */}

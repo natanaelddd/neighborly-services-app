@@ -8,7 +8,7 @@ import { useEffect } from "react";
 const HomePage = () => {
   // Update document title
   useEffect(() => {
-    document.title = "Vitrine Evidence - Serviços para o seu condomínio";
+    document.title = "Condo Indico - Serviços para o seu condomínio";
   }, []);
 
   return (

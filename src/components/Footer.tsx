@@ -10,8 +10,12 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link to="/" className="text-xl font-semibold text-primary flex items-center mb-4">
-              <span className="mr-2">🏡</span>
-              Evidence Resort
+              <img 
+                src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+                alt="Condo Indico" 
+                className="w-6 h-6 mr-2"
+              />
+              Condo Indico
             </Link>
             <p className="text-muted-foreground max-w-xs">
               Conectando moradores e serviços dentro do Evidence Resort, seu condomínio de casas.
@@ -56,7 +60,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
           <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
             <p className="text-muted-foreground text-sm mb-2 md:mb-0">
-              © {currentYear} Evidence Resort. Todos os direitos reservados.
+              © {currentYear} Condo Indico. Todos os direitos reservados.
             </p>
             <p className="text-muted-foreground text-sm mb-4 md:mb-0">
               Desenvolvido por <a href="https://www.natanael.com.br" target="_blank" rel="noreferrer" className="text-primary hover:text-primary/80">Natanael Silva</a>. 
