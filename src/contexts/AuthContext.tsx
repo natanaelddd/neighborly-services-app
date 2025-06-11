@@ -17,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   session: Session | null;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, block: string, houseNumber: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -28,6 +29,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   session: null,
+  isAdmin: false,
   login: async () => {},
   signup: async () => {},
   logout: async () => {},
@@ -44,6 +46,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Lista de emails de administradores - em um app real, isso seria gerenciado no banco
+  const adminEmails = ['admin@evidence.com', 'adm@evidence.com'];
+  
+  const isAdmin = profile ? adminEmails.includes(profile.email) : false;
 
   useEffect(() => {
     // Configurar listener de mudanças de autenticação
@@ -187,6 +194,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       user, 
       profile,
       session,
+      isAdmin,
       login, 
       signup,
       logout, 

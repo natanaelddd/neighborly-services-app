@@ -44,7 +44,7 @@ const ServiceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { profile } = useAuth();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,9 +52,9 @@ const ServiceForm = () => {
       title: "",
       description: "",
       categoryId: "",
-      whatsapp: user?.whatsapp || "",
-      block: user?.block || "",
-      unit: user?.houseNumber || "",
+      whatsapp: profile?.whatsapp || "",
+      block: profile?.block || "",
+      unit: profile?.house_number || "",
       logoUrl: "",
     },
   });
