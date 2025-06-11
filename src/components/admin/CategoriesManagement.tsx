@@ -11,7 +11,7 @@ import { Category } from "@/types";
 interface CategoriesManagementProps {
   categories: Category[];
   isLoading: boolean;
-  onAddCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => void;
+  onAddCategory: (category: Omit<Category, "id" | "created_at" | "updated_at">) => void;
   onDeleteCategory: (id: number) => void;
 }
 

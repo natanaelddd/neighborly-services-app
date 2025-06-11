@@ -26,12 +26,13 @@ export interface Unit {
   updatedAt: string;
 }
 
+// Update Category to match Supabase schema
 export interface Category {
   id: number;
   name: string;
-  icon?: string;
-  createdAt: string;
-  updatedAt: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Service {
