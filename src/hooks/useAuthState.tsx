@@ -59,5 +59,5 @@ export const useAuthState = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, profile, session, isLoading, setIsLoading };
+  return { user, profile, session, isLoading, setIsLoading, setUser, setProfile, setSession };
 };

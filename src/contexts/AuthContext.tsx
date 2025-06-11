@@ -29,7 +29,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { user, profile, session, isLoading, setIsLoading } = useAuthState();
+  const { user, profile, session, isLoading, setIsLoading, setUser, setProfile, setSession } = useAuthState();
   const isAdmin = isUserAdmin(profile);
 
   const login = async (email: string, password: string): Promise<void> => {
