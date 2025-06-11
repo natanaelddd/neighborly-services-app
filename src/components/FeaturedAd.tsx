@@ -38,8 +38,8 @@ const FeaturedAd = () => {
     },
     {
       id: 2,
-      title: "Casa Moderna - Bloco A",
-      description: "Casa de 3 quartos com suíte, sala ampla, cozinha planejada e área gourmet. Localizada no Bloco A com vista privilegiada para a área verde do condomínio.",
+      title: "Casa Moderna - Bloco 1",
+      description: "Casa de 3 quartos com suíte, sala ampla, cozinha planejada e área gourmet. Localizada no Bloco 1 com vista privilegiada para a área verde do condomínio.",
       details: "Acabamento de primeira qualidade, garagem para 2 carros, jardim privativo e acesso direto à área de lazer do condomínio.",
       imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
       type: "venda",
@@ -47,7 +47,7 @@ const FeaturedAd = () => {
     },
     {
       id: 3,
-      title: "Casa para Locação - Bloco C",
+      title: "Casa para Locação - Bloco 3",
       description: "Oportunidade única de morar no Evidence Resort. Casa mobiliada de 2 quartos, ideal para casais ou pequenas famílias que buscam conforto e segurança.",
       details: "Inclui móveis planejados, ar condicionado, área de serviço completa e vaga de garagem coberta.",
       imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
