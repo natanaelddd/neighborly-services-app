@@ -21,7 +21,7 @@ export const loginWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: getRedirectUrl()
+      redirectTo: `${window.location.origin}/`
     }
   });
   
@@ -35,13 +35,11 @@ export const signupWithEmail = async (
   block: string, 
   houseNumber: string
 ) => {
-  const redirectUrl = getRedirectUrl();
-  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: redirectUrl,
+      emailRedirectTo: `${window.location.origin}/`,
       data: {
         name,
         block,

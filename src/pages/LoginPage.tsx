@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,14 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const navigate = useNavigate();
-  const { login, loginWithGoogle, forgotPassword } = useAuth();
+  const { login, loginWithGoogle, forgotPassword, user } = useAuth();
+
+  // Se o usuário já está logado, redireciona para home
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +29,7 @@ const LoginPage = () => {
       await login(email, password);
       navigate("/");
     } catch (error: any) {
+      console.error('Erro no login:', error);
       toast.error(error.message || "Erro ao fazer login");
     } finally {
       setIsLoading(false);
@@ -33,6 +41,7 @@ const LoginPage = () => {
     try {
       await loginWithGoogle();
     } catch (error: any) {
+      console.error('Erro no login com Google:', error);
       toast.error(error.message || "Erro ao fazer login com Google");
     } finally {
       setIsLoading(false);
@@ -51,6 +60,7 @@ const LoginPage = () => {
       await forgotPassword(email);
       setIsForgotPassword(false);
     } catch (error: any) {
+      console.error('Erro na recuperação de senha:', error);
       toast.error(error.message || "Erro ao recuperar senha");
     } finally {
       setIsLoading(false);

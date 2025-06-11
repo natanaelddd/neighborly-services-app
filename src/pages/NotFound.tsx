@@ -29,7 +29,7 @@ const NotFound = () => {
             <Link to="/services">Ver Serviços</Link>
           </Button>
           <Button asChild variant="secondary" className="w-full">
-            <Link to="/register">Cadastrar-se</Link>
+            <Link to="/services/new">Cadastrar Serviço</Link>
           </Button>
         </div>
       </div>

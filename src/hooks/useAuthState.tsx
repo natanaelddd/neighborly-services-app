@@ -32,7 +32,8 @@ export const useAuthState = () => {
                 if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
                   console.log('Usuário do Google sem perfil, redirecionando para registro...');
                   toast.info("Complete seu cadastro para continuar");
-                  window.location.href = 'https://www.condoindico.com.br/register';
+                  // Redireciona para register em vez de URL externa
+                  window.location.href = '/register';
                   return;
                 }
               } else {

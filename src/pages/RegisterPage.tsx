@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,14 @@ const RegisterPage = () => {
   const [houseNumber, setHouseNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup, loginWithGoogle, user } = useAuth();
+
+  // Se o usuário já está logado, redireciona para home
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +31,7 @@ const RegisterPage = () => {
       await signup(email, password, name, block, houseNumber);
       navigate("/login");
     } catch (error: any) {
+      console.error('Erro no cadastro:', error);
       toast.error(error.message || "Erro ao realizar cadastro");
     } finally {
       setIsLoading(false);
@@ -35,6 +43,7 @@ const RegisterPage = () => {
     try {
       await loginWithGoogle();
     } catch (error: any) {
+      console.error('Erro no cadastro com Google:', error);
       toast.error(error.message || "Erro ao cadastrar com Google");
     } finally {
       setIsLoading(false);
