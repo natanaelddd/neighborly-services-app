@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,23 @@ interface FeaturedAdEditorProps {
   onSave: (properties: FeaturedProperty[]) => void;
 }
 
-const FeaturedAdEditor = ({ properties, onSave }: FeaturedAdEditorProps) => {
-  const [propertyList, setPropertyList] = useState<FeaturedProperty[]>(properties);
+const FeaturedAdEditor = ({ properties: initialProperties, onSave }: FeaturedAdEditorProps) => {
+  const [propertyList, setPropertyList] = useState<FeaturedProperty[]>([]);
+
+  useEffect(() => {
+    // Carregar propriedades do localStorage ou usar as iniciais
+    const storedProperties = localStorage.getItem('featuredProperties');
+    if (storedProperties) {
+      try {
+        setPropertyList(JSON.parse(storedProperties));
+      } catch (error) {
+        console.error('Erro ao carregar propriedades do localStorage:', error);
+        setPropertyList(initialProperties);
+      }
+    } else {
+      setPropertyList(initialProperties);
+    }
+  }, [initialProperties]);
 
   const addProperty = () => {
     const newProperty: FeaturedProperty = {
@@ -52,7 +67,13 @@ const FeaturedAdEditor = ({ properties, onSave }: FeaturedAdEditorProps) => {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Salvar no localStorage
+    localStorage.setItem('featuredProperties', JSON.stringify(propertyList));
+    
+    // Chamar callback do componente pai
     onSave(propertyList);
+    
     toast.success("Propriedades em destaque atualizadas com sucesso!");
   };
 
@@ -61,7 +82,7 @@ const FeaturedAdEditor = ({ properties, onSave }: FeaturedAdEditorProps) => {
       <CardHeader>
         <CardTitle>Propriedades em Destaque</CardTitle>
         <CardDescription>
-          Gerencie as casas/propriedades exibidas no carousel da página inicial
+          Gerencie as casas/propriedades exibidas no carousel da página inicial. As alterações são salvas automaticamente e aparecem imediatamente no site.
         </CardDescription>
       </CardHeader>
       <CardContent>

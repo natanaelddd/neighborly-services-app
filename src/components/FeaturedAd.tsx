@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
 import { CarouselApi } from "@/components/ui/carousel";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FeaturedProperty {
   id: number;
@@ -24,37 +25,43 @@ interface FeaturedProperty {
 const FeaturedAd = () => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const [properties, setProperties] = useState<FeaturedProperty[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - em produção viria do admin ou banco de dados
-  const properties: FeaturedProperty[] = [
-    {
-      id: 1,
-      title: "Evidence Resort - Seu novo lar",
-      description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
-      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda",
-      price: "A partir de R$ 450.000"
-    },
-    {
-      id: 2,
-      title: "Casa Moderna - Bloco 1",
-      description: "Casa de 3 quartos com suíte, sala ampla, cozinha planejada e área gourmet. Localizada no Bloco 1 com vista privilegiada para a área verde do condomínio.",
-      details: "Acabamento de primeira qualidade, garagem para 2 carros, jardim privativo e acesso direto à área de lazer do condomínio.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda",
-      price: "R$ 520.000"
-    },
-    {
-      id: 3,
-      title: "Casa para Locação - Bloco 3",
-      description: "Oportunidade única de morar no Evidence Resort. Casa mobiliada de 2 quartos, ideal para casais ou pequenas famílias que buscam conforto e segurança.",
-      details: "Inclui móveis planejados, ar condicionado, área de serviço completa e vaga de garagem coberta.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "aluguel",
-      price: "R$ 2.800/mês"
-    }
-  ];
+  useEffect(() => {
+    const fetchFeaturedProperties = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Buscar propriedades em destaque do localStorage ou banco (futuro)
+        const storedProperties = localStorage.getItem('featuredProperties');
+        if (storedProperties) {
+          const parsedProperties = JSON.parse(storedProperties);
+          setProperties(parsedProperties);
+        } else {
+          // Propriedades padrão se não houver nada salvo
+          setProperties([
+            {
+              id: 1,
+              title: "Evidence Resort - Seu novo lar",
+              description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
+              details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
+              imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
+              type: "venda",
+              price: "A partir de R$ 450.000"
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar propriedades em destaque:', error);
+        setProperties([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeaturedProperties();
+  }, []);
 
   useEffect(() => {
     if (!api) {
@@ -79,6 +86,20 @@ const FeaturedAd = () => {
       api.off("select", onSelect);
     };
   }, [api]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex justify-center p-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (properties.length === 0) {
+    return null;
+  }
 
   const currentProperty = properties[current];
 
