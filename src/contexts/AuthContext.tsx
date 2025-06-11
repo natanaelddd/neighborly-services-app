@@ -1,101 +1,198 @@
 
 import { createContext, useState, useEffect, ReactNode } from "react";
-import { User } from "@/types";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  block: string;
+  house_number: string;
+  whatsapp?: string;
+}
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
+  session: Session | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signup: (email: string, password: string, name: string, block: string, houseNumber: string) => Promise<void>;
+  logout: () => Promise<void>;
   isLoading: boolean;
   forgotPassword: (email: string) => Promise<void>;
-  isAdmin: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
+  profile: null,
+  session: null,
   login: async () => {},
-  logout: () => {},
+  signup: async () => {},
+  logout: async () => {},
   isLoading: false,
   forgotPassword: async () => {},
-  isAdmin: false,
 });
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Admin credentials (in a real app, this would be in a database)
-const ADMIN_EMAILS = ["admin@example.com"];
-const ADMIN_PASSWORD = "admin123";
-
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      setIsAdmin(ADMIN_EMAILS.includes(parsedUser.email));
-    }
-    setIsLoading(false);
+    // Configurar listener de mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Buscar perfil do usuário
+          setTimeout(async () => {
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (error) {
+                console.error('Erro ao buscar perfil:', error);
+              } else {
+                setProfile(profileData);
+              }
+            } catch (error) {
+              console.error('Erro ao buscar perfil:', error);
+            }
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Verificar sessão existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    // In a real app, this would validate with a backend
     setIsLoading(true);
     
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check if it's an admin login
-        const isAdminUser = ADMIN_EMAILS.includes(email);
-        
-        if (isAdminUser && password !== ADMIN_PASSWORD) {
-          setIsLoading(false);
-          reject(new Error("Senha incorreta para administrador"));
-          return;
-        }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        toast.success("Login realizado com sucesso!");
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        const newUser: User = { 
-          email, 
-          isLoggedIn: true,
-          whatsapp: "",
-          isAdmin: isAdminUser
-        };
-        
-        setUser(newUser);
-        setIsAdmin(isAdminUser);
-        localStorage.setItem("user", JSON.stringify(newUser));
-        setIsLoading(false);
-        resolve();
-      }, 1000);
-    });
+  const signup = async (
+    email: string, 
+    password: string, 
+    name: string, 
+    block: string, 
+    houseNumber: string
+  ): Promise<void> => {
+    setIsLoading(true);
+    
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name,
+            block,
+            house_number: houseNumber,
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
+      }
+    } catch (error) {
+      console.error('Erro no cadastro:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const forgotPassword = async (email: string): Promise<void> => {
     setIsLoading(true);
     
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        toast.success("Um link de recuperação foi enviado para seu email");
-        setIsLoading(false);
-        resolve();
-      }, 1000);
-    });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Um link de recuperação foi enviado para seu email");
+    } catch (error) {
+      console.error('Erro ao recuperar senha:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAdmin(false);
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      toast.success("Logout realizado com sucesso!");
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      toast.error("Erro ao fazer logout");
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, forgotPassword, isAdmin }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile,
+      session,
+      login, 
+      signup,
+      logout, 
+      isLoading, 
+      forgotPassword 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,11 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Menu, X, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, logout, isAdmin } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const [showRecommendations, setShowRecommendations] = useState(false);
 
@@ -24,9 +23,8 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleLogout = () => {
-    logout();
-    toast.success("Logout realizado com sucesso!");
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -55,10 +53,10 @@ const Navbar = () => {
           
           {user ? (
             <div className="flex items-center gap-4">
-              {isAdmin && (
-                <Button asChild variant="outline">
-                  <Link to="/admin">Painel Admin</Link>
-                </Button>
+              {profile && (
+                <span className="text-sm text-muted-foreground">
+                  Olá, {profile.name}
+                </span>
               )}
               <Button asChild>
                 <Link to="/services/new">Cadastrar Serviço</Link>
@@ -129,15 +127,10 @@ const Navbar = () => {
             
             {user ? (
               <>
-                {isAdmin && (
-                  <Button 
-                    asChild 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <Link to="/admin">Painel Admin</Link>
-                  </Button>
+                {profile && (
+                  <span className="text-sm text-muted-foreground py-2">
+                    Olá, {profile.name}
+                  </span>
                 )}
                 <Button asChild className="w-full">
                   <Link to="/services/new" onClick={() => setIsOpen(false)}>

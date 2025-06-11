@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 const RegisterPage = () => {
   const [name, setName] = useState("");
@@ -13,24 +14,20 @@ const RegisterPage = () => {
   const [houseNumber, setHouseNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulating registration - would connect to Supabase in production
-    setTimeout(() => {
-      localStorage.setItem("user", JSON.stringify({ 
-        name, 
-        email, 
-        block,
-        houseNumber,
-        isLoggedIn: true 
-      }));
-      toast.success("Cadastro realizado com sucesso!");
+    try {
+      await signup(email, password, name, block, houseNumber);
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao realizar cadastro");
+    } finally {
       setIsLoading(false);
-      navigate("/");
-    }, 1000);
+    }
   };
 
   return (
@@ -41,7 +38,7 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
-              Nome
+              Nome Completo
             </label>
             <Input
               id="name"
@@ -78,6 +75,7 @@ const RegisterPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="********"
               required
+              minLength={6}
             />
           </div>
           

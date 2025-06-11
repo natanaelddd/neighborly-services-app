@@ -20,10 +20,9 @@ const LoginPage = () => {
     
     try {
       await login(email, password);
-      toast.success("Login realizado com sucesso!");
-      navigate("/services/new"); // Redirect to service registration
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erro ao fazer login");
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao fazer login");
     } finally {
       setIsLoading(false);
     }
@@ -40,8 +39,8 @@ const LoginPage = () => {
     try {
       await forgotPassword(email);
       setIsForgotPassword(false);
-    } catch (error) {
-      toast.error("Erro ao recuperar senha");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao recuperar senha");
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +50,7 @@ const LoginPage = () => {
     <div className="container-custom py-10 flex flex-col items-center">
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-100 p-6 md:p-8">
         <h1 className="text-3xl font-bold mb-6 text-center text-gradient">
-          {isForgotPassword ? "Recuperar Senha" : "Login"}
+          {isForgotPassword ? "Recuperar Senha" : "Entrar"}
         </h1>
         
         {!isForgotPassword ? (

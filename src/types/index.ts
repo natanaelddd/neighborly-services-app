@@ -1,4 +1,8 @@
 
+import { Database } from "@/integrations/supabase/types";
+
+export type Profile = Database['public']['Tables']['profiles']['Row'];
+
 export interface User {
   id?: number;
   phone?: string;
