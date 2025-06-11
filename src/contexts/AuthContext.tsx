@@ -49,8 +49,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Lista de emails de administradores - em um app real, isso seria gerenciado no banco
-  const adminEmails = ['admin@evidence.com', 'adm@evidence.com'];
+  // Lista de emails de administradores - adicionado natanaelddd@gmail.com
+  const adminEmails = ['admin@evidence.com', 'adm@evidence.com', 'natanaelddd@gmail.com'];
   
   const isAdmin = profile ? adminEmails.includes(profile.email) : false;
 
