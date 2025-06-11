@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,12 +54,12 @@ const ServiceForm = () => {
           category_id: parseInt(categoryId),
           photo_url: photoUrl,
           unit_id: profile.id,
-          status: 'approved' // Serviços são aprovados automaticamente
+          status: 'pending' // Serviços ficam pendentes para aprovação
         });
 
       if (error) throw error;
 
-      toast.success("Serviço cadastrado com sucesso!");
+      toast.success("Serviço cadastrado com sucesso! Aguarde a aprovação do administrador.");
       navigate("/services");
     } catch (error: any) {
       console.error('Erro ao cadastrar serviço:', error);
