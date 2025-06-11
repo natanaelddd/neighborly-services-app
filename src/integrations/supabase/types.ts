@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          icon: string
+          id: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon: string
+          id?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           block: string
@@ -42,12 +66,66 @@ export type Database = {
         }
         Relationships: []
       }
+      services: {
+        Row: {
+          category_id: number | null
+          created_at: string
+          description: string
+          id: number
+          status: string
+          title: string
+          unit_id: string | null
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          category_id?: number | null
+          created_at?: string
+          description: string
+          id?: number
+          status?: string
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          category_id?: number | null
+          created_at?: string
+          description?: string
+          id?: number
+          status?: string
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Service, Category } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 // Admin component imports
 import PendingServices from "@/components/admin/PendingServices";
@@ -13,6 +14,35 @@ import MenuManager from "@/components/admin/MenuManager";
 import RecommendationsManager from "@/components/admin/RecommendationsManager";
 import AdminsManager from "@/components/admin/AdminsManager";
 
+interface Service {
+  id: number;
+  unit_id: string;
+  category_id: number | null;
+  title: string;
+  description: string;
+  whatsapp: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    name: string;
+    block: string;
+    house_number: string;
+  };
+  categories?: {
+    name: string;
+    icon: string;
+  };
+}
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminDashboardPage = () => {
   const { user, isAdmin } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
@@ -21,7 +51,7 @@ const AdminDashboardPage = () => {
   const [admins, setAdmins] = useState<string[]>(["admin@example.com"]);
   const [showRecommendationsMenu, setShowRecommendationsMenu] = useState(false);
   
-  // State for featured properties management (replacing single featuredAd)
+  // State for featured properties management
   const [featuredProperties, setFeaturedProperties] = useState([
     {
       id: 1,
@@ -62,59 +92,8 @@ const AdminDashboardPage = () => {
   ]);
 
   useEffect(() => {
-    // In a real app, this would fetch from a database
-    setIsLoading(true);
+    fetchData();
     
-    setTimeout(() => {
-      // Mock service data
-      const mockServices: Service[] = [
-        {
-          id: 1,
-          unitId: 1,
-          categoryId: 1,
-          title: "Limpeza Residencial",
-          description: "Serviço de limpeza completa para residências",
-          whatsapp: "16992701617",
-          status: "pending",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          unitId: 2,
-          categoryId: 2,
-          title: "Encanador Profissional",
-          description: "Reparos e instalações hidráulicas",
-          whatsapp: "16992701617",
-          status: "pending",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-      
-      // Mock categories data
-      const mockCategories: Category[] = [
-        {
-          id: 1,
-          name: "Limpeza",
-          icon: "🧹",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          name: "Manutenção",
-          icon: "🔧",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-      
-      setServices(mockServices);
-      setCategories(mockCategories);
-      setIsLoading(false);
-    }, 1000);
-
     // Check if recommendations menu is enabled
     const storedShowRecommendations = localStorage.getItem("showRecommendationsMenu");
     if (storedShowRecommendations) {
@@ -122,19 +101,93 @@ const AdminDashboardPage = () => {
     }
   }, []);
 
-  // Service management functions
-  const handleApprove = (serviceId: number) => {
-    setServices(services.map(service => 
-      service.id === serviceId ? { ...service, status: "approved" } : service
-    ));
-    toast.success("Serviço aprovado com sucesso!");
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+
+      // Buscar serviços com informações do usuário e categoria
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select(`
+          *,
+          profiles:unit_id (name, block, house_number),
+          categories:category_id (name, icon)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (servicesError) {
+        console.error('Erro ao buscar serviços:', servicesError);
+        toast.error("Erro ao carregar serviços");
+      } else {
+        setServices(servicesData || []);
+      }
+
+      // Buscar categorias
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Erro ao buscar categorias:', categoriesError);
+        toast.error("Erro ao carregar categorias");
+      } else {
+        setCategories(categoriesData || []);
+      }
+
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error("Erro ao carregar dados do painel");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleReject = (serviceId: number) => {
-    setServices(services.map(service => 
-      service.id === serviceId ? { ...service, status: "rejected" } : service
-    ));
-    toast.success("Serviço rejeitado!");
+  // Service management functions
+  const handleApprove = async (serviceId: number) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ status: 'approved', updated_at: new Date().toISOString() })
+        .eq('id', serviceId);
+
+      if (error) {
+        console.error('Erro ao aprovar serviço:', error);
+        toast.error("Erro ao aprovar serviço");
+        return;
+      }
+
+      setServices(services.map(service => 
+        service.id === serviceId ? { ...service, status: "approved" } : service
+      ));
+      toast.success("Serviço aprovado com sucesso!");
+    } catch (error) {
+      console.error('Erro ao aprovar serviço:', error);
+      toast.error("Erro ao aprovar serviço");
+    }
+  };
+
+  const handleReject = async (serviceId: number) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({ status: 'rejected', updated_at: new Date().toISOString() })
+        .eq('id', serviceId);
+
+      if (error) {
+        console.error('Erro ao rejeitar serviço:', error);
+        toast.error("Erro ao rejeitar serviço");
+        return;
+      }
+
+      setServices(services.map(service => 
+        service.id === serviceId ? { ...service, status: "rejected" } : service
+      ));
+      toast.success("Serviço rejeitado!");
+    } catch (error) {
+      console.error('Erro ao rejeitar serviço:', error);
+      toast.error("Erro ao rejeitar serviço");
+    }
   };
 
   // Admin management functions
@@ -149,27 +202,53 @@ const AdminDashboardPage = () => {
   };
 
   // Category management functions
-  const handleAddCategory = (newCategoryData: Omit<Category, "id" | "createdAt" | "updatedAt">) => {
-    const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-    
-    const category: Category = {
-      id: newId,
-      name: newCategoryData.name,
-      icon: newCategoryData.icon,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setCategories([...categories, category]);
-    toast.success("Categoria adicionada com sucesso!");
+  const handleAddCategory = async (newCategoryData: Omit<Category, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({
+          name: newCategoryData.name,
+          icon: newCategoryData.icon
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao adicionar categoria:', error);
+        toast.error("Erro ao adicionar categoria");
+        return;
+      }
+
+      setCategories([...categories, data]);
+      toast.success("Categoria adicionada com sucesso!");
+    } catch (error) {
+      console.error('Erro ao adicionar categoria:', error);
+      toast.error("Erro ao adicionar categoria");
+    }
   };
 
-  const handleDeleteCategory = (id: number) => {
-    setCategories(categories.filter(category => category.id !== id));
-    toast.success("Categoria removida com sucesso!");
+  const handleDeleteCategory = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao remover categoria:', error);
+        toast.error("Erro ao remover categoria");
+        return;
+      }
+
+      setCategories(categories.filter(category => category.id !== id));
+      toast.success("Categoria removida com sucesso!");
+    } catch (error) {
+      console.error('Erro ao remover categoria:', error);
+      toast.error("Erro ao remover categoria");
+    }
   };
 
-  // Featured properties management (replacing handleSaveFeaturedAd)
+  // Featured properties management
   const handleSaveFeaturedProperties = (newProperties: typeof featuredProperties) => {
     setFeaturedProperties(newProperties);
     toast.success("Propriedades em destaque atualizadas com sucesso!");

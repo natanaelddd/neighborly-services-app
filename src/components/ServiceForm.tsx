@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -8,10 +8,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { categories } from '@/data/mockData';
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   title: z.string().min(5, {
@@ -30,21 +30,20 @@ const formSchema = z.object({
   whatsapp: z.string().min(10, {
     message: "Número de WhatsApp inválido.",
   }),
-  block: z.string().refine(val => {
-    const num = parseInt(val);
-    return !isNaN(num) && num >= 1 && num <= 5;
-  }, { message: "Informe um bloco válido entre 1 e 5." }),
-  unit: z.string().min(1, {
-    message: "Informe a casa.",
-  }),
-  logoUrl: z.string().optional(),
 });
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+}
 
 const ServiceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,39 +52,72 @@ const ServiceForm = () => {
       description: "",
       categoryId: "",
       whatsapp: profile?.whatsapp || "",
-      block: profile?.block || "",
-      unit: profile?.house_number || "",
-      logoUrl: "",
     },
   });
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real application, you would upload this to your storage service
-      // For now, we'll just create a local URL for preview
-      const url = URL.createObjectURL(file);
-      setLogoPreview(url);
-      form.setValue("logoUrl", url);
-    }
-  };
+  // Buscar categorias do banco de dados
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          console.error('Erro ao buscar categorias:', error);
+          toast.error("Erro ao carregar categorias");
+        } else {
+          setCategories(data || []);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error);
+        toast.error("Erro ao carregar categorias");
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+    fetchCategories();
+  }, []);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast.error("Você precisa estar logado para cadastrar um serviço");
+      return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulating envio para API
-    setTimeout(() => {
-      console.log(values);
-      
-      // Simulate sending WhatsApp message
-      const whatsappMessage = `Olá! Seu serviço "${values.title}" foi cadastrado com sucesso no site Vitrine Evidence. Em breve ele passará por aprovação. Obrigado!`;
-      console.log("WhatsApp message:", whatsappMessage);
-      console.log("Would send to:", values.whatsapp);
-      
-      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação. Uma notificação foi enviada para seu WhatsApp.");
-      setIsSubmitting(false);
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .insert({
+          unit_id: user.id,
+          category_id: parseInt(values.categoryId),
+          title: values.title,
+          description: values.description,
+          whatsapp: values.whatsapp,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao cadastrar serviço:', error);
+        toast.error("Erro ao cadastrar serviço. Tente novamente.");
+        return;
+      }
+
+      console.log('Serviço cadastrado:', data);
+      toast.success("Serviço cadastrado com sucesso! Aguardando aprovação.");
       navigate("/");
-    }, 1000);
+    } catch (error) {
+      console.error('Erro ao cadastrar serviço:', error);
+      toast.error("Erro ao cadastrar serviço. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -129,32 +161,6 @@ const ServiceForm = () => {
           )}
         />
         
-        <div>
-          <FormLabel className="block mb-2">Logo ou Imagem do Serviço</FormLabel>
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              <Input 
-                type="file" 
-                accept="image/*"
-                onChange={handleLogoChange}
-                className="cursor-pointer"
-              />
-              <FormDescription>
-                Adicione uma logo ou imagem que represente seu serviço.
-              </FormDescription>
-            </div>
-            {logoPreview && (
-              <div className="w-24 h-24 rounded-md overflow-hidden border border-gray-200">
-                <img 
-                  src={logoPreview} 
-                  alt="Logo preview" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -162,16 +168,16 @@ const ServiceForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Categoria</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
+                      <SelectValue placeholder={isLoadingCategories ? "Carregando..." : "Selecione uma categoria"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
+                        {category.icon} {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -199,40 +205,12 @@ const ServiceForm = () => {
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="block"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bloco</FormLabel>
-                <FormControl>
-                  <Input {...field} type="number" min="1" max="5" placeholder="Ex: 1" />
-                </FormControl>
-                <FormDescription>
-                  Número do bloco (1-5)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="unit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Casa</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Ex: 101" />
-                </FormControl>
-                <FormDescription>
-                  Número da sua casa
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="bg-muted/50 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground mb-2">
+            <strong>Informações do seu perfil:</strong>
+          </p>
+          <p className="text-sm">Bloco: {profile?.block || 'Não informado'}</p>
+          <p className="text-sm">Casa: {profile?.house_number || 'Não informado'}</p>
         </div>
         
         <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
