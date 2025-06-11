@@ -19,7 +19,7 @@ const FeaturedServices = () => {
           .select(`
             *,
             profiles:unit_id (name, block, house_number),
-            categories:category_id (name, icon)
+            categories:category_id (name, icon, created_at, updated_at)
           `)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })
