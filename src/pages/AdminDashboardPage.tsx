@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,12 +21,18 @@ const AdminDashboardPage = () => {
   const [admins, setAdmins] = useState<string[]>(["admin@example.com"]);
   const [showRecommendationsMenu, setShowRecommendationsMenu] = useState(false);
   
-  // State for featured ad management
-  const [featuredAd, setFeaturedAd] = useState({
-    title: "Evidence Resort - Seu novo lar",
-    description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis.",
-    imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png"
-  });
+  // State for featured properties management (replacing single featuredAd)
+  const [featuredProperties, setFeaturedProperties] = useState([
+    {
+      id: 1,
+      title: "Evidence Resort - Seu novo lar",
+      description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
+      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
+      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
+      type: "venda" as const,
+      price: "A partir de R$ 450.000"
+    }
+  ]);
 
   // State for menu management
   const [menuItems, setMenuItems] = useState([
@@ -146,10 +151,10 @@ const AdminDashboardPage = () => {
     toast.success("Categoria removida com sucesso!");
   };
 
-  // Featured ad management
-  const handleSaveFeaturedAd = (newFeaturedAd: typeof featuredAd) => {
-    setFeaturedAd(newFeaturedAd);
-    toast.success("Anúncio em destaque atualizado com sucesso!");
+  // Featured properties management (replacing handleSaveFeaturedAd)
+  const handleSaveFeaturedProperties = (newProperties: typeof featuredProperties) => {
+    setFeaturedProperties(newProperties);
+    toast.success("Propriedades em destaque atualizadas com sucesso!");
   };
 
   // Menu management functions
@@ -193,14 +198,14 @@ const AdminDashboardPage = () => {
 
   return (
     <div className="container-custom py-8">
-      <h1 className="text-3xl font-bold mb-6">Painel do Administrador - Vitrine Evidence</h1>
+      <h1 className="text-3xl font-bold mb-6">Painel do Administrador - Condo Indico</h1>
       
       <Tabs defaultValue="pending-services">
         <TabsList className="mb-6 flex flex-wrap">
           <TabsTrigger value="pending-services">Serviços Pendentes</TabsTrigger>
           <TabsTrigger value="all-services">Todos Serviços</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
-          <TabsTrigger value="featured-ad">Anúncio em Destaque</TabsTrigger>
+          <TabsTrigger value="featured-ad">Propriedades em Destaque</TabsTrigger>
           <TabsTrigger value="menu">Menu</TabsTrigger>
           <TabsTrigger value="recommendations">Indicações</TabsTrigger>
           <TabsTrigger value="admins">Administradores</TabsTrigger>
@@ -234,11 +239,11 @@ const AdminDashboardPage = () => {
           />
         </TabsContent>
         
-        {/* Anúncio em Destaque */}
+        {/* Propriedades em Destaque */}
         <TabsContent value="featured-ad">
           <FeaturedAdEditor 
-            featuredAd={featuredAd}
-            onSave={handleSaveFeaturedAd}
+            properties={featuredProperties}
+            onSave={handleSaveFeaturedProperties}
           />
         </TabsContent>
         
