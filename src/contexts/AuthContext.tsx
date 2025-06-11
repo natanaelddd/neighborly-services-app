@@ -74,6 +74,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               
               if (error) {
                 console.error('Erro ao buscar perfil:', error);
+                // Se não encontrou perfil e é login com Google, criar perfil básico
+                if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
+                  console.log('Criando perfil para usuário do Google...');
+                  const { error: insertError } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: session.user.id,
+                      name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Usuário',
+                      email: session.user.email || '',
+                      block: '1', // Valor padrão temporário
+                      house_number: '0' // Valor padrão temporário
+                    });
+                  
+                  if (insertError) {
+                    console.error('Erro ao criar perfil:', insertError);
+                  } else {
+                    // Buscar o perfil recém-criado
+                    const { data: newProfile } = await supabase
+                      .from('profiles')
+                      .select('*')
+                      .eq('id', session.user.id)
+                      .single();
+                    setProfile(newProfile);
+                  }
+                }
               } else {
                 setProfile(profileData);
               }
@@ -112,6 +137,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       if (data.user) {
         toast.success("Login realizado com sucesso!");
+        // Redirecionar para home após login
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Erro no login:', error);
@@ -202,6 +229,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setProfile(null);
       setSession(null);
       toast.success("Logout realizado com sucesso!");
+      // Redirecionar para home após logout
+      window.location.href = '/';
     } catch (error) {
       console.error('Erro no logout:', error);
       toast.error("Erro ao fazer logout");

@@ -2,12 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn, LogOut } from "lucide-react";
+import { Menu, X, LogIn, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showRecommendations, setShowRecommendations] = useState(false);
 
@@ -25,8 +25,32 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
+    setIsOpen(false);
   };
+
+  const handleLogin = () => {
+    navigate("/login");
+    setIsOpen(false);
+  };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <header className="bg-card/50 backdrop-blur-lg border-b border-border sticky top-0 z-50">
+        <nav className="container-custom py-4 flex justify-between items-center">
+          <Link to="/" className="text-xl font-semibold text-primary flex items-center">
+            <img 
+              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+              alt="Condo Indico" 
+              className="w-8 h-8 mr-2"
+            />
+            Condo Indico
+          </Link>
+          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+        </nav>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-card/50 backdrop-blur-lg border-b border-border sticky top-0 z-50">
@@ -58,6 +82,14 @@ const Navbar = () => {
                   Olá, {profile.name}
                 </span>
               )}
+              {isAdmin && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/admin">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Admin
+                  </Link>
+                </Button>
+              )}
               <Button asChild>
                 <Link to="/services/new">Cadastrar Serviço</Link>
               </Button>
@@ -67,11 +99,9 @@ const Navbar = () => {
               </Button>
             </div>
           ) : (
-            <Button asChild>
-              <Link to="/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                Entrar
-              </Link>
+            <Button onClick={handleLogin}>
+              <LogIn className="mr-2 h-4 w-4" />
+              Entrar
             </Button>
           )}
         </div>
@@ -132,6 +162,14 @@ const Navbar = () => {
                     Olá, {profile.name}
                   </span>
                 )}
+                {isAdmin && (
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/admin" onClick={() => setIsOpen(false)}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild className="w-full">
                   <Link to="/services/new" onClick={() => setIsOpen(false)}>
                     Cadastrar Serviço
@@ -140,21 +178,16 @@ const Navbar = () => {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => {
-                    handleLogout();
-                    setIsOpen(false);
-                  }}
+                  onClick={handleLogout}
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
                 </Button>
               </>
             ) : (
-              <Button asChild className="w-full">
-                <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Entrar
-                </Link>
+              <Button onClick={handleLogin} className="w-full">
+                <LogIn className="mr-2 h-4 w-4" />
+                Entrar
               </Button>
             )}
           </div>
