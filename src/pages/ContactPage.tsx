@@ -81,7 +81,7 @@ const ContactPage = () => {
           </div>
           
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4">Informações de Contato</h2>
+            <h2 className="text-xl font-semibold mb-4">Fale com o Desenvolvedor</h2>
             
             <div className="space-y-4">
               <div>
@@ -123,6 +123,12 @@ const ContactPage = () => {
                   Sábado: 9h às 12h
                 </p>
               </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Importante:</strong> Este site é independente e não tem qualquer vinculação com a administração do Evidence Resort. É uma iniciativa particular para conectar moradores e facilitar a troca de serviços entre vizinhos.
+              </p>
             </div>
           </div>
         </div>
