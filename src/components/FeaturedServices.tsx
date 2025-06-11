@@ -34,24 +34,24 @@ const FeaturedServices = () => {
         // Transformar os dados para o formato ServiceWithProvider
         const transformedServices: ServiceWithProvider[] = (servicesData || []).map(service => ({
           id: service.id,
-          unitId: service.unit_id,
-          categoryId: service.category_id,
+          unitId: 0, // Valor temporário já que não temos tabela units
+          categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
           photoUrl: '', // Pode ser adicionado futuramente se houver campo para foto
           whatsapp: service.whatsapp,
-          status: service.status,
+          status: service.status as 'pending' | 'approved' | 'rejected',
           createdAt: service.created_at,
           updatedAt: service.updated_at,
           providerName: service.profiles?.name || 'Morador não identificado',
           block: service.profiles?.block || '',
           number: service.profiles?.house_number || '',
           category: service.categories ? {
-            id: service.category_id,
+            id: service.category_id || 0,
             name: service.categories.name,
             icon: service.categories.icon,
-            created_at: '',
-            updated_at: ''
+            created_at: service.categories.created_at || '',
+            updated_at: service.categories.updated_at || ''
           } : undefined
         }));
 
