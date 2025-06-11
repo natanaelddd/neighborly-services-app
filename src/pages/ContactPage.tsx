@@ -127,7 +127,7 @@ const ContactPage = () => {
             
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                <strong>Importante:</strong> Este site é independente e não tem qualquer vinculação com a administração do Evidence Resort. É uma iniciativa particular para conectar moradores e facilitar a troca de serviços entre vizinhos.
+                <strong>Importante:</strong> Este site é independente e não tem qualquer vinculação com a administração do Evidence Resort. É uma iniciativa particular para conectar moradores e facilitar a divulgação dos trabalhos e serviços oferecidos pelos condôminos.
               </p>
             </div>
           </div>
