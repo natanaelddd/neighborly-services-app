@@ -46,7 +46,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-medium mb-4 text-foreground">Contato</h3>
             <p className="text-muted-foreground mb-2">
-              Administração do Evidence Resort
+              Fale com o desenvolvedor
             </p>
             <Link 
               to="/contact" 
@@ -55,6 +55,12 @@ const Footer = () => {
               Entre em contato
             </Link>
           </div>
+        </div>
+        
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            <strong>Importante:</strong> Este site é independente e não tem qualquer vinculação com a administração do Evidence Resort. É uma iniciativa particular para conectar moradores e facilitar a divulgação dos trabalhos e serviços oferecidos pelos condôminos.
+          </p>
         </div>
         
         <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
