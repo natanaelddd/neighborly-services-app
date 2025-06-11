@@ -19,6 +19,7 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   signup: (email: string, password: string, name: string, block: string, houseNumber: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -31,6 +32,7 @@ export const AuthContext = createContext<AuthContextType>({
   session: null,
   isAdmin: false,
   login: async () => {},
+  loginWithGoogle: async () => {},
   signup: async () => {},
   logout: async () => {},
   isLoading: false,
@@ -119,6 +121,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const loginWithGoogle = async (): Promise<void> => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Erro no login com Google:', error);
+      toast.error("Erro ao fazer login com Google");
+      throw error;
+    }
+  };
+
   const signup = async (
     email: string, 
     password: string, 
@@ -195,7 +214,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       profile,
       session,
       isAdmin,
-      login, 
+      login,
+      loginWithGoogle,
       signup,
       logout, 
       isLoading, 
