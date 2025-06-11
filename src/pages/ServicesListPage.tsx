@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { getServicesByCategory, getAllCategories, searchServices } from "@/data/mockData";
 import { ServiceWithProvider } from "@/types";
 import ServiceList from "@/components/ServiceList";
@@ -10,14 +10,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ServicesListPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [searchParams] = useSearchParams();
   const [services, setServices] = useState<ServiceWithProvider[]>([]);
   const [filteredServices, setFilteredServices] = useState<ServiceWithProvider[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const categories = getAllCategories();
   
   useEffect(() => {
+    // Primeiro verifica se há categoria na query string (vem do redirecionamento)
+    const categoryFromQuery = searchParams.get('category');
+    
+    // Se houver categoria na query string, usa ela
+    if (categoryFromQuery) {
+      const categoryIdNumber = parseInt(categoryFromQuery);
+      const categoryServices = getServicesByCategory(categoryIdNumber);
+      setServices(categoryServices);
+      setFilteredServices(categoryServices);
+      setActiveCategory(categoryFromQuery);
+    }
     // Se houver um categoryId na URL, usamos ele
-    if (categoryId) {
+    else if (categoryId) {
       const categoryIdNumber = parseInt(categoryId);
       const categoryServices = getServicesByCategory(categoryIdNumber);
       setServices(categoryServices);
@@ -30,7 +42,7 @@ const ServicesListPage = () => {
       setFilteredServices(allServices);
       setActiveCategory("all");
     }
-  }, [categoryId]);
+  }, [categoryId, searchParams]);
 
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
