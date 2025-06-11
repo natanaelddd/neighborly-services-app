@@ -41,6 +41,7 @@ const RegisterPage = () => {
   const handleGoogleSignup = async () => {
     setIsLoading(true);
     try {
+      toast.info("Redirecionando para Google...");
       await loginWithGoogle();
     } catch (error: any) {
       console.error('Erro no cadastro com Google:', error);
