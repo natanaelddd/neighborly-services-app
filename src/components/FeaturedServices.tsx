@@ -38,7 +38,7 @@ const FeaturedServices = () => {
           categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
-          photoUrl: '', // Pode ser adicionado futuramente se houver campo para foto
+          photoUrl: service.photo_url || '', // Campo para imagem do serviço
           whatsapp: service.whatsapp,
           status: service.status as 'pending' | 'approved' | 'rejected',
           createdAt: service.created_at,

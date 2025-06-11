@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash, PlusCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Edit, Trash, PlusCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { Category } from "@/types";
+import IconSelector from "./IconSelector";
 
 interface CategoriesManagementProps {
   categories: Category[];
   isLoading: boolean;
   onAddCategory: (category: Omit<Category, "id" | "created_at" | "updated_at">) => void;
+  onUpdateCategory: (id: number, category: Omit<Category, "id" | "created_at" | "updated_at">) => void;
   onDeleteCategory: (id: number) => void;
 }
 
@@ -19,9 +22,12 @@ const CategoriesManagement = ({
   categories, 
   isLoading, 
   onAddCategory, 
+  onUpdateCategory,
   onDeleteCategory 
 }: CategoriesManagementProps) => {
   const [newCategory, setNewCategory] = useState({ name: "", icon: "" });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Função para renderizar ícone (emoji ou texto)
   const renderIcon = (icon: string) => {
@@ -45,6 +51,31 @@ const CategoriesManagement = ({
     setNewCategory({ name: "", icon: "" });
   };
 
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory({ ...category });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory?.name) {
+      toast.error("Nome da categoria é obrigatório");
+      return;
+    }
+
+    onUpdateCategory(editingCategory.id, {
+      name: editingCategory.name,
+      icon: editingCategory.icon
+    });
+    setIsEditDialogOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditDialogOpen(false);
+    setEditingCategory(null);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2">
@@ -52,7 +83,7 @@ const CategoriesManagement = ({
           <CardHeader>
             <CardTitle>Categorias</CardTitle>
             <CardDescription>
-              Gerencie as categorias de serviços disponíveis. Use emojis para os ícones (ex: 🧹, 🔧, 🌱).
+              Gerencie as categorias de serviços disponíveis. Clique no ícone de editar para modificar uma categoria.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -75,7 +106,11 @@ const CategoriesManagement = ({
                       <span className="font-medium">{category.name}</span>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditCategory(category)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => onDeleteCategory(category.id)}>
@@ -95,7 +130,7 @@ const CategoriesManagement = ({
           <CardHeader>
             <CardTitle>Adicionar Categoria</CardTitle>
             <CardDescription>
-              Crie uma nova categoria de serviços. Use emojis para os ícones.
+              Crie uma nova categoria de serviços.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -109,18 +144,12 @@ const CategoriesManagement = ({
                   placeholder="Ex: Limpeza, Manutenção"
                 />
               </div>
-              <div>
-                <Label htmlFor="category-icon">Ícone (emoji)</Label>
-                <Input
-                  id="category-icon"
-                  value={newCategory.icon}
-                  onChange={(e) => setNewCategory({...newCategory, icon: e.target.value})}
-                  placeholder="Ex: 🧹, 🔧, 🌱"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use emojis para melhor visualização. Exemplos: 🧹 🔧 🌱 👶 🍽️ 🚗 💻 📚 🏥 📦
-                </p>
-              </div>
+              
+              <IconSelector
+                selectedIcon={newCategory.icon}
+                onIconSelect={(icon) => setNewCategory({...newCategory, icon})}
+              />
+
               <Button type="submit" className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Categoria
@@ -129,6 +158,48 @@ const CategoriesManagement = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog para editar categoria */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Categoria</DialogTitle>
+            <DialogDescription>
+              Modifique o nome e ícone da categoria.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingCategory && (
+            <form onSubmit={handleUpdateCategory} className="space-y-4">
+              <div>
+                <Label htmlFor="edit-category-name">Nome da Categoria</Label>
+                <Input
+                  id="edit-category-name"
+                  value={editingCategory.name}
+                  onChange={(e) => setEditingCategory({...editingCategory, name: e.target.value})}
+                  placeholder="Ex: Limpeza, Manutenção"
+                />
+              </div>
+              
+              <IconSelector
+                selectedIcon={editingCategory.icon}
+                onIconSelect={(icon) => setEditingCategory({...editingCategory, icon})}
+              />
+
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

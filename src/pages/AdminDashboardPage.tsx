@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -227,6 +226,35 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleUpdateCategory = async (id: number, updatedCategoryData: Omit<Category, "id" | "created_at" | "updated_at">) => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .update({
+          name: updatedCategoryData.name,
+          icon: updatedCategoryData.icon,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Erro ao atualizar categoria:', error);
+        toast.error("Erro ao atualizar categoria");
+        return;
+      }
+
+      setCategories(categories.map(category => 
+        category.id === id ? data : category
+      ));
+      toast.success("Categoria atualizada com sucesso!");
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      toast.error("Erro ao atualizar categoria");
+    }
+  };
+
   const handleDeleteCategory = async (id: number) => {
     try {
       const { error } = await supabase
@@ -245,6 +273,34 @@ const AdminDashboardPage = () => {
     } catch (error) {
       console.error('Erro ao remover categoria:', error);
       toast.error("Erro ao remover categoria");
+    }
+  };
+
+  // Service update function
+  const handleUpdateService = async (serviceId: number, updatedData: Partial<Service>) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .update({
+          ...updatedData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', serviceId);
+
+      if (error) {
+        console.error('Erro ao atualizar serviço:', error);
+        toast.error("Erro ao atualizar serviço");
+        return;
+      }
+
+      // Atualizar o estado local
+      setServices(services.map(service => 
+        service.id === serviceId ? { ...service, ...updatedData } : service
+      ));
+      toast.success("Serviço atualizado com sucesso!");
+    } catch (error) {
+      console.error('Erro ao atualizar serviço:', error);
+      toast.error("Erro ao atualizar serviço");
     }
   };
 
@@ -322,7 +378,9 @@ const AdminDashboardPage = () => {
         <TabsContent value="all-services">
           <AllServices 
             services={services}
+            categories={categories}
             isLoading={isLoading}
+            onUpdateService={handleUpdateService}
           />
         </TabsContent>
         
@@ -332,6 +390,7 @@ const AdminDashboardPage = () => {
             categories={categories}
             isLoading={isLoading}
             onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
           />
         </TabsContent>
