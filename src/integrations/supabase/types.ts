@@ -66,6 +66,97 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          bedrooms: number
+          created_at: string | null
+          description: string
+          garage_covered: boolean | null
+          id: number
+          is_renovated: boolean | null
+          price: string | null
+          rejection_reason: string | null
+          status: string
+          title: string
+          type: string
+          unit_id: string | null
+          updated_at: string | null
+          whatsapp: string
+        }
+        Insert: {
+          bedrooms?: number
+          created_at?: string | null
+          description: string
+          garage_covered?: boolean | null
+          id?: number
+          is_renovated?: boolean | null
+          price?: string | null
+          rejection_reason?: string | null
+          status?: string
+          title: string
+          type?: string
+          unit_id?: string | null
+          updated_at?: string | null
+          whatsapp: string
+        }
+        Update: {
+          bedrooms?: number
+          created_at?: string | null
+          description?: string
+          garage_covered?: boolean | null
+          id?: number
+          is_renovated?: boolean | null
+          price?: string | null
+          rejection_reason?: string | null
+          status?: string
+          title?: string
+          type?: string
+          unit_id?: string | null
+          updated_at?: string | null
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_photos: {
+        Row: {
+          created_at: string | null
+          id: number
+          is_primary: boolean | null
+          photo_url: string
+          property_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          is_primary?: boolean | null
+          photo_url: string
+          property_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          is_primary?: boolean | null
+          photo_url?: string
+          property_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_photos_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           category_id: number | null

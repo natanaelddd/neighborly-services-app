@@ -1,255 +1,172 @@
-
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Plus, Trash2, MessageCircle } from "lucide-react";
+import { Plus, Home, Briefcase, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import UserServiceEditor from "@/components/user/UserServiceEditor";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-interface UserService {
+interface Service {
   id: number;
   title: string;
   description: string;
-  whatsapp: string;
   status: string;
-  created_at: string;
-  categories?: {
-    name: string;
-    icon: string;
-  };
+}
+
+interface Property {
+  id: number;
+  title: string;
+  type: string;
+  status: string;
 }
 
 const UserDashboardPage = () => {
-  const { user, profile } = useAuth();
-  const [services, setServices] = useState<UserService[]>([]);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [services, setServices] = useState<Service[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [editingService, setEditingService] = useState<UserService | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserServices();
-      fetchCategories();
+    if (!user) {
+      navigate('/login');
+      return;
     }
-  }, [user]);
 
-  const fetchUserServices = async () => {
+    fetchData();
+  }, [user, navigate]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select(`
-          id,
-          title,
-          description,
-          whatsapp,
-          status,
-          created_at,
-          categories (
-            name,
-            icon
-          )
-        `)
+        .select('id, title, description, status')
         .eq('unit_id', user?.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setServices(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar serviços:', error);
-      toast.error("Erro ao carregar seus serviços");
+      if (servicesError) {
+        console.error('Erro ao buscar serviços:', servicesError);
+        toast.error("Erro ao carregar serviços");
+      } else {
+        setServices(servicesData || []);
+      }
+
+      const { data: propertiesData, error: propertiesError } = await supabase
+        .from('properties')
+        .select('id, title, type, status')
+        .eq('unit_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      if (propertiesError) {
+        console.error('Erro ao buscar casas:', propertiesError);
+        toast.error("Erro ao carregar casas");
+      } else {
+        setProperties(propertiesData || []);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar categorias:', error);
-    }
-  };
-
-  const handleDeleteService = async (serviceId: number) => {
-    if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
-
-    try {
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', serviceId)
-        .eq('unit_id', user?.id);
-
-      if (error) throw error;
-
-      toast.success("Serviço excluído com sucesso!");
-      fetchUserServices();
-    } catch (error) {
-      console.error('Erro ao excluir serviço:', error);
-      toast.error("Erro ao excluir serviço");
-    }
-  };
-
-  const handleServiceUpdate = () => {
-    fetchUserServices();
-    setEditingService(null);
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      approved: { label: "Aprovado", variant: "default" as const },
-      pending: { label: "Pendente", variant: "secondary" as const },
-      rejected: { label: "Rejeitado", variant: "destructive" as const }
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
-
-  const getWhatsAppUrl = (service: UserService) => {
-    const message = `Olá! Vi seu serviço "${service.title}" no Evidence Resort e gostaria de mais informações.`;
-    return `https://wa.me/${service.whatsapp}?text=${encodeURIComponent(message)}`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="container-custom py-10">
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container-custom py-10">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Meu Painel</h1>
-          <p className="text-muted-foreground">
-            Olá, {profile?.name}! Gerencie seus serviços cadastrados aqui.
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">{services.length}</CardTitle>
-              <CardDescription>Total de Serviços</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                {services.filter(s => s.status === 'approved').length}
-              </CardTitle>
-              <CardDescription>Serviços Aprovados</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                {services.filter(s => s.status === 'pending').length}
-              </CardTitle>
-              <CardDescription>Aguardando Aprovação</CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">Meus Serviços</h2>
-          <Button asChild>
-            <Link to="/services/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Serviço
-            </Link>
-          </Button>
-        </div>
-
-        {services.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                Você ainda não cadastrou nenhum serviço.
-              </p>
-              <Button asChild>
-                <Link to="/services/new">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Cadastrar Primeiro Serviço
-                </Link>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container-custom">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Meu Dashboard</h1>
+              <p className="text-gray-600">Gerencie seus serviços e anúncios</p>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={() => navigate('/services/new')} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Serviço
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <Card key={service.id}>
+              <Button onClick={() => navigate('/properties/new')} variant="outline" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Anunciar Casa
+              </Button>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center p-6">
+              <Loader2 className="animate-spin h-6 w-6 text-blue-500" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Serviços */}
+              <Card>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">{service.title}</CardTitle>
-                      <div className="flex items-center gap-2 mb-2">
-                        {service.categories && (
-                          <Badge variant="outline">
-                            <span className="mr-1">{service.categories.icon}</span>
-                            {service.categories.name}
-                          </Badge>
-                        )}
-                        {getStatusBadge(service.status)}
-                      </div>
-                    </div>
-                  </div>
-                  <CardDescription className="line-clamp-3">
-                    {service.description}
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5" />
+                    Meus Serviços
+                  </CardTitle>
+                  <CardDescription>
+                    Visualize e gerencie seus serviços cadastrados.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingService(service)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(getWhatsAppUrl(service), '_blank')}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteService(service.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {services.length === 0 ? (
+                    <p className="text-center py-4 text-gray-500">
+                      Nenhum serviço cadastrado.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {services.map(service => (
+                        <div key={service.id} className="flex items-center justify-between p-3 bg-gray-100 rounded-md">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{service.title}</h3>
+                            <p className="text-gray-600 text-sm line-clamp-1">{service.description}</p>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Status: {service.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
 
-        <UserServiceEditor
-          service={editingService}
-          categories={categories}
-          isOpen={!!editingService}
-          onClose={() => setEditingService(null)}
-          onSave={handleServiceUpdate}
-        />
+              {/* Anúncios de Casas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Home className="h-5 w-5" />
+                    Meus Anúncios de Casas
+                  </CardTitle>
+                  <CardDescription>
+                    Visualize e gerencie seus anúncios de casas.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {properties.length === 0 ? (
+                    <p className="text-center py-4 text-gray-500">
+                      Nenhum anúncio de casa cadastrado.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {properties.map(property => (
+                        <div key={property.id} className="flex items-center justify-between p-3 bg-gray-100 rounded-md">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{property.title}</h3>
+                            <p className="text-gray-600 text-sm">Tipo: {property.type}</p>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Status: {property.status}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

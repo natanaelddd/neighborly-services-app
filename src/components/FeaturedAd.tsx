@@ -4,47 +4,84 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, MapPin, Home, Bed, Bath, Car } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PropertyPhoto {
+  photo_url: string;
+  is_primary: boolean;
+}
 
 interface FeaturedProperty {
   id: number;
   title: string;
   description: string;
-  details: string;
-  imageUrl: string;
   type: "venda" | "aluguel";
   price?: string;
+  bedrooms: number;
+  garage_covered: boolean;
+  is_renovated: boolean;
+  photos: PropertyPhoto[];
+  providerName: string;
+  block: string;
+  houseNumber: string;
 }
 
 const FeaturedAd = () => {
   const [properties, setProperties] = useState<FeaturedProperty[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Carregar propriedades do localStorage ou usar as padrão
-    const storedProperties = localStorage.getItem('featuredProperties');
-    if (storedProperties) {
-      try {
-        setProperties(JSON.parse(storedProperties));
-      } catch (error) {
-        console.error('Erro ao carregar propriedades:', error);
-        setProperties(getDefaultProperties());
-      }
-    } else {
-      setProperties(getDefaultProperties());
-    }
+    fetchFeaturedProperties();
   }, []);
 
-  const getDefaultProperties = (): FeaturedProperty[] => [
-    {
-      id: 1,
-      title: "Evidence Resort - Seu novo lar",
-      description: "Localizado em uma região privilegiada, o Evidence Resort conta com casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
-      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda" as const,
-      price: "A partir de R$ 450.000"
+  const fetchFeaturedProperties = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Buscar propriedades aprovadas com fotos e dados do perfil
+      const { data: propertiesData, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles:unit_id (name, block, house_number),
+          property_photos (photo_url, is_primary)
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (error) {
+        console.error('Erro ao buscar propriedades:', error);
+        setProperties([]);
+        return;
+      }
+
+      // Transformar os dados
+      const transformedProperties: FeaturedProperty[] = (propertiesData || []).map(property => ({
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        type: property.type as "venda" | "aluguel",
+        price: property.price || undefined,
+        bedrooms: property.bedrooms,
+        garage_covered: property.garage_covered,
+        is_renovated: property.is_renovated,
+        photos: property.property_photos || [],
+        providerName: property.profiles?.name || 'Morador não identificado',
+        block: property.profiles?.block || '',
+        houseNumber: property.profiles?.house_number || ''
+      }));
+
+      console.log('Propriedades carregadas:', transformedProperties);
+      setProperties(transformedProperties);
+    } catch (error) {
+      console.error('Erro ao carregar propriedades:', error);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
@@ -58,11 +95,48 @@ const FeaturedAd = () => {
     );
   };
 
+  if (isLoading) {
+    return (
+      <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+        <div className="container-custom">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Descubra as melhores oportunidades no Evidence Resort
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (properties.length === 0) {
-    return null;
+    return (
+      <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+        <div className="container-custom">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Descubra as melhores oportunidades no Evidence Resort
+            </p>
+          </div>
+          <div className="text-center py-12">
+            <Home className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma casa disponível</h3>
+            <p className="text-gray-500">
+              Não há casas aprovadas para exibir no momento.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   const currentProperty = properties[currentIndex];
+  const primaryPhoto = currentProperty.photos.find(photo => photo.is_primary) || currentProperty.photos[0];
 
   return (
     <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
@@ -79,11 +153,17 @@ const FeaturedAd = () => {
             <div className="grid lg:grid-cols-2 gap-0">
               {/* Imagem */}
               <div className="relative h-64 lg:h-96 overflow-hidden">
-                <img 
-                  src={currentProperty.imageUrl} 
-                  alt={currentProperty.title}
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                />
+                {primaryPhoto ? (
+                  <img 
+                    src={primaryPhoto.photo_url} 
+                    alt={currentProperty.title}
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <Home className="h-16 w-16 text-gray-400" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                 
                 {/* Badge do tipo */}
@@ -95,6 +175,15 @@ const FeaturedAd = () => {
                     {currentProperty.type === "venda" ? "À Venda" : "Para Alugar"}
                   </Badge>
                 </div>
+
+                {/* Badge de reforma */}
+                {currentProperty.is_renovated && (
+                  <div className="absolute top-4 right-4">
+                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                      Reformada
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               {/* Conteúdo */}
@@ -106,11 +195,13 @@ const FeaturedAd = () => {
                     </h3>
                     <div className="flex items-center text-gray-600 mb-4">
                       <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">Evidence Resort - Condomínio Fechado</span>
+                      <span className="text-sm">
+                        Evidence Resort - Bloco {currentProperty.block}, Casa {currentProperty.houseNumber}
+                      </span>
                     </div>
                   </div>
 
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed line-clamp-3">
                     {currentProperty.description}
                   </p>
 
@@ -118,21 +209,23 @@ const FeaturedAd = () => {
                   <div className="flex items-center gap-6 py-3 border-y border-gray-200">
                     <div className="flex items-center gap-1 text-gray-600">
                       <Bed className="w-4 h-4" />
-                      <span className="text-sm font-medium">3 quartos</span>
+                      <span className="text-sm font-medium">{currentProperty.bedrooms} quartos</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-600">
                       <Bath className="w-4 h-4" />
-                      <span className="text-sm font-medium">2 banheiros</span>
+                      <span className="text-sm font-medium">2+ banheiros</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Car className="w-4 h-4" />
-                      <span className="text-sm font-medium">2 vagas</span>
-                    </div>
+                    {currentProperty.garage_covered && (
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <Car className="w-4 h-4" />
+                        <span className="text-sm font-medium">Garagem coberta</span>
+                      </div>
+                    )}
                   </div>
 
                   {currentProperty.price && (
                     <div className="mb-4">
-                      <span className="text-3xl font-bold text-brand-blue">
+                      <span className="text-2xl lg:text-3xl font-bold text-brand-blue">
                         {currentProperty.price}
                       </span>
                     </div>
@@ -151,8 +244,12 @@ const FeaturedAd = () => {
                       size="lg"
                       className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-6"
                     >
-                      Agendar Visita
+                      Entrar em Contato
                     </Button>
+                  </div>
+
+                  <div className="text-sm text-gray-500">
+                    Anunciado por: {currentProperty.providerName}
                   </div>
                 </div>
               </div>

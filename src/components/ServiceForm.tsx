@@ -1,13 +1,17 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Save, Briefcase } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import ImageUpload from "./ImageUpload";
 
 interface Category {
   id: number;
@@ -16,16 +20,18 @@ interface Category {
 }
 
 const ServiceForm = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-  const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    whatsapp: "",
+    categoryId: ""
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -33,165 +39,204 @@ const ServiceForm = () => {
 
   const fetchCategories = async () => {
     try {
-      setIsLoadingCategories(true);
-      const { data: categoriesData, error } = await supabase
+      const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');
 
-      if (error) {
-        console.error('Erro ao buscar categorias:', error);
-        toast.error("Erro ao carregar categorias");
-      } else {
-        setCategories(categoriesData || []);
-      }
+      if (error) throw error;
+      setCategories(data || []);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
       toast.error("Erro ao carregar categorias");
-    } finally {
-      setIsLoadingCategories(false);
     }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (selectedImages.length === 0) return null;
+    
+    const file = selectedImages[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('service-photos')
+      .upload(fileName, file);
+    
+    if (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      throw error;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from('service-photos')
+      .getPublicUrl(fileName);
+    
+    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !profile) {
+    if (!user) {
       toast.error("Você precisa estar logado para cadastrar um serviço");
-      navigate("/login");
+      return;
+    }
+
+    if (!formData.title || !formData.description || !formData.whatsapp) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
 
     setIsLoading(true);
-
+    
     try {
+      // Upload da imagem (se houver)
+      const photoUrl = await uploadImage();
+      
       const { error } = await supabase
         .from('services')
         .insert({
-          title,
-          description,
-          whatsapp,
-          category_id: parseInt(categoryId),
+          unit_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          whatsapp: formData.whatsapp,
+          category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
           photo_url: photoUrl,
-          unit_id: profile.id,
           status: 'pending'
         });
 
       if (error) throw error;
 
-      toast.success("Serviço cadastrado com sucesso! Aguarde a aprovação do administrador.");
-      navigate("/dashboard");
-    } catch (error: any) {
+      toast.success("Serviço cadastrado com sucesso! Aguarde a aprovação da administração.");
+      navigate('/user-dashboard');
+      
+    } catch (error) {
       console.error('Erro ao cadastrar serviço:', error);
-      toast.error(error.message || "Erro ao cadastrar serviço");
+      toast.error("Erro ao cadastrar serviço. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="container-custom py-10">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center text-gradient">
-          Cadastrar Novo Serviço
-        </h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-lg shadow-sm border border-gray-100">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium mb-2">
-              Título do Serviço *
-            </label>
-            <Input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Aulas de Piano"
-              required
-            />
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container-custom">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-4 mb-6">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => navigate(-1)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Cadastrar Serviço</h1>
+              <p className="text-gray-600">Ofereça seus serviços para a comunidade do Evidence Resort</p>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-2">
-              Descrição *
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva seu serviço em detalhes..."
-              rows={4}
-              required
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Informações do Serviço
+              </CardTitle>
+              <CardDescription>
+                Preencha as informações do seu serviço. Após o cadastro, seu serviço será analisado pela administração.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="title">Título do Serviço *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    placeholder="Ex: Limpeza de apartamentos e casas"
+                    required
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium mb-2">
-              Categoria *
-            </label>
-            {isLoadingCategories ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <Select value={categoryId} onValueChange={setCategoryId} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        <span>{category.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {categories.length === 0 && !isLoadingCategories && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Nenhuma categoria disponível. Entre em contato com o administrador.
-              </p>
-            )}
-          </div>
+                <div>
+                  <Label htmlFor="description">Descrição *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Descreva detalhadamente o serviço que você oferece, experiência, horários de atendimento..."
+                    rows={4}
+                    required
+                  />
+                </div>
 
-          <div>
-            <label htmlFor="whatsapp" className="block text-sm font-medium mb-2">
-              WhatsApp *
-            </label>
-            <Input
-              id="whatsapp"
-              type="tel"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="(11) 99999-9999"
-              required
-            />
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="category">Categoria</Label>
+                    <Select 
+                      value={formData.categoryId} 
+                      onValueChange={(value) => setFormData({...formData, categoryId: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <span>{category.icon}</span>
+                              <span>{category.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-          <div>
-            <label htmlFor="photo" className="block text-sm font-medium mb-2">
-              URL da Foto (opcional)
-            </label>
-            <Input
-              id="photo"
-              type="url"
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              placeholder="https://exemplo.com/foto.jpg"
-            />
-          </div>
+                  <div>
+                    <Label htmlFor="whatsapp">WhatsApp *</Label>
+                    <Input
+                      id="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
+                      placeholder="5511999999999"
+                      required
+                    />
+                  </div>
+                </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-brand-blue hover:bg-blue-700"
-            disabled={isLoading || categories.length === 0}
-          >
-            {isLoading ? "Cadastrando..." : "Cadastrar Serviço"}
-          </Button>
-        </form>
+                <ImageUpload
+                  bucket="service-photos"
+                  maxFiles={1}
+                  selectedImages={selectedImages}
+                  onImagesChange={setSelectedImages}
+                />
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate(-1)}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Salvando...' : 'Cadastrar Serviço'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
