@@ -87,12 +87,12 @@ const ContactPage = () => {
               <div>
                 <p className="text-sm font-medium">Site</p>
                 <a 
-                  href="https://natanel.com.br" 
+                  href="https://www.natanael.com.br" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  natanel.com.br
+                  www.natanael.com.br
                 </a>
               </div>
               

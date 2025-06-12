@@ -28,9 +28,11 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CR</span>
-            </div>
+            <img 
+              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+              alt="Condo Indico Logo" 
+              className="w-8 h-8 rounded-lg"
+            />
             <span className="text-xl font-bold text-gradient">Condo Indico</span>
           </Link>
 
