@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Upload, ImageIcon } from "lucide-react";
+import { X, Upload, ImageIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -89,33 +89,71 @@ const ImageUpload = ({
     }
   };
 
+  const canAddMore = (selectedImages.length + existingUrls.length) < maxFiles;
+
   return (
     <div className="space-y-4">
       <div>
-        <Label>{maxFiles === 1 ? 'Imagem' : `Imagens (máximo ${maxFiles})`}</Label>
-        <div className="mt-2">
+        <Label className="text-sm font-medium text-gray-700 mb-2 block">
+          {maxFiles === 1 ? 'Imagem' : `Imagens (máximo ${maxFiles})`}
+        </Label>
+        
+        {/* Botão personalizado mais destacado */}
+        <div className="relative">
           <Input
             type="file"
             accept="image/*"
             multiple={maxFiles > 1}
             onChange={handleFileSelect}
-            disabled={uploading || (selectedImages.length + existingUrls.length) >= maxFiles}
-            className="cursor-pointer"
+            disabled={uploading || !canAddMore}
+            className="sr-only"
+            id="file-upload"
           />
+          <Label
+            htmlFor="file-upload"
+            className={`
+              flex flex-col items-center justify-center w-full h-32 
+              border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200
+              ${canAddMore && !uploading 
+                ? 'border-primary bg-primary/5 hover:bg-primary/10 hover:border-primary/70' 
+                : 'border-gray-300 bg-gray-50 cursor-not-allowed opacity-50'
+              }
+            `}
+          >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+              <div className={`
+                w-12 h-12 mb-3 rounded-full flex items-center justify-center
+                ${canAddMore && !uploading 
+                  ? 'bg-primary text-white' 
+                  : 'bg-gray-300 text-gray-500'
+                }
+              `}>
+                {canAddMore && !uploading ? <Plus className="w-6 h-6" /> : <ImageIcon className="w-6 h-6" />}
+              </div>
+              <p className={`mb-2 text-sm font-medium ${canAddMore && !uploading ? 'text-primary' : 'text-gray-500'}`}>
+                {canAddMore 
+                  ? `Clique para ${maxFiles === 1 ? 'adicionar imagem' : 'adicionar imagens'}`
+                  : maxFiles === 1 
+                    ? 'Imagem já adicionada' 
+                    : `Máximo de ${maxFiles} imagens atingido`
+                }
+              </p>
+              <p className="text-xs text-gray-500">
+                JPG, PNG, WebP (máx. 5MB cada)
+              </p>
+            </div>
+          </Label>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Formatos aceitos: JPG, PNG, WebP (máximo 5MB cada)
-        </p>
       </div>
 
       {(selectedImages.length > 0 || existingUrls.length > 0) && (
         <div>
-          <Label>Pré-visualização</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+          <Label className="text-sm font-medium text-gray-700 mb-2 block">Pré-visualização</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Imagens existentes */}
             {existingUrls.map((url, index) => (
               <div key={`existing-${index}`} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden border">
+                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <img 
                     src={url} 
                     alt={`Imagem existente ${index + 1}`}
@@ -126,14 +164,14 @@ const ImageUpload = ({
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   onClick={() => removeExistingImage(url, index)}
                   disabled={uploading}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </Button>
                 {index === 0 && existingUrls.length > 1 && (
-                  <div className="absolute bottom-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded shadow-sm">
                     Principal
                   </div>
                 )}
@@ -143,7 +181,7 @@ const ImageUpload = ({
             {/* Novas imagens selecionadas */}
             {selectedImages.map((file, index) => (
               <div key={`new-${index}`} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden border">
+                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <img 
                     src={URL.createObjectURL(file)} 
                     alt={`Imagem ${index + 1}`}
@@ -154,28 +192,19 @@ const ImageUpload = ({
                   type="button"
                   variant="destructive"
                   size="icon"
-                  className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                   onClick={() => removeImage(index)}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </Button>
                 {existingUrls.length === 0 && index === 0 && selectedImages.length > 1 && (
-                  <div className="absolute bottom-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-2 left-2 bg-primary text-white text-xs px-2 py-1 rounded shadow-sm">
                     Principal
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {(selectedImages.length + existingUrls.length) === 0 && (
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-          <ImageIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-gray-500">
-            {maxFiles === 1 ? 'Selecione uma imagem' : `Selecione até ${maxFiles} imagens`}
-          </p>
         </div>
       )}
     </div>

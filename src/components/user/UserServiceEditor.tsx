@@ -44,14 +44,43 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
 
   useEffect(() => {
     if (service && isOpen) {
+      // Converter o WhatsApp de volta para formato brasileiro (remover código do país)
+      let displayWhatsApp = service.whatsapp;
+      if (service.whatsapp.startsWith('55')) {
+        const number = service.whatsapp.slice(2);
+        displayWhatsApp = formatWhatsApp(number);
+      }
+
       setEditedService({
         title: service.title,
         description: service.description,
-        whatsapp: service.whatsapp,
+        whatsapp: displayWhatsApp,
         category_id: categories.find(c => c.name === service.categories?.name)?.id
       });
     }
   }, [service, isOpen, categories]);
+
+  const formatWhatsApp = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos (DDD + número)
+    const limited = numbers.slice(0, 11);
+    
+    // Aplica máscara
+    if (limited.length <= 2) {
+      return limited;
+    } else if (limited.length <= 7) {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+    } else {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+    }
+  };
+
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatWhatsApp(e.target.value);
+    setEditedService({...editedService, whatsapp: formatted});
+  };
 
   const handleSave = async () => {
     if (!service || !editedService.title || !editedService.description || !editedService.whatsapp) {
@@ -59,14 +88,24 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
       return;
     }
 
+    // Validar WhatsApp (deve ter pelo menos 10 dígitos)
+    const whatsappNumbers = editedService.whatsapp.replace(/\D/g, '');
+    if (whatsappNumbers.length < 10) {
+      toast.error("Digite um número de WhatsApp válido");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Salvar com código do país (55) + DDD + número
+      const fullWhatsApp = `55${whatsappNumbers}`;
+
       const { error } = await supabase
         .from('services')
         .update({
           title: editedService.title,
           description: editedService.description,
-          whatsapp: editedService.whatsapp,
+          whatsapp: fullWhatsApp,
           category_id: editedService.category_id,
           updated_at: new Date().toISOString()
         })
@@ -96,7 +135,7 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) handleCancel();
     }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Serviço</DialogTitle>
           <DialogDescription>
@@ -104,7 +143,7 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 py-4">
           <div>
             <Label htmlFor="edit-title">Título do Serviço *</Label>
             <Input
@@ -112,6 +151,7 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
               value={editedService.title || ''}
               onChange={(e) => setEditedService({...editedService, title: e.target.value})}
               placeholder="Ex: Limpeza de apartamentos"
+              className="mt-1"
             />
           </div>
 
@@ -123,6 +163,7 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
               onChange={(e) => setEditedService({...editedService, description: e.target.value})}
               placeholder="Descreva detalhadamente o serviço oferecido..."
               rows={4}
+              className="mt-1"
             />
           </div>
 
@@ -131,9 +172,11 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
             <Input
               id="edit-whatsapp"
               value={editedService.whatsapp || ''}
-              onChange={(e) => setEditedService({...editedService, whatsapp: e.target.value})}
-              placeholder="Ex: 5511999999999"
+              onChange={handleWhatsAppChange}
+              placeholder="(16) 99999-9999"
+              className="mt-1"
             />
+            <p className="text-xs text-gray-500 mt-1">Digite apenas o DDD e número</p>
           </div>
 
           <div>
@@ -142,7 +185,7 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
               value={editedService.category_id?.toString() || ''}
               onValueChange={(value) => setEditedService({...editedService, category_id: parseInt(value)})}
             >
-              <SelectTrigger>
+              <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
@@ -170,12 +213,12 @@ const UserServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Use
           )}
         </div>
 
-        <div className="flex gap-2 justify-end pt-4 border-t">
-          <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-2 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={handleCancel} disabled={isLoading} className="flex-1 sm:flex-none">
             <X className="mr-2 h-4 w-4" />
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          <Button onClick={handleSave} disabled={isLoading} className="flex-1 sm:flex-none">
             <Save className="mr-2 h-4 w-4" />
             {isLoading ? 'Salvando...' : 'Salvar Alterações'}
           </Button>

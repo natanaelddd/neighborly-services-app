@@ -75,6 +75,28 @@ const ServiceForm = () => {
     return publicUrl;
   };
 
+  const formatWhatsApp = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos (DDD + número)
+    const limited = numbers.slice(0, 11);
+    
+    // Aplica máscara
+    if (limited.length <= 2) {
+      return limited;
+    } else if (limited.length <= 7) {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+    } else {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+    }
+  };
+
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatWhatsApp(e.target.value);
+    setFormData({...formData, whatsapp: formatted});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -88,11 +110,21 @@ const ServiceForm = () => {
       return;
     }
 
+    // Validar WhatsApp (deve ter pelo menos 10 dígitos)
+    const whatsappNumbers = formData.whatsapp.replace(/\D/g, '');
+    if (whatsappNumbers.length < 10) {
+      toast.error("Digite um número de WhatsApp válido");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
       // Upload da imagem (se houver)
       const photoUrl = await uploadImage();
+      
+      // Salvar com código do país (55) + DDD + número
+      const fullWhatsApp = `55${whatsappNumbers}`;
       
       const { error } = await supabase
         .from('services')
@@ -100,7 +132,7 @@ const ServiceForm = () => {
           unit_id: user.id,
           title: formData.title,
           description: formData.description,
-          whatsapp: formData.whatsapp,
+          whatsapp: fullWhatsApp,
           category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
           photo_url: photoUrl,
           status: 'pending'
@@ -120,48 +152,52 @@ const ServiceForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-2 sm:py-8 sm:px-4">
       <div className="container-custom">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Button 
               variant="outline" 
               size="icon"
               onClick={() => navigate(-1)}
+              className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Cadastrar Serviço</h1>
-              <p className="text-gray-600">Ofereça seus serviços para a comunidade do Evidence Resort</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Cadastrar Serviço</h1>
+              <p className="text-sm sm:text-base text-gray-600 hidden sm:block">
+                Ofereça seus serviços para a comunidade do Evidence Resort
+              </p>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Informações do Serviço
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Briefcase className="h-5 w-5 shrink-0" />
+                <span>Informações do Serviço</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Preencha as informações do seu serviço. Após o cadastro, seu serviço será analisado pela administração.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div>
-                  <Label htmlFor="title">Título do Serviço *</Label>
+                  <Label htmlFor="title" className="text-sm font-medium">Título do Serviço *</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                     placeholder="Ex: Limpeza de apartamentos e casas"
                     required
+                    className="mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Descrição *</Label>
+                  <Label htmlFor="description" className="text-sm font-medium">Descrição *</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -169,17 +205,18 @@ const ServiceForm = () => {
                     placeholder="Descreva detalhadamente o serviço que você oferece, experiência, horários de atendimento..."
                     rows={4}
                     required
+                    className="mt-1"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                   <div>
-                    <Label htmlFor="category">Categoria</Label>
+                    <Label htmlFor="category" className="text-sm font-medium">Categoria</Label>
                     <Select 
                       value={formData.categoryId} 
                       onValueChange={(value) => setFormData({...formData, categoryId: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Selecione uma categoria" />
                       </SelectTrigger>
                       <SelectContent>
@@ -196,38 +233,42 @@ const ServiceForm = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="whatsapp">WhatsApp *</Label>
+                    <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp *</Label>
                     <Input
                       id="whatsapp"
                       value={formData.whatsapp}
-                      onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                      placeholder="5511999999999"
+                      onChange={handleWhatsAppChange}
+                      placeholder="(16) 99999-9999"
                       required
+                      className="mt-1"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Digite apenas o DDD e número</p>
                   </div>
                 </div>
 
-                <ImageUpload
-                  bucket="service-photos"
-                  maxFiles={1}
-                  selectedImages={selectedImages}
-                  onImagesChange={setSelectedImages}
-                />
+                <div>
+                  <ImageUpload
+                    bucket="service-photos"
+                    maxFiles={1}
+                    selectedImages={selectedImages}
+                    onImagesChange={setSelectedImages}
+                  />
+                </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col gap-3 pt-4 sm:flex-row">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => navigate(-1)}
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 order-2 sm:order-1"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 order-1 sm:order-2"
                   >
                     <Save className="mr-2 h-4 w-4" />
                     {isLoading ? 'Salvando...' : 'Cadastrar Serviço'}

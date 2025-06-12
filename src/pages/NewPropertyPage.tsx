@@ -1,6 +1,5 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Home, Save } from "lucide-react";
+import { ArrowLeft, Save, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 
 const NewPropertyPage = () => {
@@ -31,38 +31,56 @@ const NewPropertyPage = () => {
     whatsapp: ""
   });
 
-  const uploadImages = async (propertyId: number): Promise<string[]> => {
-    const uploadedUrls: string[] = [];
+  const formatWhatsApp = (value: string) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '');
     
-    for (let i = 0; i < selectedImages.length; i++) {
-      const file = selectedImages[i];
+    // Limita a 11 dígitos (DDD + número)
+    const limited = numbers.slice(0, 11);
+    
+    // Aplica máscara
+    if (limited.length <= 2) {
+      return limited;
+    } else if (limited.length <= 7) {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2)}`;
+    } else {
+      return `(${limited.slice(0, 2)}) ${limited.slice(2, 7)}-${limited.slice(7)}`;
+    }
+  };
+
+  const handleWhatsAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatWhatsApp(e.target.value);
+    setFormData({...formData, whatsapp: formatted});
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (selectedImages.length === 0) return [];
+    
+    const uploadPromises = selectedImages.map(async (file, index) => {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${propertyId}-${Date.now()}-${i}.${fileExt}`;
+      const fileName = `${user?.id}-${Date.now()}-${index}.${fileExt}`;
       
       const { data, error } = await supabase.storage
         .from('property-photos')
         .upload(fileName, file);
       
-      if (error) {
-        console.error('Erro ao fazer upload da imagem:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       const { data: { publicUrl } } = supabase.storage
         .from('property-photos')
         .getPublicUrl(fileName);
       
-      uploadedUrls.push(publicUrl);
-    }
+      return publicUrl;
+    });
     
-    return uploadedUrls;
+    return Promise.all(uploadPromises);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
-      toast.error("Você precisa estar logado para anunciar uma casa");
+      toast.error("Você precisa estar logado para cadastrar uma propriedade");
       return;
     }
 
@@ -71,15 +89,23 @@ const NewPropertyPage = () => {
       return;
     }
 
-    if (selectedImages.length === 0) {
-      toast.error("Adicione pelo menos uma foto da casa");
+    // Validar WhatsApp (deve ter pelo menos 10 dígitos)
+    const whatsappNumbers = formData.whatsapp.replace(/\D/g, '');
+    if (whatsappNumbers.length < 10) {
+      toast.error("Digite um número de WhatsApp válido");
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // Inserir a propriedade
+      // Upload das imagens
+      const photoUrls = await uploadImages();
+      
+      // Salvar com código do país (55) + DDD + número
+      const fullWhatsApp = `55${whatsappNumbers}`;
+      
+      // Inserir propriedade
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert({
@@ -91,7 +117,7 @@ const NewPropertyPage = () => {
           bedrooms: parseInt(formData.bedrooms),
           garage_covered: formData.garageCovered,
           is_renovated: formData.isRenovated,
-          whatsapp: formData.whatsapp,
+          whatsapp: fullWhatsApp,
           status: 'pending'
         })
         .select()
@@ -99,79 +125,98 @@ const NewPropertyPage = () => {
 
       if (propertyError) throw propertyError;
 
-      // Upload das imagens
-      const uploadedUrls = await uploadImages(property.id);
-      
-      // Inserir as fotos na tabela property_photos
-      const photoInserts = uploadedUrls.map((url, index) => ({
-        property_id: property.id,
-        photo_url: url,
-        is_primary: index === 0 // Primeira imagem é a principal
-      }));
+      // Inserir fotos se houver
+      if (photoUrls.length > 0 && property) {
+        const photoInserts = photoUrls.map((url, index) => ({
+          property_id: property.id,
+          photo_url: url,
+          is_primary: index === 0
+        }));
 
-      const { error: photosError } = await supabase
-        .from('property_photos')
-        .insert(photoInserts);
+        const { error: photosError } = await supabase
+          .from('property_photos')
+          .insert(photoInserts);
 
-      if (photosError) throw photosError;
+        if (photosError) throw photosError;
+      }
 
-      toast.success("Casa anunciada com sucesso! Aguarde a aprovação da administração.");
+      toast.success("Propriedade cadastrada com sucesso! Aguarde a aprovação da administração.");
       navigate('/user-dashboard');
       
     } catch (error) {
-      console.error('Erro ao anunciar casa:', error);
-      toast.error("Erro ao anunciar casa. Tente novamente.");
+      console.error('Erro ao cadastrar propriedade:', error);
+      toast.error("Erro ao cadastrar propriedade. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-2 sm:py-8 sm:px-4">
       <div className="container-custom">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
             <Button 
               variant="outline" 
               size="icon"
               onClick={() => navigate(-1)}
+              className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Anunciar Casa</h1>
-              <p className="text-gray-600">Cadastre sua casa no Evidence Resort</p>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Anunciar Propriedade</h1>
+              <p className="text-sm sm:text-base text-gray-600 hidden sm:block">
+                Anuncie sua casa ou apartamento no Evidence Resort
+              </p>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Home className="h-5 w-5" />
-                Informações da Casa
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4 sm:pb-6">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <Home className="h-5 w-5 shrink-0" />
+                <span>Informações da Propriedade</span>
               </CardTitle>
-              <CardDescription>
-                Preencha as informações da sua casa. Após o cadastro, seu anúncio será analisado pela administração.
+              <CardDescription className="text-sm">
+                Preencha as informações da sua propriedade. Após o cadastro, o anúncio será analisado pela administração.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <Label htmlFor="title">Título do Anúncio *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      placeholder="Ex: Casa 3 quartos reformada no Evidence Resort"
-                      required
-                    />
-                  </div>
+            <CardContent className="space-y-4 sm:space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                <div>
+                  <Label htmlFor="title" className="text-sm font-medium">Título do Anúncio *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    placeholder="Ex: Casa 3 quartos com reforma completa"
+                    required
+                    className="mt-1"
+                  />
+                </div>
 
+                <div>
+                  <Label htmlFor="description" className="text-sm font-medium">Descrição *</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Descreva a propriedade, características especiais, localização dentro do condomínio..."
+                    rows={4}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                   <div>
-                    <Label htmlFor="type">Tipo *</Label>
-                    <Select value={formData.type} onValueChange={(value) => setFormData({...formData, type: value})}>
-                      <SelectTrigger>
+                    <Label htmlFor="type" className="text-sm font-medium">Tipo *</Label>
+                    <Select 
+                      value={formData.type} 
+                      onValueChange={(value) => setFormData({...formData, type: value})}
+                    >
+                      <SelectTrigger className="mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -182,96 +227,96 @@ const NewPropertyPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="price">Preço</Label>
+                    <Label htmlFor="price" className="text-sm font-medium">
+                      Preço {formData.type === 'aluguel' ? '(mensal)' : ''}
+                    </Label>
                     <Input
                       id="price"
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
                       placeholder="Ex: R$ 450.000 ou R$ 2.500/mês"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="bedrooms">Quartos *</Label>
-                    <Select value={formData.bedrooms} onValueChange={(value) => setFormData({...formData, bedrooms: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="3">3 quartos</SelectItem>
-                        <SelectItem value="4">4 quartos</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="whatsapp">WhatsApp *</Label>
-                    <Input
-                      id="whatsapp"
-                      value={formData.whatsapp}
-                      onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-                      placeholder="5511999999999"
-                      required
+                      className="mt-1"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Descrição *</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    placeholder="Descreva sua casa: localização no condomínio, características especiais, condições..."
-                    rows={4}
+                  <Label htmlFor="bedrooms" className="text-sm font-medium">Quartos *</Label>
+                  <Select 
+                    value={formData.bedrooms} 
+                    onValueChange={(value) => setFormData({...formData, bedrooms: value})}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 quartos</SelectItem>
+                      <SelectItem value="4">4 quartos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Características</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="garage"
+                        checked={formData.garageCovered}
+                        onCheckedChange={(checked) => setFormData({...formData, garageCovered: !!checked})}
+                      />
+                      <Label htmlFor="garage" className="text-sm">Garagem coberta</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="renovated"
+                        checked={formData.isRenovated}
+                        onCheckedChange={(checked) => setFormData({...formData, isRenovated: !!checked})}
+                      />
+                      <Label htmlFor="renovated" className="text-sm">Casa reformada</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="whatsapp" className="text-sm font-medium">WhatsApp *</Label>
+                  <Input
+                    id="whatsapp"
+                    value={formData.whatsapp}
+                    onChange={handleWhatsAppChange}
+                    placeholder="(16) 99999-9999"
                     required
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Digite apenas o DDD e número</p>
+                </div>
+
+                <div>
+                  <ImageUpload
+                    bucket="property-photos"
+                    maxFiles={5}
+                    selectedImages={selectedImages}
+                    onImagesChange={setSelectedImages}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="garage"
-                      checked={formData.garageCovered}
-                      onCheckedChange={(checked) => setFormData({...formData, garageCovered: !!checked})}
-                    />
-                    <Label htmlFor="garage">Garagem coberta</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="renovated"
-                      checked={formData.isRenovated}
-                      onCheckedChange={(checked) => setFormData({...formData, isRenovated: !!checked})}
-                    />
-                    <Label htmlFor="renovated">Casa reformada</Label>
-                  </div>
-                </div>
-
-                <ImageUpload
-                  bucket="property-photos"
-                  maxFiles={5}
-                  selectedImages={selectedImages}
-                  onImagesChange={setSelectedImages}
-                />
-
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col gap-3 pt-4 sm:flex-row">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => navigate(-1)}
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 order-2 sm:order-1"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 order-1 sm:order-2"
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {isLoading ? 'Salvando...' : 'Anunciar Casa'}
+                    {isLoading ? 'Salvando...' : 'Cadastrar Propriedade'}
                   </Button>
                 </div>
               </form>
