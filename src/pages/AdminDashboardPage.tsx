@@ -393,13 +393,7 @@ const AdminDashboardPage = () => {
         
         {/* Categorias */}
         <TabsContent value="categories">
-          <CategoriesManagement 
-            categories={categories}
-            isLoading={isLoading}
-            onAddCategory={handleAddCategory}
-            onUpdateCategory={handleUpdateCategory}
-            onDeleteCategory={handleDeleteCategory}
-          />
+          <CategoriesManagement />
         </TabsContent>
         
         {/* Propriedades em Destaque */}
