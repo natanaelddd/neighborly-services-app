@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 interface Service {
   id: number;
@@ -32,12 +33,13 @@ interface PendingServicesProps {
 }
 
 const PendingServices = ({ services, isLoading, onApprove, onReject }: PendingServicesProps) => {
+  const { isDemoMode } = useDemoMode();
   const pendingServices = services.filter(service => service.status === "pending");
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Serviços Pendentes de Aprovação</CardTitle>
+        <CardTitle>Serviços Pendentes de Aprovação {isDemoMode && <Badge variant="outline">DEMO</Badge>}</CardTitle>
         <CardDescription>
           Analise e aprove os serviços cadastrados pelos moradores
         </CardDescription>

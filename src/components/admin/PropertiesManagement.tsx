@@ -9,12 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Property } from "@/types";
 import ImageUpload from "../ImageUpload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 interface PropertiesManagementProps {
   onUpdateProperty?: (propertyId: number, updatedData: Partial<Property>) => void;
 }
 
 const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) => {
+  const { isDemoMode, mockProperties } = useDemoMode();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -23,8 +25,13 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    if (isDemoMode) {
+      setProperties(mockProperties as Property[]);
+      setIsLoading(false);
+    } else {
+      fetchProperties();
+    }
+  }, [isDemoMode]);
 
   const fetchProperties = async () => {
     try {
@@ -67,6 +74,14 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   };
 
   const handleStatusChange = async (propertyId: number, newStatus: string) => {
+    if (isDemoMode) {
+      setProperties(properties.map(property => 
+        property.id === propertyId ? { ...property, status: newStatus } : property
+      ));
+      toast.success(`Status da propriedade atualizado para ${newStatus}!`);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('properties')
@@ -104,6 +119,11 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   };
 
   const handleAddPhotos = async () => {
+    if (isDemoMode) {
+      toast.info("Modo demonstração: funcionalidade de upload não disponível");
+      return;
+    }
+
     if (!selectedProperty || selectedImages.length === 0) {
       toast.error("Selecione pelo menos uma imagem");
       return;
@@ -196,7 +216,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gerenciar Propriedades</CardTitle>
+        <CardTitle>Gerenciar Propriedades {isDemoMode && <Badge variant="outline">DEMO</Badge>}</CardTitle>
         <CardDescription>
           Gerencie as propriedades cadastradas pelos moradores. Propriedades aprovadas aparecerão no carousel da página inicial.
         </CardDescription>
@@ -322,54 +342,56 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                     </Button>
                   )}
 
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedProperty(property)}
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Adicionar Fotos
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Adicionar Fotos - {property.title}</DialogTitle>
-                        <DialogDescription>
-                          Adicione fotos para esta propriedade. A primeira foto será definida como principal.
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="space-y-4">
-                        <ImageUpload
-                          bucket="property-photos"
-                          maxFiles={10}
-                          selectedImages={selectedImages}
-                          onImagesChange={setSelectedImages}
-                        />
+                  {!isDemoMode && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedProperty(property)}
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          Adicionar Fotos
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Adicionar Fotos - {property.title}</DialogTitle>
+                          <DialogDescription>
+                            Adicione fotos para esta propriedade. A primeira foto será definida como principal.
+                          </DialogDescription>
+                        </DialogHeader>
                         
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedImages([]);
-                              setSelectedProperty(null);
-                            }}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            onClick={handleAddPhotos}
-                            disabled={isUploadingImages || selectedImages.length === 0}
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            {isUploadingImages ? 'Enviando...' : 'Adicionar Fotos'}
-                          </Button>
+                        <div className="space-y-4">
+                          <ImageUpload
+                            bucket="property-photos"
+                            maxFiles={10}
+                            selectedImages={selectedImages}
+                            onImagesChange={setSelectedImages}
+                          />
+                          
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedImages([]);
+                                setSelectedProperty(null);
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button
+                              onClick={handleAddPhotos}
+                              disabled={isUploadingImages || selectedImages.length === 0}
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              {isUploadingImages ? 'Enviando...' : 'Adicionar Fotos'}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
               </div>
             ))}

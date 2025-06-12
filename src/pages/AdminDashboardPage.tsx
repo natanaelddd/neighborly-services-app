@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
+import DemoModeToggle from "@/components/DemoModeToggle";
 
 // Admin component imports
 import PendingServices from "@/components/admin/PendingServices";
@@ -30,7 +31,8 @@ const AdminDashboardPage = () => {
     featuredProperties,
     setFeaturedProperties,
     menuItems,
-    setMenuItems
+    setMenuItems,
+    isDemoMode
   } = useAdminState();
 
   const serviceManager = ServiceManager({ services, setServices });
@@ -72,7 +74,10 @@ const AdminDashboardPage = () => {
 
   return (
     <div className="container-custom py-8">
-      <h1 className="text-3xl font-bold mb-6">Painel do Administrador - Condo Indico</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Painel do Administrador - Condo Indico
+        {isDemoMode && <span className="text-sm font-normal text-blue-600 ml-2">(Modo Demonstração)</span>}
+      </h1>
       
       <Tabs defaultValue="pending-services">
         <TabsList className="mb-6 flex flex-wrap">
@@ -113,7 +118,9 @@ const AdminDashboardPage = () => {
         
         {/* Categorias */}
         <TabsContent value="categories">
-          <CategoriesManagement />
+          <Categories
+
+Management />
         </TabsContent>
         
         {/* Propriedades em Destaque */}
@@ -151,6 +158,8 @@ const AdminDashboardPage = () => {
           />
         </TabsContent>
       </Tabs>
+
+      <DemoModeToggle />
     </div>
   );
 };

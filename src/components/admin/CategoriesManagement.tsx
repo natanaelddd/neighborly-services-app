@@ -1,10 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import CategoryItem from "./CategoryItem";
 import CategoryFormDialog from "./CategoryFormDialog";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import {
   DndContext,
   closestCenter,
@@ -31,6 +33,7 @@ interface Category {
 }
 
 const CategoriesManagement = () => {
+  const { isDemoMode, mockCategories } = useDemoMode();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,8 +47,13 @@ const CategoriesManagement = () => {
   );
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (isDemoMode) {
+      setCategories(mockCategories.map(cat => ({ ...cat, display_order: cat.display_order || 0 })) as Category[]);
+      setIsLoading(false);
+    } else {
+      fetchCategories();
+    }
+  }, [isDemoMode]);
 
   const fetchCategories = async () => {
     try {
@@ -81,6 +89,11 @@ const CategoriesManagement = () => {
       const newCategories = arrayMove(categories, oldIndex, newIndex);
       setCategories(newCategories);
 
+      if (isDemoMode) {
+        toast.success("Ordem das categorias atualizada! (Modo demonstração)");
+        return;
+      }
+
       // Atualizar ordem no banco
       try {
         const updates = newCategories.map((category, index) => ({
@@ -107,11 +120,21 @@ const CategoriesManagement = () => {
   };
 
   const handleEdit = (category: Category) => {
+    if (isDemoMode) {
+      toast.info("Modo demonstração: edição não disponível");
+      return;
+    }
     setEditingCategory(category);
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (categoryId: number) => {
+    if (isDemoMode) {
+      setCategories(categories.filter(cat => cat.id !== categoryId));
+      toast.success("Categoria excluída! (Modo demonstração)");
+      return;
+    }
+
     if (!confirm("Tem certeza que deseja excluir esta categoria?")) return;
 
     try {
@@ -148,19 +171,21 @@ const CategoriesManagement = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gerenciar Categorias</CardTitle>
+        <CardTitle>Gerenciar Categorias {isDemoMode && <Badge variant="outline">DEMO</Badge>}</CardTitle>
         <CardDescription>
           Gerencie as categorias de serviços. Arraste e solte para reordenar.
         </CardDescription>
         
-        <CategoryFormDialog
-          categories={categories}
-          editingCategory={editingCategory}
-          isDialogOpen={isDialogOpen}
-          onDialogOpenChange={setIsDialogOpen}
-          onCategoryChange={fetchCategories}
-          onEditingCategoryChange={setEditingCategory}
-        />
+        {!isDemoMode && (
+          <CategoryFormDialog
+            categories={categories}
+            editingCategory={editingCategory}
+            isDialogOpen={isDialogOpen}
+            onDialogOpenChange={setIsDialogOpen}
+            onCategoryChange={fetchCategories}
+            onEditingCategoryChange={setEditingCategory}
+          />
+        )}
       </CardHeader>
       
       <CardContent>

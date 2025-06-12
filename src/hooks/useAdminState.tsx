@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoMode } from "./useDemoMode";
 
 interface Service {
   id: number;
@@ -33,6 +34,7 @@ interface Category {
 }
 
 export const useAdminState = () => {
+  const { isDemoMode, mockServices, mockCategories, mockProperties } = useDemoMode();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,14 +82,30 @@ export const useAdminState = () => {
   ]);
 
   useEffect(() => {
-    fetchData();
+    if (isDemoMode) {
+      // Use mock data for demo
+      setServices(mockServices as Service[]);
+      setCategories(mockCategories as Category[]);
+      setFeaturedProperties([...featuredProperties, ...mockProperties.filter(p => p.status === 'approved').map(p => ({
+        id: p.id + 10,
+        title: p.title,
+        description: p.description,
+        details: p.description,
+        imageUrl: p.property_photos?.[0]?.photo_url || "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
+        type: p.type,
+        price: p.price || "Consulte preço"
+      }))]);
+      setIsLoading(false);
+    } else {
+      fetchData();
+    }
     
     // Check if recommendations menu is enabled
     const storedShowRecommendations = localStorage.getItem("showRecommendationsMenu");
     if (storedShowRecommendations) {
       setShowRecommendationsMenu(JSON.parse(storedShowRecommendations));
     }
-  }, []);
+  }, [isDemoMode]);
 
   const fetchData = async () => {
     try {
@@ -145,6 +163,7 @@ export const useAdminState = () => {
     setFeaturedProperties,
     menuItems,
     setMenuItems,
-    fetchData
+    fetchData,
+    isDemoMode
   };
 };
