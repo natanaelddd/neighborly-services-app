@@ -1,4 +1,3 @@
-
 // Mock data for demonstration purposes
 export const mockCategories = [
   { id: 1, name: 'Limpeza', icon: '🧹', display_order: 1, created_at: '2024-01-01', updated_at: '2024-01-01' },
@@ -298,3 +297,17 @@ export const mockProperties = [
     ]
   }
 ];
+
+// Helper function to get service by ID with provider information
+export const getServiceById = (id: number) => {
+  const service = mockServices.find(s => s.id === id);
+  if (!service) return null;
+
+  return {
+    ...service,
+    category: service.categories,
+    providerName: service.profiles?.name || 'Prestador',
+    block: service.profiles?.block || '',
+    number: service.profiles?.house_number || ''
+  };
+};

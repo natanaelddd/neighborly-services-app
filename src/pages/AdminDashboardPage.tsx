@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
@@ -118,9 +117,7 @@ const AdminDashboardPage = () => {
         
         {/* Categorias */}
         <TabsContent value="categories">
-          <Categories
-
-Management />
+          <CategoriesManagement />
         </TabsContent>
         
         {/* Propriedades em Destaque */}
