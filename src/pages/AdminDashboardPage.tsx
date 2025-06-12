@@ -12,6 +12,7 @@ import FeaturedAdEditor from "@/components/admin/FeaturedAdEditor";
 import MenuManager from "@/components/admin/MenuManager";
 import RecommendationsManager from "@/components/admin/RecommendationsManager";
 import AdminsManager from "@/components/admin/AdminsManager";
+import PropertiesManagement from "@/components/admin/PropertiesManagement";
 
 interface Service {
   id: number;
@@ -357,6 +358,7 @@ const AdminDashboardPage = () => {
         <TabsList className="mb-6 flex flex-wrap">
           <TabsTrigger value="pending-services">Serviços Pendentes</TabsTrigger>
           <TabsTrigger value="all-services">Todos Serviços</TabsTrigger>
+          <TabsTrigger value="properties">Propriedades</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
           <TabsTrigger value="featured-ad">Propriedades em Destaque</TabsTrigger>
           <TabsTrigger value="menu">Menu</TabsTrigger>
@@ -382,6 +384,11 @@ const AdminDashboardPage = () => {
             isLoading={isLoading}
             onUpdateService={handleUpdateService}
           />
+        </TabsContent>
+        
+        {/* Propriedades */}
+        <TabsContent value="properties">
+          <PropertiesManagement />
         </TabsContent>
         
         {/* Categorias */}

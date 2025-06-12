@@ -1,15 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, MapPin, Home, Bed, Bath, Car } from "lucide-react";
+import { ChevronLeft, ChevronRight, Home, MapPin, Bed, Car, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface PropertyPhoto {
-  photo_url: string;
-  is_primary: boolean;
-}
 
 interface FeaturedProperty {
   id: number;
@@ -17,18 +12,15 @@ interface FeaturedProperty {
   description: string;
   type: "venda" | "aluguel";
   price?: string;
-  bedrooms: number;
-  garage_covered: boolean;
-  is_renovated: boolean;
-  photos: PropertyPhoto[];
-  providerName: string;
-  block: string;
-  houseNumber: string;
+  bedrooms?: number;
+  garage_covered?: boolean;
+  is_renovated?: boolean;
+  photo_url?: string;
 }
 
 const FeaturedAd = () => {
-  const [properties, setProperties] = useState<FeaturedProperty[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [properties, setProperties] = useState<FeaturedProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -37,28 +29,31 @@ const FeaturedAd = () => {
 
   const fetchFeaturedProperties = async () => {
     try {
-      setIsLoading(true);
-      
-      // Buscar propriedades aprovadas com fotos e dados do perfil
-      const { data: propertiesData, error } = await supabase
+      // Buscar propriedades aprovadas com fotos
+      const { data: propertiesData, error: propertiesError } = await supabase
         .from('properties')
         .select(`
-          *,
-          profiles:unit_id (name, block, house_number),
-          property_photos (photo_url, is_primary)
+          id,
+          title,
+          description,
+          type,
+          price,
+          bedrooms,
+          garage_covered,
+          is_renovated,
+          property_photos!inner(photo_url, is_primary)
         `)
         .eq('status', 'approved')
-        .order('created_at', { ascending: false })
+        .eq('property_photos.is_primary', true)
         .limit(6);
 
-      if (error) {
-        console.error('Erro ao buscar propriedades:', error);
-        setProperties([]);
+      if (propertiesError) {
+        console.error('Erro ao buscar propriedades:', propertiesError);
         return;
       }
 
-      // Transformar os dados
-      const transformedProperties: FeaturedProperty[] = (propertiesData || []).map(property => ({
+      // Formatar dados para o componente
+      const formattedProperties = propertiesData?.map(property => ({
         id: property.id,
         title: property.title,
         description: property.description,
@@ -67,17 +62,12 @@ const FeaturedAd = () => {
         bedrooms: property.bedrooms,
         garage_covered: property.garage_covered,
         is_renovated: property.is_renovated,
-        photos: property.property_photos || [],
-        providerName: property.profiles?.name || 'Morador não identificado',
-        block: property.profiles?.block || '',
-        houseNumber: property.profiles?.house_number || ''
-      }));
+        photo_url: property.property_photos[0]?.photo_url
+      })) || [];
 
-      console.log('Propriedades carregadas:', transformedProperties);
-      setProperties(transformedProperties);
+      setProperties(formattedProperties);
     } catch (error) {
-      console.error('Erro ao carregar propriedades:', error);
-      setProperties([]);
+      console.error('Erro ao carregar propriedades em destaque:', error);
     } finally {
       setIsLoading(false);
     }
@@ -95,18 +85,20 @@ const FeaturedAd = () => {
     );
   };
 
+  const formatWhatsAppUrl = (phone: string) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return `https://wa.me/${cleanPhone}`;
+  };
+
   if (isLoading) {
     return (
-      <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+      <section className="py-8 sm:py-16">
         <div className="container-custom">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Descubra as melhores oportunidades no Evidence Resort
-            </p>
-          </div>
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+              Casas em Destaque
+            </h2>
+            <div className="animate-pulse bg-gray-200 h-4 w-48 mx-auto rounded"></div>
           </div>
         </div>
       </section>
@@ -115,20 +107,13 @@ const FeaturedAd = () => {
 
   if (properties.length === 0) {
     return (
-      <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+      <section className="py-8 sm:py-16">
         <div className="container-custom">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Descubra as melhores oportunidades no Evidence Resort
-            </p>
-          </div>
-          <div className="text-center py-12">
-            <Home className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma casa disponível</h3>
-            <p className="text-gray-500">
-              Não há casas aprovadas para exibir no momento.
-            </p>
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+              Casas em Destaque
+            </h2>
+            <p className="text-gray-600">Nenhuma propriedade em destaque no momento.</p>
           </div>
         </div>
       </section>
@@ -136,50 +121,38 @@ const FeaturedAd = () => {
   }
 
   const currentProperty = properties[currentIndex];
-  const primaryPhoto = currentProperty.photos.find(photo => photo.is_primary) || currentProperty.photos[0];
 
   return (
-    <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+    <section className="py-8 sm:py-16">
       <div className="container-custom">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+            Casas em Destaque
+          </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Descubra as melhores oportunidades no Evidence Resort
+            Encontre sua nova casa no Evidence Resort com as melhores opções de venda e aluguel.
           </p>
         </div>
 
-        <div className="relative max-w-6xl mx-auto">
-          <Card className="overflow-hidden shadow-2xl bg-white/95 backdrop-blur-sm border-0">
-            <div className="grid lg:grid-cols-2 gap-0">
+        <div className="relative max-w-4xl mx-auto">
+          <Card className="overflow-hidden shadow-lg">
+            <div className="grid md:grid-cols-2 gap-0">
               {/* Imagem */}
-              <div className="relative h-64 lg:h-96 overflow-hidden">
-                {primaryPhoto ? (
-                  <img 
-                    src={primaryPhoto.photo_url} 
-                    alt={currentProperty.title}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <Home className="h-16 w-16 text-gray-400" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-                
-                {/* Badge do tipo */}
+              <div className="relative h-64 md:h-full min-h-[300px]">
+                <img
+                  src={currentProperty.photo_url || "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png"}
+                  alt={currentProperty.title}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute top-4 left-4">
-                  <Badge 
-                    variant={currentProperty.type === "venda" ? "default" : "secondary"}
-                    className="text-sm font-semibold px-3 py-1"
-                  >
-                    {currentProperty.type === "venda" ? "À Venda" : "Para Alugar"}
+                  <Badge variant={currentProperty.type === "venda" ? "default" : "secondary"}>
+                    {currentProperty.type === "venda" ? "Venda" : "Aluguel"}
                   </Badge>
                 </div>
-
-                {/* Badge de reforma */}
                 {currentProperty.is_renovated && (
                   <div className="absolute top-4 right-4">
-                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+                    <Badge className="bg-green-500">
+                      <Sparkles className="w-3 h-3 mr-1" />
                       Reformada
                     </Badge>
                   </div>
@@ -187,72 +160,50 @@ const FeaturedAd = () => {
               </div>
 
               {/* Conteúdo */}
-              <div className="p-6 lg:p-8 flex flex-col justify-center">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                      {currentProperty.title}
-                    </h3>
-                    <div className="flex items-center text-gray-600 mb-4">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      <span className="text-sm">
-                        Evidence Resort - Bloco {currentProperty.block}, Casa {currentProperty.houseNumber}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-700 leading-relaxed line-clamp-3">
-                    {currentProperty.description}
-                  </p>
-
-                  {/* Características da propriedade */}
-                  <div className="flex items-center gap-6 py-3 border-y border-gray-200">
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Bed className="w-4 h-4" />
-                      <span className="text-sm font-medium">{currentProperty.bedrooms} quartos</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Bath className="w-4 h-4" />
-                      <span className="text-sm font-medium">2+ banheiros</span>
-                    </div>
-                    {currentProperty.garage_covered && (
-                      <div className="flex items-center gap-1 text-gray-600">
-                        <Car className="w-4 h-4" />
-                        <span className="text-sm font-medium">Garagem coberta</span>
-                      </div>
-                    )}
-                  </div>
-
+              <CardContent className="p-6 md:p-8 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                    {currentProperty.title}
+                  </h3>
+                  
                   {currentProperty.price && (
-                    <div className="mb-4">
-                      <span className="text-2xl lg:text-3xl font-bold text-brand-blue">
-                        {currentProperty.price}
-                      </span>
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-4">
+                      {currentProperty.price}
                     </div>
                   )}
 
-                  <div className="flex gap-3">
-                    <Button 
-                      size="lg" 
-                      className="bg-brand-blue hover:bg-blue-700 text-white px-6"
-                    >
-                      <Home className="w-4 h-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-6"
-                    >
-                      Entrar em Contato
-                    </Button>
-                  </div>
+                  <p className="text-gray-600 mb-6 line-clamp-3">
+                    {currentProperty.description}
+                  </p>
 
-                  <div className="text-sm text-gray-500">
-                    Anunciado por: {currentProperty.providerName}
+                  <div className="flex flex-wrap gap-4 mb-6">
+                    {currentProperty.bedrooms && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Bed className="w-4 h-4" />
+                        <span className="text-sm">{currentProperty.bedrooms} quartos</span>
+                      </div>
+                    )}
+                    {currentProperty.garage_covered && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Car className="w-4 h-4" />
+                        <span className="text-sm">Garagem coberta</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <MapPin className="w-4 h-4" />
+                      <span className="text-sm">Evidence Resort</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                <Button 
+                  className="w-full sm:w-auto"
+                  onClick={() => window.open(`https://wa.me/5516999999999?text=Olá! Tenho interesse na propriedade: ${currentProperty.title}`, '_blank')}
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  Tenho Interesse
+                </Button>
+              </CardContent>
             </div>
           </Card>
 
@@ -262,35 +213,35 @@ const FeaturedAd = () => {
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm border-2 hover:bg-white shadow-lg"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg"
                 onClick={prevSlide}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm border-2 hover:bg-white shadow-lg"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg"
                 onClick={nextSlide}
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
-
-              {/* Indicadores */}
-              <div className="flex justify-center mt-6 space-x-2">
-                {properties.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentIndex 
-                        ? 'bg-brand-blue scale-110' 
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                    onClick={() => setCurrentIndex(index)}
-                  />
-                ))}
-              </div>
             </>
+          )}
+
+          {/* Indicadores */}
+          {properties.length > 1 && (
+            <div className="flex justify-center mt-4 space-x-2">
+              {properties.map((_, index) => (
+                <button
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                  }`}
+                  onClick={() => setCurrentIndex(index)}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
