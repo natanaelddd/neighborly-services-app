@@ -1,71 +1,142 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { getServicesByCategory, getAllCategories, searchServices } from "@/data/mockData";
-import { ServiceWithProvider } from "@/types";
+import { ServiceWithProvider, Category } from "@/types";
 import ServiceList from "@/components/ServiceList";
 import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 const ServicesListPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [searchParams] = useSearchParams();
   const [services, setServices] = useState<ServiceWithProvider[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredServices, setFilteredServices] = useState<ServiceWithProvider[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const categories = getAllCategories();
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Primeiro verifica se há categoria na query string (vem do redirecionamento)
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     const categoryFromQuery = searchParams.get('category');
     
-    // Se houver categoria na query string, usa ela
     if (categoryFromQuery) {
-      const categoryIdNumber = parseInt(categoryFromQuery);
-      const categoryServices = getServicesByCategory(categoryIdNumber);
-      setServices(categoryServices);
-      setFilteredServices(categoryServices);
       setActiveCategory(categoryFromQuery);
-    }
-    // Se houver um categoryId na URL, usamos ele
-    else if (categoryId) {
-      const categoryIdNumber = parseInt(categoryId);
-      const categoryServices = getServicesByCategory(categoryIdNumber);
-      setServices(categoryServices);
-      setFilteredServices(categoryServices);
+      filterServicesByCategory(categoryFromQuery);
+    } else if (categoryId) {
       setActiveCategory(categoryId);
+      filterServicesByCategory(categoryId);
     } else {
-      // Senão, carregamos todos os serviços
-      const allServices = getServicesByCategory(null);
-      setServices(allServices);
-      setFilteredServices(allServices);
       setActiveCategory("all");
+      setFilteredServices(services);
     }
-  }, [categoryId, searchParams]);
+  }, [categoryId, searchParams, services]);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Buscar categorias
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Erro ao buscar categorias:', categoriesError);
+      } else {
+        setCategories(categoriesData || []);
+      }
+
+      // Buscar serviços aprovados
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select(`
+          *,
+          profiles:unit_id (name, block, house_number),
+          categories:category_id (name, icon, created_at, updated_at)
+        `)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
+
+      if (servicesError) {
+        console.error('Erro ao buscar serviços:', servicesError);
+        setServices([]);
+      } else {
+        const transformedServices: ServiceWithProvider[] = (servicesData || []).map(service => ({
+          id: service.id,
+          unitId: 0,
+          categoryId: service.category_id || 0,
+          title: service.title,
+          description: service.description,
+          photoUrl: service.photo_url || '',
+          whatsapp: service.whatsapp,
+          status: service.status as 'pending' | 'approved' | 'rejected',
+          createdAt: service.created_at,
+          updatedAt: service.updated_at,
+          providerName: service.profiles?.name || 'Morador não identificado',
+          block: service.profiles?.block || '',
+          number: service.profiles?.house_number || '',
+          category: service.categories ? {
+            id: service.category_id || 0,
+            name: service.categories.name,
+            icon: service.categories.icon,
+            created_at: service.categories.created_at || '',
+            updated_at: service.categories.updated_at || ''
+          } : undefined
+        }));
+
+        setServices(transformedServices);
+        setFilteredServices(transformedServices);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filterServicesByCategory = (categoryIdStr: string) => {
+    if (categoryIdStr === "all") {
+      setFilteredServices(services);
+    } else {
+      const categoryIdNumber = parseInt(categoryIdStr);
+      const filtered = services.filter(service => service.categoryId === categoryIdNumber);
+      setFilteredServices(filtered);
+    }
+  };
 
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
-      setFilteredServices(services);
+      filterServicesByCategory(activeCategory);
       return;
     }
     
-    const results = searchServices(searchTerm);
+    const results = services.filter(service =>
+      service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     setFilteredServices(results);
   };
 
   const handleCategoryChange = (value: string) => {
     setActiveCategory(value);
-    
-    if (value === "all") {
-      const allServices = getServicesByCategory(null);
-      setFilteredServices(allServices);
-    } else {
-      const categoryIdNumber = parseInt(value);
-      const categoryServices = getServicesByCategory(categoryIdNumber);
-      setFilteredServices(categoryServices);
-    }
+    filterServicesByCategory(value);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container-custom py-10">
+        <div className="flex justify-center p-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-custom py-10">
@@ -87,7 +158,6 @@ const ServicesListPage = () => {
           </TabsList>
         </ScrollArea>
         
-        {/* O TabsContent é apenas um wrapper, o conteúdo será sempre o mesmo */}
         <TabsContent value={activeCategory}>
           <ServiceList 
             services={filteredServices} 

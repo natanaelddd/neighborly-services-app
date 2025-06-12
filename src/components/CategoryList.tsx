@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { getAllCategories } from "@/data/mockData";
 import { Link } from "react-router-dom";
 import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,15 +32,13 @@ const CategoryList = () => {
 
         if (error) {
           console.error('Erro ao buscar categorias:', error);
-          // Fallback para categorias mock se houver erro
-          setCategories(getAllCategories());
+          setCategories([]);
         } else {
           setCategories(categoriesData || []);
         }
       } catch (error) {
         console.error('Erro ao carregar categorias:', error);
-        // Fallback para categorias mock se houver erro
-        setCategories(getAllCategories());
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -91,6 +88,18 @@ const CategoryList = () => {
         <h2 className="text-3xl font-semibold mb-8 text-center text-foreground">Categorias de Serviços</h2>
         <div className="flex justify-center p-6">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (categories.length === 0) {
+    return (
+      <div className="py-12">
+        <h2 className="text-3xl font-semibold mb-8 text-center text-foreground">Categorias de Serviços</h2>
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-4">Nenhuma categoria cadastrada ainda.</p>
+          <p className="text-sm text-gray-400">As categorias aparecerão aqui quando forem criadas.</p>
         </div>
       </div>
     );

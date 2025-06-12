@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,30 +9,49 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+}
+
 const ServiceForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
-  const categories = [
-    { id: 1, name: "Limpeza", icon: "🧹" },
-    { id: 2, name: "Jardinagem", icon: "🌱" },
-    { id: 3, name: "Manutenção", icon: "🔧" },
-    { id: 4, name: "Beleza", icon: "💄" },
-    { id: 5, name: "Educação", icon: "📚" },
-    { id: 6, name: "Saúde", icon: "🏥" },
-    { id: 7, name: "Tecnologia", icon: "💻" },
-    { id: 8, name: "Alimentação", icon: "🍕" },
-    { id: 9, name: "Transporte", icon: "🚗" },
-    { id: 10, name: "Pet Care", icon: "🐕" },
-    { id: 11, name: "Consultoria", icon: "💼" },
-    { id: 12, name: "Outros", icon: "🔧" }
-  ];
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setIsLoadingCategories(true);
+      const { data: categoriesData, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        console.error('Erro ao buscar categorias:', error);
+        toast.error("Erro ao carregar categorias");
+      } else {
+        setCategories(categoriesData || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      toast.error("Erro ao carregar categorias");
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,13 +74,13 @@ const ServiceForm = () => {
           category_id: parseInt(categoryId),
           photo_url: photoUrl,
           unit_id: profile.id,
-          status: 'pending' // Serviços ficam pendentes para aprovação
+          status: 'pending'
         });
 
       if (error) throw error;
 
       toast.success("Serviço cadastrado com sucesso! Aguarde a aprovação do administrador.");
-      navigate("/services");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error('Erro ao cadastrar serviço:', error);
       toast.error(error.message || "Erro ao cadastrar serviço");
@@ -109,18 +129,32 @@ const ServiceForm = () => {
             <label htmlFor="category" className="block text-sm font-medium mb-2">
               Categoria *
             </label>
-            <Select value={categoryId} onValueChange={setCategoryId} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.icon} {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isLoadingCategories ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <Select value={categoryId} onValueChange={setCategoryId} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      <div className="flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        <span>{category.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {categories.length === 0 && !isLoadingCategories && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Nenhuma categoria disponível. Entre em contato com o administrador.
+              </p>
+            )}
           </div>
 
           <div>
@@ -153,7 +187,7 @@ const ServiceForm = () => {
           <Button 
             type="submit" 
             className="w-full bg-brand-blue hover:bg-blue-700"
-            disabled={isLoading}
+            disabled={isLoading || categories.length === 0}
           >
             {isLoading ? "Cadastrando..." : "Cadastrar Serviço"}
           </Button>
