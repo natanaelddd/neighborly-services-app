@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, MessageCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Home, Bed, Bath, Car } from "lucide-react";
 
 interface FeaturedProperty {
   id: number;
@@ -13,163 +13,191 @@ interface FeaturedProperty {
   imageUrl: string;
   type: "venda" | "aluguel";
   price?: string;
-  whatsapp?: string;
 }
 
-const defaultProperties: FeaturedProperty[] = [
-  {
-    id: 1,
-    title: "Casa Moderna no Evidence Resort",
-    description: "Linda casa com 3 quartos, sendo 1 suíte, área gourmet e piscina privativa.",
-    details: "- 3 quartos (1 suíte)\n- 2 banheiros\n- Área gourmet\n- Piscina privativa\n- Garagem para 2 carros\n- Jardim paisagístico",
-    imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-    type: "venda",
-    price: "R$ 850.000",
-    whatsapp: "5516992701617"
-  },
-  {
-    id: 2,
-    title: "Casa Aconchegante para Locação",
-    description: "Casa mobiliada com 2 quartos, perfeita para quem busca conforto e praticidade.",
-    details: "- 2 quartos\n- 1 banheiro\n- Sala integrada\n- Cozinha equipada\n- Área de serviço\n- Mobiliada",
-    imageUrl: "/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png",
-    type: "aluguel",
-    price: "R$ 3.200/mês",
-    whatsapp: "5516992701617"
-  }
-];
-
 const FeaturedAd = () => {
+  const [properties, setProperties] = useState<FeaturedProperty[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [properties, setProperties] = useState<FeaturedProperty[]>(defaultProperties);
 
   useEffect(() => {
+    // Carregar propriedades do localStorage ou usar as padrão
     const storedProperties = localStorage.getItem('featuredProperties');
     if (storedProperties) {
       try {
-        const parsed = JSON.parse(storedProperties);
-        setProperties(parsed.length > 0 ? parsed : defaultProperties);
+        setProperties(JSON.parse(storedProperties));
       } catch (error) {
-        console.error('Erro ao carregar propriedades do localStorage:', error);
-        setProperties(defaultProperties);
+        console.error('Erro ao carregar propriedades:', error);
+        setProperties(getDefaultProperties());
       }
+    } else {
+      setProperties(getDefaultProperties());
     }
   }, []);
 
-  const nextProperty = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % properties.length);
+  const getDefaultProperties = (): FeaturedProperty[] => [
+    {
+      id: 1,
+      title: "Evidence Resort - Seu novo lar",
+      description: "Localizado em uma região privilegiada, o Evidence Resort conta com casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
+      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
+      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
+      type: "venda" as const,
+      price: "A partir de R$ 450.000"
+    }
+  ];
+
+  const nextSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === properties.length - 1 ? 0 : prevIndex + 1
+    );
   };
 
-  const prevProperty = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + properties.length) % properties.length);
+  const prevSlide = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? properties.length - 1 : prevIndex - 1
+    );
   };
 
-  const handleWhatsAppContact = (property: FeaturedProperty) => {
-    const whatsappNumber = property.whatsapp || "5516992701617";
-    const typeText = property.type === "venda" ? "venda" : "aluguel";
-    const message = `Olá! Vim do site Condo Indico e vi a casa "${property.title}" para ${typeText}. Gostaria de mais informações. Você está disponível para conversar?`;
-    
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
-  };
+  if (properties.length === 0) {
+    return null;
+  }
 
   const currentProperty = properties[currentIndex];
 
   return (
-    <div className="text-center mb-16">
-      <h2 className="text-3xl font-bold mb-8 text-foreground">Casas em Destaque</h2>
-      
-      <div className="relative max-w-4xl mx-auto">
-        <Card className="overflow-hidden">
-          <div className="relative">
-            <img 
-              src={currentProperty.imageUrl} 
-              alt={currentProperty.title}
-              className="w-full h-64 md:h-80 object-cover"
-            />
-            
-            <div className="absolute top-4 left-4">
-              <Badge 
-                variant={currentProperty.type === "venda" ? "default" : "secondary"}
-                className="text-sm font-medium"
-              >
-                {currentProperty.type === "venda" ? "Venda" : "Aluguel"}
-              </Badge>
-            </div>
+    <section className="relative bg-gradient-to-br from-blue-50 to-indigo-100 py-12">
+      <div className="container-custom">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Casas em Destaque</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Descubra as melhores oportunidades no Evidence Resort
+          </p>
+        </div>
 
-            <div className="absolute top-4 right-4">
-              <Button
-                size="icon"
-                className="bg-brand-green hover:bg-green-600 text-white rounded-full"
-                onClick={() => handleWhatsAppContact(currentProperty)}
-              >
-                <MessageCircle className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {properties.length > 1 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
-                  onClick={prevProperty}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white"
-                  onClick={nextProperty}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          <CardContent className="p-6 text-left">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-semibold mb-2 text-foreground">{currentProperty.title}</h3>
-                <p className="text-muted-foreground mb-4">{currentProperty.description}</p>
-              </div>
-              {currentProperty.price && (
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-brand-blue">{currentProperty.price}</p>
+        <div className="relative max-w-6xl mx-auto">
+          <Card className="overflow-hidden shadow-2xl bg-white/95 backdrop-blur-sm border-0">
+            <div className="grid lg:grid-cols-2 gap-0">
+              {/* Imagem */}
+              <div className="relative h-64 lg:h-96 overflow-hidden">
+                <img 
+                  src={currentProperty.imageUrl} 
+                  alt={currentProperty.title}
+                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+                
+                {/* Badge do tipo */}
+                <div className="absolute top-4 left-4">
+                  <Badge 
+                    variant={currentProperty.type === "venda" ? "default" : "secondary"}
+                    className="text-sm font-semibold px-3 py-1"
+                  >
+                    {currentProperty.type === "venda" ? "À Venda" : "Para Alugar"}
+                  </Badge>
                 </div>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-sm text-muted-foreground whitespace-pre-line">{currentProperty.details}</p>
-            </div>
+              </div>
 
-            <Button 
-              className="w-full bg-brand-green hover:bg-green-600"
-              onClick={() => handleWhatsAppContact(currentProperty)}
-            >
-              Entrar em Contato via WhatsApp
-            </Button>
-          </CardContent>
-        </Card>
+              {/* Conteúdo */}
+              <div className="p-6 lg:p-8 flex flex-col justify-center">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      {currentProperty.title}
+                    </h3>
+                    <div className="flex items-center text-gray-600 mb-4">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span className="text-sm">Evidence Resort - Condomínio Fechado</span>
+                    </div>
+                  </div>
 
-        {properties.length > 1 && (
-          <div className="flex justify-center mt-4 space-x-2">
-            {properties.map((_, index) => (
-              <button
-                key={index}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-brand-blue' : 'bg-gray-300'
-                }`}
-                onClick={() => setCurrentIndex(index)}
-              />
-            ))}
-          </div>
-        )}
+                  <p className="text-gray-700 leading-relaxed">
+                    {currentProperty.description}
+                  </p>
+
+                  {/* Características da propriedade */}
+                  <div className="flex items-center gap-6 py-3 border-y border-gray-200">
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Bed className="w-4 h-4" />
+                      <span className="text-sm font-medium">3 quartos</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Bath className="w-4 h-4" />
+                      <span className="text-sm font-medium">2 banheiros</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-600">
+                      <Car className="w-4 h-4" />
+                      <span className="text-sm font-medium">2 vagas</span>
+                    </div>
+                  </div>
+
+                  {currentProperty.price && (
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-brand-blue">
+                        {currentProperty.price}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Button 
+                      size="lg" 
+                      className="bg-brand-blue hover:bg-blue-700 text-white px-6"
+                    >
+                      <Home className="w-4 h-4 mr-2" />
+                      Ver Detalhes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white px-6"
+                    >
+                      Agendar Visita
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Controles de navegação */}
+          {properties.length > 1 && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm border-2 hover:bg-white shadow-lg"
+                onClick={prevSlide}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm border-2 hover:bg-white shadow-lg"
+                onClick={nextSlide}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+
+              {/* Indicadores */}
+              <div className="flex justify-center mt-6 space-x-2">
+                {properties.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentIndex 
+                        ? 'bg-brand-blue scale-110' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    onClick={() => setCurrentIndex(index)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

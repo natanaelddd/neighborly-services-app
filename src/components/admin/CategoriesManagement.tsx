@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Edit, Trash, PlusCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { Category } from "@/types";
@@ -40,15 +40,24 @@ const CategoriesManagement = ({
     return <span className="text-sm bg-gray-100 px-2 py-1 rounded">{icon || '📦'}</span>;
   };
 
-  const handleAddCategory = (e: React.FormEvent) => {
+  const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCategory.name) {
+    
+    if (!newCategory.name.trim()) {
       toast.error("Nome da categoria é obrigatório");
       return;
     }
 
-    onAddCategory(newCategory);
-    setNewCategory({ name: "", icon: "" });
+    try {
+      await onAddCategory({
+        name: newCategory.name.trim(),
+        icon: newCategory.icon || '📦'
+      });
+      setNewCategory({ name: "", icon: "" });
+    } catch (error) {
+      console.error('Erro ao adicionar categoria:', error);
+      toast.error("Erro ao adicionar categoria");
+    }
   };
 
   const handleEditCategory = (category: Category) => {
@@ -56,24 +65,41 @@ const CategoriesManagement = ({
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateCategory = (e: React.FormEvent) => {
+  const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingCategory?.name) {
+    
+    if (!editingCategory?.name.trim()) {
       toast.error("Nome da categoria é obrigatório");
       return;
     }
 
-    onUpdateCategory(editingCategory.id, {
-      name: editingCategory.name,
-      icon: editingCategory.icon
-    });
-    setIsEditDialogOpen(false);
-    setEditingCategory(null);
+    try {
+      await onUpdateCategory(editingCategory.id, {
+        name: editingCategory.name.trim(),
+        icon: editingCategory.icon || '📦'
+      });
+      setIsEditDialogOpen(false);
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      toast.error("Erro ao atualizar categoria");
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditDialogOpen(false);
     setEditingCategory(null);
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    if (window.confirm("Tem certeza que deseja excluir esta categoria?")) {
+      try {
+        await onDeleteCategory(id);
+      } catch (error) {
+        console.error('Erro ao remover categoria:', error);
+        toast.error("Erro ao remover categoria");
+      }
+    }
   };
 
   return (
@@ -113,7 +139,11 @@ const CategoriesManagement = ({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => onDeleteCategory(category.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeleteCategory(category.id)}
+                      >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
@@ -142,6 +172,7 @@ const CategoriesManagement = ({
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
                   placeholder="Ex: Limpeza, Manutenção"
+                  required
                 />
               </div>
               
@@ -178,6 +209,7 @@ const CategoriesManagement = ({
                   value={editingCategory.name}
                   onChange={(e) => setEditingCategory({...editingCategory, name: e.target.value})}
                   placeholder="Ex: Limpeza, Manutenção"
+                  required
                 />
               </div>
               
