@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ServicesListPage from './pages/ServicesListPage';
 import ServiceDetailPage from './pages/ServiceDetailPage';
 import CategoryPage from './pages/CategoryPage';
+import CategoriesPage from './pages/CategoriesPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -46,6 +47,7 @@ function App() {
                   <Route path="/services" element={<ServicesListPage />} />
                   <Route path="/services/:id" element={<ServiceDetailPage />} />
                   <Route path="/category/:categoryId" element={<CategoryPage />} />
+                  <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />

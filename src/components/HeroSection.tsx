@@ -32,32 +32,32 @@ const HeroSection = () => {
                 se conectarem com facilidade e segurança.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Button 
-                  size="lg" 
+                  size="default" 
                   className="group"
                   onClick={() => navigate('/services')}
                 >
-                  <Search className="mr-2 h-5 w-5" />
+                  <Search className="mr-2 h-4 w-4" />
                   Encontrar Serviços
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-2 h-3 w-3 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 
                 <Button 
                   variant="outline" 
-                  size="lg"
+                  size="default"
                   onClick={() => navigate('/services/new')}
                 >
-                  <Briefcase className="mr-2 h-5 w-5" />
+                  <Briefcase className="mr-2 h-4 w-4" />
                   Oferecer Serviços
                 </Button>
 
                 <Button 
                   variant="secondary" 
-                  size="lg"
+                  size="default"
                   onClick={() => navigate('/properties/new')}
                 >
-                  <Home className="mr-2 h-5 w-5" />
+                  <Home className="mr-2 h-4 w-4" />
                   Cadastrar Imóvel
                 </Button>
               </div>
