@@ -64,7 +64,7 @@ const Navbar = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center">
+                    <Link to="/user-dashboard" className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
                       Meu Painel
                     </Link>
@@ -156,7 +156,7 @@ const Navbar = () => {
                     <p className="text-sm text-gray-500 mb-2">Olá, {profile?.name || 'Usuário'}!</p>
                     <div className="space-y-2">
                       <Link
-                        to="/dashboard"
+                        to="/user-dashboard"
                         className="block text-gray-700 hover:text-brand-blue transition-colors"
                         onClick={() => setIsOpen(false)}
                       >
