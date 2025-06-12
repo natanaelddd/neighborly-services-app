@@ -159,4 +159,3 @@ const CategoryFormDialog = ({
 };
 
 export default CategoryFormDialog;
-export { handleEdit };
