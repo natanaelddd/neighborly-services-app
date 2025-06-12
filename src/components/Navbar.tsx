@@ -51,9 +51,11 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Home className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+              alt="Condo Indico" 
+              className="w-8 h-8"
+            />
             <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
 
