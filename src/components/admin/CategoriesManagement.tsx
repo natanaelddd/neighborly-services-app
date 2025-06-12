@@ -1,238 +1,374 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Edit, Trash, PlusCircle, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { Category } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 import IconSelector from "./IconSelector";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import {
+  CSS,
+} from '@dnd-kit/utilities';
 
-interface CategoriesManagementProps {
-  categories: Category[];
-  isLoading: boolean;
-  onAddCategory: (category: Omit<Category, "id" | "created_at" | "updated_at">) => void;
-  onUpdateCategory: (id: number, category: Omit<Category, "id" | "created_at" | "updated_at">) => void;
-  onDeleteCategory: (id: number) => void;
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
-const CategoriesManagement = ({ 
-  categories, 
-  isLoading, 
-  onAddCategory, 
-  onUpdateCategory,
-  onDeleteCategory 
-}: CategoriesManagementProps) => {
-  const [newCategory, setNewCategory] = useState({ name: "", icon: "" });
+interface SortableCategoryItemProps {
+  category: Category;
+  onEdit: (category: Category) => void;
+  onDelete: (categoryId: number) => void;
+}
+
+const SortableCategoryItem = ({ category, onEdit, onDelete }: SortableCategoryItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 bg-white border rounded-lg shadow-sm"
+    >
+      <div {...attributes} {...listeners} className="cursor-grab hover:cursor-grabbing">
+        <GripVertical className="w-5 h-5 text-gray-400" />
+      </div>
+      
+      <div className="flex-1 flex items-center gap-3">
+        <span className="text-2xl">{category.icon}</span>
+        <div>
+          <h3 className="font-medium">{category.name}</h3>
+          <Badge variant="outline" className="text-xs">
+            Ordem: {category.display_order}
+          </Badge>
+        </div>
+      </div>
+      
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(category)}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => onDelete(category.id)}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const CategoriesManagement = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    icon: "📋"
+  });
 
-  // Função para renderizar ícone (emoji ou texto)
-  const renderIcon = (icon: string) => {
-    // Se for um emoji, retorna diretamente
-    if (icon && icon.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon)) {
-      return <span className="text-xl">{icon}</span>;
-    }
-    
-    // Caso contrário, retorna como texto
-    return <span className="text-sm bg-gray-100 px-2 py-1 rounded">{icon || '📦'}</span>;
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const handleAddCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newCategory.name.trim()) {
-      toast.error("Nome da categoria é obrigatório");
-      return;
-    }
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
+  const fetchCategories = async () => {
     try {
-      await onAddCategory({
-        name: newCategory.name.trim(),
-        icon: newCategory.icon || '📦'
-      });
-      setNewCategory({ name: "", icon: "" });
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar categorias:', error);
+        toast.error("Erro ao carregar categorias");
+        return;
+      }
+
+      setCategories(data || []);
     } catch (error) {
-      console.error('Erro ao adicionar categoria:', error);
-      toast.error("Erro ao adicionar categoria");
+      console.error('Erro ao carregar categorias:', error);
+      toast.error("Erro ao carregar categorias");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory({ ...category });
-    setIsEditDialogOpen(true);
-  };
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
-  const handleUpdateCategory = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!editingCategory?.name.trim()) {
-      toast.error("Nome da categoria é obrigatório");
-      return;
-    }
+    if (over && active.id !== over.id) {
+      const oldIndex = categories.findIndex((item) => item.id === active.id);
+      const newIndex = categories.findIndex((item) => item.id === over.id);
 
-    try {
-      await onUpdateCategory(editingCategory.id, {
-        name: editingCategory.name.trim(),
-        icon: editingCategory.icon || '📦'
-      });
-      setIsEditDialogOpen(false);
-      setEditingCategory(null);
-    } catch (error) {
-      console.error('Erro ao atualizar categoria:', error);
-      toast.error("Erro ao atualizar categoria");
-    }
-  };
+      const newCategories = arrayMove(categories, oldIndex, newIndex);
+      setCategories(newCategories);
 
-  const handleCancelEdit = () => {
-    setIsEditDialogOpen(false);
-    setEditingCategory(null);
-  };
-
-  const handleDeleteCategory = async (id: number) => {
-    if (window.confirm("Tem certeza que deseja excluir esta categoria?")) {
+      // Atualizar ordem no banco
       try {
-        await onDeleteCategory(id);
+        const updates = newCategories.map((category, index) => ({
+          id: category.id,
+          display_order: index + 1
+        }));
+
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('categories')
+            .update({ display_order: update.display_order })
+            .eq('id', update.id);
+
+          if (error) throw error;
+        }
+
+        toast.success("Ordem das categorias atualizada!");
       } catch (error) {
-        console.error('Erro ao remover categoria:', error);
-        toast.error("Erro ao remover categoria");
+        console.error('Erro ao atualizar ordem:', error);
+        toast.error("Erro ao atualizar ordem das categorias");
+        fetchCategories(); // Recarregar dados originais
       }
     }
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Categorias</CardTitle>
-            <CardDescription>
-              Gerencie as categorias de serviços disponíveis. Clique no ícone de editar para modificar uma categoria.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center p-6">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-              </div>
-            ) : categories.length === 0 ? (
-              <p className="text-center py-6 text-muted-foreground">
-                Nenhuma categoria cadastrada.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {categories.map(category => (
-                  <div key={category.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 flex items-center justify-center">
-                        {renderIcon(category.icon)}
-                      </div>
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEditCategory(category)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDeleteCategory(category.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast.error("Nome da categoria é obrigatório");
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        // Editar categoria existente
+        const { error } = await supabase
+          .from('categories')
+          .update({
+            name: formData.name.trim(),
+            icon: formData.icon,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingCategory.id);
+
+        if (error) throw error;
+        toast.success("Categoria atualizada com sucesso!");
+      } else {
+        // Criar nova categoria
+        const maxOrder = Math.max(...categories.map(c => c.display_order || 0), 0);
+        
+        const { error } = await supabase
+          .from('categories')
+          .insert({
+            name: formData.name.trim(),
+            icon: formData.icon,
+            display_order: maxOrder + 1
+          });
+
+        if (error) throw error;
+        toast.success("Categoria criada com sucesso!");
+      }
+
+      setFormData({ name: "", icon: "📋" });
+      setEditingCategory(null);
+      setIsDialogOpen(false);
+      fetchCategories();
+    } catch (error) {
+      console.error('Erro ao salvar categoria:', error);
+      toast.error("Erro ao salvar categoria");
+    }
+  };
+
+  const handleEdit = (category: Category) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      icon: category.icon
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (categoryId: number) => {
+    if (!confirm("Tem certeza que deseja excluir esta categoria?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
       
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Adicionar Categoria</CardTitle>
-            <CardDescription>
-              Crie uma nova categoria de serviços.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddCategory} className="space-y-4">
+      toast.success("Categoria excluída com sucesso!");
+      fetchCategories();
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+      toast.error("Erro ao excluir categoria");
+    }
+  };
+
+  const openCreateDialog = () => {
+    setEditingCategory(null);
+    setFormData({ name: "", icon: "📋" });
+    setIsDialogOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciar Categorias</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center p-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Gerenciar Categorias</CardTitle>
+        <CardDescription>
+          Gerencie as categorias de serviços. Arraste e solte para reordenar.
+        </CardDescription>
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={openCreateDialog}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Categoria
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingCategory 
+                  ? 'Edite as informações da categoria' 
+                  : 'Preencha as informações para criar uma nova categoria'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="category-name">Nome da Categoria</Label>
+                <Label htmlFor="name">Nome da Categoria *</Label>
                 <Input
-                  id="category-name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
-                  placeholder="Ex: Limpeza, Manutenção"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  placeholder="Ex: Limpeza, Manutenção, etc."
                   required
                 />
               </div>
-              
-              <IconSelector
-                selectedIcon={newCategory.icon}
-                onIconSelect={(icon) => setNewCategory({...newCategory, icon})}
-              />
 
-              <Button type="submit" className="w-full">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Adicionar Categoria
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Dialog para editar categoria */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Categoria</DialogTitle>
-            <DialogDescription>
-              Modifique o nome e ícone da categoria.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {editingCategory && (
-            <form onSubmit={handleUpdateCategory} className="space-y-4">
-              <div>
-                <Label htmlFor="edit-category-name">Nome da Categoria</Label>
-                <Input
-                  id="edit-category-name"
-                  value={editingCategory.name}
-                  onChange={(e) => setEditingCategory({...editingCategory, name: e.target.value})}
-                  placeholder="Ex: Limpeza, Manutenção"
-                  required
-                />
-              </div>
-              
               <IconSelector
-                selectedIcon={editingCategory.icon}
-                onIconSelect={(icon) => setEditingCategory({...editingCategory, icon})}
+                selectedIcon={formData.icon}
+                onIconSelect={(icon) => setFormData({...formData, icon})}
               />
 
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={handleCancelEdit}>
-                  <X className="mr-2 h-4 w-4" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Salvar Alterações
+                  {editingCategory ? 'Atualizar' : 'Criar'} Categoria
                 </Button>
               </div>
             </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+      
+      <CardContent>
+        {categories.length === 0 ? (
+          <p className="text-center py-6 text-muted-foreground">
+            Nenhuma categoria cadastrada. Crie a primeira categoria!
+          </p>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={categories.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {categories.map((category) => (
+                  <SortableCategoryItem
+                    key={category.id}
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,55 +1,73 @@
 
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Menu, X, User, Settings, LogOut, Plus, Shield } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Home, Menu, X, User, Plus, Building2, Briefcase, Settings, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, isAdmin, logout } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success('Logout realizado com sucesso!');
+      navigate('/');
+    } catch (error) {
+      console.error('Erro no logout:', error);
+      toast.error('Erro ao fazer logout');
+    }
   };
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const navItems = [
+    { name: 'Início', href: '/', icon: Home },
+    { name: 'Serviços', href: '/services' },
+    { name: 'Categorias', href: '/categories' },
+    { name: 'Sobre', href: '/about' },
+    { name: 'Contato', href: '/contact' },
+  ];
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="container-custom">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
-              alt="Condo Indico Logo" 
-              className="w-8 h-8 rounded-lg"
-            />
-            <span className="text-xl font-bold text-gradient">Condo Indico</span>
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Home className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/services" className="text-gray-700 hover:text-brand-blue transition-colors">
-              Serviços
-            </Link>
-            <Link to="/categories" className="text-gray-700 hover:text-brand-blue transition-colors">
-              Categorias
-            </Link>
-            <Link to="/about" className="text-gray-700 hover:text-brand-blue transition-colors">
-              Sobre
-            </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-brand-blue transition-colors">
-              Contato
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className="text-gray-600 hover:text-primary transition-colors"
+              >
+                {item.name}
+              </Link>
+            ))}
           </div>
 
           {/* User Menu */}
@@ -57,45 +75,51 @@ const Navbar = () => {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>{profile?.name || 'Usuário'}</span>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="max-w-32 truncate">
+                      {profile?.name || 'Usuário'}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link to="/user-dashboard" className="flex items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Meu Painel
+                    <Link to="/services/new" className="flex items-center">
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      + Serviço
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/services/new" className="flex items-center">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Novo Serviço
+                    <Link to="/properties/new" className="flex items-center">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      + Imóvel
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/user-dashboard" className="flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      Meu Painel
                     </Link>
                   </DropdownMenuItem>
                   {isAdmin && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin" className="flex items-center">
-                          <Shield className="mr-2 h-4 w-4" />
-                          Administração
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Administração
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="space-x-2">
-                <Button variant="ghost" asChild>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" asChild>
                   <Link to="/login">Entrar</Link>
                 </Button>
                 <Button asChild>
@@ -109,99 +133,90 @@ const Navbar = () => {
           <div className="md:hidden">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => setIsOpen(!isOpen)}
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
-            <div className="flex flex-col space-y-4">
-              <Link
-                to="/services"
-                className="text-gray-700 hover:text-brand-blue transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Serviços
-              </Link>
-              <Link
-                to="/categories"
-                className="text-gray-700 hover:text-brand-blue transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Categorias
-              </Link>
-              <Link
-                to="/about"
-                className="text-gray-700 hover:text-brand-blue transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Sobre
-              </Link>
-              <Link
-                to="/contact"
-                className="text-gray-700 hover:text-brand-blue transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Contato
-              </Link>
+          <div className="md:hidden py-4 border-t">
+            <div className="flex flex-col space-y-2">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className="text-gray-600 hover:text-primary transition-colors py-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
               
               {user ? (
                 <>
-                  <div className="border-t border-gray-100 pt-4">
-                    <p className="text-sm text-gray-500 mb-2">Olá, {profile?.name || 'Usuário'}!</p>
-                    <div className="space-y-2">
+                  <div className="border-t pt-2 mt-2">
+                    <Link
+                      to="/services/new"
+                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      + Serviço
+                    </Link>
+                    <Link
+                      to="/properties/new"
+                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Building2 className="w-4 h-4 mr-2" />
+                      + Imóvel
+                    </Link>
+                    <Link
+                      to="/user-dashboard"
+                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Meu Painel
+                    </Link>
+                    {isAdmin && (
                       <Link
-                        to="/user-dashboard"
-                        className="block text-gray-700 hover:text-brand-blue transition-colors"
+                        to="/admin"
+                        className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
                         onClick={() => setIsOpen(false)}
                       >
-                        Meu Painel
+                        <Settings className="w-4 h-4 mr-2" />
+                        Administração
                       </Link>
-                      <Link
-                        to="/services/new"
-                        className="block text-gray-700 hover:text-brand-blue transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Novo Serviço
-                      </Link>
-                      {isAdmin && (
-                        <Link
-                          to="/admin"
-                          className="block text-gray-700 hover:text-brand-blue transition-colors"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          Administração
-                        </Link>
-                      )}
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setIsOpen(false);
-                        }}
-                        className="block text-gray-700 hover:text-brand-blue transition-colors"
-                      >
-                        Sair
-                      </button>
-                    </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center text-red-600 hover:text-red-700 transition-colors py-2 w-full text-left"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sair
+                    </button>
                   </div>
                 </>
               ) : (
-                <div className="border-t border-gray-100 pt-4 space-y-2">
+                <div className="border-t pt-2 mt-2 space-y-2">
                   <Link
                     to="/login"
-                    className="block text-gray-700 hover:text-brand-blue transition-colors"
+                    className="block text-gray-600 hover:text-primary transition-colors py-2"
                     onClick={() => setIsOpen(false)}
                   >
                     Entrar
                   </Link>
                   <Link
                     to="/register"
-                    className="block text-gray-700 hover:text-brand-blue transition-colors"
+                    className="block text-gray-600 hover:text-primary transition-colors py-2"
                     onClick={() => setIsOpen(false)}
                   >
                     Cadastrar

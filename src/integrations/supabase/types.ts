@@ -12,6 +12,7 @@ export type Database = {
       categories: {
         Row: {
           created_at: string
+          display_order: number | null
           icon: string
           id: number
           name: string
@@ -19,6 +20,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           icon: string
           id?: number
           name: string
@@ -26,6 +28,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           icon?: string
           id?: number
           name?: string
@@ -153,6 +156,38 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_photos: {
+        Row: {
+          created_at: string | null
+          id: number
+          is_primary: boolean | null
+          photo_url: string
+          service_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          is_primary?: boolean | null
+          photo_url: string
+          service_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          is_primary?: boolean | null
+          photo_url?: string
+          service_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_photos_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
