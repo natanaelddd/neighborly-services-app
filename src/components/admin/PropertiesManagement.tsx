@@ -6,30 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Property {
-  id: number;
-  unit_id: string;
-  title: string;
-  description: string;
-  type: "venda" | "aluguel";
-  price?: string;
-  bedrooms: number;
-  garage_covered: boolean;
-  is_renovated: boolean;
-  whatsapp: string;
-  status: string;
-  created_at: string;
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  property_photos?: {
-    photo_url: string;
-    is_primary: boolean;
-  }[];
-}
+import { Property } from "@/types";
 
 interface PropertiesManagementProps {
   onUpdateProperty?: (propertyId: number, updatedData: Partial<Property>) => void;
@@ -63,7 +40,19 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
         return;
       }
 
-      setProperties(data || []);
+      // Transform data to match Property interface
+      const transformedProperties: Property[] = (data || []).map(item => ({
+        ...item,
+        type: item.type as "venda" | "aluguel", // Type assertion to fix the type issue
+        profiles: item.profiles ? {
+          name: item.profiles.name,
+          block: item.profiles.block,
+          house_number: item.profiles.house_number
+        } : undefined,
+        property_photos: item.property_photos || []
+      }));
+
+      setProperties(transformedProperties);
     } catch (error) {
       console.error('Erro ao carregar propriedades:', error);
       toast.error("Erro ao carregar propriedades");

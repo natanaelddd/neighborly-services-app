@@ -58,3 +58,30 @@ export interface ServiceWithProvider extends Service {
   block?: string;
   number?: string;
 }
+
+// Add Property interface to match database schema
+export interface Property {
+  id: number;
+  unit_id: string;
+  title: string;
+  description: string;
+  type: "venda" | "aluguel";
+  price?: string;
+  bedrooms: number;
+  garage_covered: boolean;
+  is_renovated: boolean;
+  whatsapp: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  rejection_reason?: string;
+  profiles?: {
+    name: string;
+    block: string;
+    house_number: string;
+  };
+  property_photos?: {
+    photo_url: string;
+    is_primary: boolean;
+  }[];
+}
