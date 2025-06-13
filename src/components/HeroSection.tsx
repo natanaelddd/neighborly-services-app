@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Search } from "lucide-react";
+import { ArrowRight, Users, Search, Plus, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const HeroSection = () => {
@@ -27,6 +27,28 @@ const HeroSection = () => {
               <Button variant="outline" size="lg" className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
                 Oferecer Serviço
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
+            <Link to="/novo-servico">
+              <Button variant="outline" size="lg" className="w-full flex items-center gap-2 h-16">
+                <Plus className="w-6 h-6" />
+                <div className="text-left">
+                  <div className="font-semibold">Cadastrar Serviço</div>
+                  <div className="text-sm opacity-75">Ofereça seus serviços</div>
+                </div>
+              </Button>
+            </Link>
+            
+            <Link to="/nova-propriedade">
+              <Button variant="outline" size="lg" className="w-full flex items-center gap-2 h-16">
+                <Home className="w-6 h-6" />
+                <div className="text-left">
+                  <div className="font-semibold">Cadastrar Casa</div>
+                  <div className="text-sm opacity-75">Anuncie sua propriedade</div>
+                </div>
               </Button>
             </Link>
           </div>
