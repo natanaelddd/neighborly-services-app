@@ -37,7 +37,7 @@ export interface Category {
 
 export interface Service {
   id: number;
-  unitId: number;
+  unitId: string; // Changed from number to string to match mock data
   categoryId: number;
   title: string;
   description: string;
