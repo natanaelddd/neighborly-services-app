@@ -51,7 +51,17 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <Home className="h-8 w-8 text-primary" />
+            <img 
+              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
+              alt="Condo Indico Logo" 
+              className="h-8 w-8"
+              onError={(e) => {
+                // Fallback to icon if image fails to load
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <Home className="h-8 w-8 text-primary hidden" />
             <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
 
