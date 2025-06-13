@@ -27,6 +27,7 @@ import NewPropertyPage from './pages/NewPropertyPage';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import StorageBuckets from "@/components/admin/StorageBuckets";
+import DemoModeToggle from "@/components/DemoModeToggle";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ function App() {
                 </Routes>
               </main>
               <Footer />
+              <DemoModeToggle />
             </div>
           </BrowserRouter>
         </TooltipProvider>
