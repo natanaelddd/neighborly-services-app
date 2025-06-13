@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,23 +16,42 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { signup, loginWithGoogle, user } = useAuth();
 
-  // Se o usuário já está logado, redireciona para home
+  // Se o usuário já está logado, redireciona para o painel
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate("/user-dashboard");
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!name || !email || !password || !block || !houseNumber) {
+      toast.error("Por favor, preencha todos os campos");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
       await signup(email, password, name, block, houseNumber);
-      navigate("/login");
+      toast.success("Cadastro realizado! Verifique seu email para confirmar.");
+      // Redirecionar para login após cadastro por email
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error: any) {
       console.error('Erro no cadastro:', error);
-      toast.error(error.message || "Erro ao realizar cadastro");
+      if (error.message?.includes('already registered')) {
+        toast.error("Este email já está cadastrado. Tente fazer login.");
+      } else {
+        toast.error(error.message || "Erro ao realizar cadastro");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +100,7 @@ const RegisterPage = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1">
-              Nome Completo
+              Nome Completo *
             </label>
             <Input
               id="name"
@@ -94,7 +114,7 @@ const RegisterPage = () => {
           
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email
+              Email *
             </label>
             <Input
               id="email"
@@ -108,7 +128,7 @@ const RegisterPage = () => {
           
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-1">
-              Senha
+              Senha * (mínimo 6 caracteres)
             </label>
             <Input
               id="password"
@@ -124,7 +144,7 @@ const RegisterPage = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="block" className="block text-sm font-medium mb-1">
-                Bloco
+                Bloco *
               </label>
               <Input
                 id="block"
@@ -140,7 +160,7 @@ const RegisterPage = () => {
             
             <div>
               <label htmlFor="houseNumber" className="block text-sm font-medium mb-1">
-                Casa
+                Casa *
               </label>
               <Input
                 id="houseNumber"

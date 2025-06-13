@@ -26,6 +26,31 @@ const MenuManager = ({
   onToggleMenuItem, 
   onToggleRecommendations 
 }: MenuManagerProps) => {
+  
+  const handleToggleItem = (id: number, visible: boolean) => {
+    onToggleMenuItem(id, visible);
+    
+    // Salvar no localStorage
+    const updatedItems = menuItems.map(item => 
+      item.id === id ? { ...item, visible } : item
+    );
+    
+    const menuConfig = updatedItems.reduce((acc, item) => {
+      const key = item.label.toLowerCase().replace(' ', '');
+      acc[key] = item.visible;
+      return acc;
+    }, {} as Record<string, boolean>);
+    
+    localStorage.setItem('menuItems', JSON.stringify(menuConfig));
+    toast.success(`Menu "${updatedItems.find(i => i.id === id)?.label}" ${visible ? 'ativado' : 'desativado'}`);
+  };
+
+  const handleToggleRecommendations = () => {
+    onToggleRecommendations();
+    localStorage.setItem('showRecommendationsMenu', JSON.stringify(!showRecommendationsMenu));
+    toast.success(`Menu de indicações ${!showRecommendationsMenu ? 'ativado' : 'desativado'}`);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -49,8 +74,8 @@ const MenuManager = ({
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => onToggleMenuItem(item.id, !item.visible)}
-                  disabled={item.label === "Início" || (item.label === "Indicações" && !showRecommendationsMenu)}
+                  onClick={() => handleToggleItem(item.id, !item.visible)}
+                  disabled={item.label === "Início"}
                 >
                   {item.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -72,7 +97,7 @@ const MenuManager = ({
                 </div>
                 <Button
                   variant={showRecommendationsMenu ? "outline" : "default"}
-                  onClick={onToggleRecommendations}
+                  onClick={handleToggleRecommendations}
                 >
                   {showRecommendationsMenu ? "Desativar" : "Ativar"}
                 </Button>

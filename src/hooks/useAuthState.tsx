@@ -32,8 +32,7 @@ export const useAuthState = () => {
                 if (error.code === 'PGRST116' && session.user.app_metadata?.provider === 'google') {
                   console.log('Usuário do Google sem perfil, criando automaticamente...');
                   
-                  // Mostrar toast de boas-vindas antes de criar o perfil
-                  toast.success("🎉 Bem-vindo ao Evidence Resort!");
+                  toast.success("🎉 Bem-vindo ao Condo Indico!");
                   
                   // Criar perfil automaticamente para usuário do Google
                   const { data: newProfile, error: createError } = await supabase
@@ -42,8 +41,8 @@ export const useAuthState = () => {
                       id: session.user.id,
                       name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuário',
                       email: session.user.email!,
-                      block: '1', // Valor padrão, usuário pode alterar depois
-                      house_number: '000' // Valor padrão, usuário pode alterar depois
+                      block: '1',
+                      house_number: '000'
                     })
                     .select()
                     .single();
@@ -53,25 +52,25 @@ export const useAuthState = () => {
                     toast.error("Erro ao criar perfil de usuário");
                   } else {
                     setProfile(newProfile);
-                    // Toast informativo sobre próximos passos
-                    toast.success("✅ Cadastro realizado com sucesso! Agora você pode cadastrar seus serviços.", {
-                      duration: 4000,
-                    });
+                    toast.success("✅ Cadastro realizado com sucesso!");
                     
-                    // Aguardar um pouco antes de redirecionar para o usuário ver as mensagens
+                    // Redirecionar para o painel do usuário
                     setTimeout(() => {
-                      window.location.href = '/services/new';
+                      window.location.href = '/user-dashboard';
                     }, 1500);
                   }
                 } else {
-                  // Outros tipos de erro
                   toast.error("Erro ao carregar dados do usuário");
                 }
               } else {
                 setProfile(profileData);
-                // Usuário existente fazendo login
+                // Usuário existente fazendo login com Google
                 if (event === 'SIGNED_IN' && session.user.app_metadata?.provider === 'google') {
                   toast.success(`Bem-vindo de volta, ${profileData.name}!`);
+                  // Redirecionar para o painel do usuário
+                  setTimeout(() => {
+                    window.location.href = '/user-dashboard';
+                  }, 1000);
                 }
               }
             } catch (error) {
