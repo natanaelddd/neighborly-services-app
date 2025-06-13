@@ -116,7 +116,7 @@ export const mockServices = [
     description: 'Técnico em informática especializado em reparos, instalação de programas e configuração de redes. Atendimento domiciliar rápido e eficiente.',
     whatsapp: '+55 11 99999-7777',
     status: 'pending',
-    photo_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400',
+    photo_url: 'https://images.unsplash.com/photo-1498050108023-c5249f4b4173?w=400',
     created_at: '2024-01-09T10:00:00Z',
     updated_at: '2024-01-09T10:00:00Z',
     profiles: mockProfiles[6],
@@ -304,7 +304,16 @@ export const getServiceById = (id: number) => {
   if (!service) return null;
 
   return {
-    ...service,
+    id: service.id,
+    unitId: service.unit_id,
+    categoryId: service.category_id,
+    title: service.title,
+    description: service.description,
+    photoUrl: service.photo_url,
+    whatsapp: service.whatsapp,
+    status: service.status,
+    createdAt: service.created_at,
+    updatedAt: service.updated_at,
     category: service.categories,
     providerName: service.profiles?.name || 'Prestador',
     block: service.profiles?.block || '',
