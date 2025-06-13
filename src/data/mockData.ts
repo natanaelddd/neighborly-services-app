@@ -311,7 +311,7 @@ export const getServiceById = (id: number) => {
     description: service.description,
     photoUrl: service.photo_url,
     whatsapp: service.whatsapp,
-    status: service.status,
+    status: service.status as 'pending' | 'approved' | 'rejected', // Properly type the status
     createdAt: service.created_at,
     updatedAt: service.updated_at,
     category: service.categories,

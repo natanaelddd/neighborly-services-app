@@ -34,7 +34,7 @@ const FeaturedServices = () => {
         // Transformar os dados para o formato ServiceWithProvider
         const transformedServices: ServiceWithProvider[] = (servicesData || []).map(service => ({
           id: service.id,
-          unitId: 0, // Valor temporário já que não temos tabela units
+          unitId: service.unit_id || '', // Changed to string and provide fallback
           categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
