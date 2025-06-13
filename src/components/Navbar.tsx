@@ -1,233 +1,192 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Home, Menu, X, User, Plus, Building2, Briefcase, Settings, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X, User, LogOut, Settings, Home, Briefcase } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Navbar = () => {
+  const { user, isAdmin, logout } = useAuth();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, isAdmin } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast.success('Logout realizado com sucesso!');
-      navigate('/');
-    } catch (error) {
-      console.error('Erro no logout:', error);
-      toast.error('Erro ao fazer logout');
-    }
-  };
+  const [menuItems, setMenuItems] = useState({
+    services: true,
+    categories: true,
+    properties: true,
+    recommendations: true,
+    about: true,
+    contact: true
+  });
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const stored = localStorage.getItem('menuItems');
+    if (stored) {
+      setMenuItems(JSON.parse(stored));
+    }
   }, []);
 
-  const navItems = [
-    { name: 'Início', href: '/', icon: Home },
-    { name: 'Serviços', href: '/services' },
-    { name: 'Categorias', href: '/categories' },
-    { name: 'Sobre', href: '/about' },
-    { name: 'Contato', href: '/contact' },
-  ];
+  const navigation = [
+    { name: 'Início', href: '/', key: 'home', show: true },
+    { name: 'Serviços', href: '/servicos', key: 'services', show: menuItems.services },
+    { name: 'Categorias', href: '/categorias', key: 'categories', show: menuItems.categories },
+    { name: 'Propriedades', href: '/propriedades', key: 'properties', show: menuItems.properties },
+    { name: 'Indicações', href: '/indicacoes', key: 'recommendations', show: menuItems.recommendations },
+    { name: 'Sobre', href: '/sobre', key: 'about', show: menuItems.about },
+    { name: 'Contato', href: '/contato', key: 'contact', show: menuItems.contact },
+  ].filter(item => item.show);
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(href);
+  };
+
+  const closeMenu = () => setIsOpen(false);
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container-custom">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
-              alt="Condo Indico" 
-              className="w-8 h-8"
-            />
+            <Home className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            {navItems.map((item) => (
+          <div className="hidden lg:flex items-center space-x-8">
+            {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className="text-gray-600 hover:text-primary transition-colors"
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive(item.href)
+                    ? 'text-primary border-b-2 border-primary'
+                    : 'text-gray-700 hover:text-primary'
+                }`}
               >
                 {item.name}
               </Link>
             ))}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* User Actions */}
+          <div className="hidden lg:flex items-center space-x-4">
             {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    <span className="max-w-32 truncate">
-                      {profile?.name || 'Usuário'}
-                    </span>
+              <div className="flex items-center space-x-2">
+                <Link to="/user-dashboard">
+                  <Button variant="outline" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    {user.name}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link to="/services/new" className="flex items-center">
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      + Serviço
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/properties/new" className="flex items-center">
-                      <Building2 className="w-4 h-4 mr-2" />
-                      + Imóvel
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/user-dashboard" className="flex items-center">
-                      <User className="w-4 h-4 mr-2" />
-                      Meu Painel
-                    </Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Administração
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center text-red-600">
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </Link>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" asChild>
-                  <Link to="/login">Entrar</Link>
-                </Button>
-                <Button asChild>
-                  <Link to="/register">Cadastrar</Link>
-                </Button>
+                <Link to="/login">
+                  <Button variant="outline" size="sm">
+                    Entrar
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">
+                    Cadastrar
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
+          <div className="lg:hidden">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64">
+                <SheetHeader>
+                  <SheetTitle className="text-left">Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col space-y-4 mt-6">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={closeMenu}
+                      className={`px-3 py-2 text-base font-medium rounded-md transition-colors ${
+                        isActive(item.href)
+                          ? 'bg-primary text-white'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                  
+                  <div className="border-t pt-4 mt-4">
+                    {user ? (
+                      <div className="space-y-2">
+                        <Link to="/user-dashboard" onClick={closeMenu}>
+                          <Button variant="outline" className="w-full justify-start">
+                            <User className="h-4 w-4 mr-2" />
+                            {user.name}
+                          </Button>
+                        </Link>
+                        {isAdmin && (
+                          <Link to="/admin" onClick={closeMenu}>
+                            <Button variant="outline" className="w-full justify-start">
+                              <Settings className="h-4 w-4 mr-2" />
+                              Admin
+                            </Button>
+                          </Link>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          className="w-full justify-start" 
+                          onClick={() => {
+                            logout();
+                            closeMenu();
+                          }}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Sair
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Link to="/login" onClick={closeMenu}>
+                          <Button variant="outline" className="w-full">
+                            Entrar
+                          </Button>
+                        </Link>
+                        <Link to="/register" onClick={closeMenu}>
+                          <Button className="w-full">
+                            Cadastrar
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="text-gray-600 hover:text-primary transition-colors py-2"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              
-              {user ? (
-                <>
-                  <div className="border-t pt-2 mt-2">
-                    <Link
-                      to="/services/new"
-                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      + Serviço
-                    </Link>
-                    <Link
-                      to="/properties/new"
-                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Building2 className="w-4 h-4 mr-2" />
-                      + Imóvel
-                    </Link>
-                    <Link
-                      to="/user-dashboard"
-                      className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <User className="w-4 h-4 mr-2" />
-                      Meu Painel
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="flex items-center text-gray-600 hover:text-primary transition-colors py-2"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        Administração
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsOpen(false);
-                      }}
-                      className="flex items-center text-red-600 hover:text-red-700 transition-colors py-2 w-full text-left"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sair
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="border-t pt-2 mt-2 space-y-2">
-                  <Link
-                    to="/login"
-                    className="block text-gray-600 hover:text-primary transition-colors py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="block text-gray-600 hover:text-primary transition-colors py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Cadastrar
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );

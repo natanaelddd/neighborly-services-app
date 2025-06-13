@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,8 +7,7 @@ import { Edit, Eye, CheckCircle, XCircle, Clock, Camera, Plus, Star, StarOff } f
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from "@/types";
-import ImageUpload from "../ImageUpload";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import PropertyPhotoManager from "@/components/property/PropertyPhotoManager";
 import { useDemoMode } from "@/hooks/useDemoMode";
 
 interface PropertiesManagementProps {
@@ -19,9 +19,6 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [featuredProperties, setFeaturedProperties] = useState<number[]>([]);
 
   useEffect(() => {
@@ -141,61 +138,6 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
     
     const action = newFeatured.includes(propertyId) ? 'adicionada ao' : 'removida do';
     toast.success(`Propriedade ${action} destaque!`);
-  };
-
-  const handleAddPhotos = async () => {
-    if (isDemoMode) {
-      toast.info("Modo demonstração: funcionalidade de upload não disponível");
-      return;
-    }
-
-    if (!selectedProperty || selectedImages.length === 0) {
-      toast.error("Selecione pelo menos uma imagem");
-      return;
-    }
-
-    setIsUploadingImages(true);
-    try {
-      const uploadPromises = selectedImages.map(async (file, index) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `property-${selectedProperty.id}-${Date.now()}-${index}.${fileExt}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('property-photos')
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-photos')
-          .getPublicUrl(fileName);
-
-        // Inserir na tabela property_photos
-        const { error: insertError } = await supabase
-          .from('property_photos')
-          .insert({
-            property_id: selectedProperty.id,
-            photo_url: publicUrl,
-            is_primary: index === 0 && selectedProperty.property_photos?.length === 0
-          });
-
-        if (insertError) throw insertError;
-
-        return publicUrl;
-      });
-
-      await Promise.all(uploadPromises);
-      
-      toast.success("Fotos adicionadas com sucesso!");
-      setSelectedImages([]);
-      setSelectedProperty(null);
-      fetchProperties(); // Recarregar dados
-    } catch (error) {
-      console.error('Erro ao fazer upload das fotos:', error);
-      toast.error("Erro ao adicionar fotos");
-    } finally {
-      setIsUploadingImages(false);
-    }
   };
 
   const formatWhatsApp = (whatsapp: string) => {
@@ -401,54 +343,12 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                   )}
 
                   {!isDemoMode && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedProperty(property)}
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          Adicionar Fotos
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Adicionar Fotos - {property.title}</DialogTitle>
-                          <DialogDescription>
-                            Adicione fotos para esta propriedade. A primeira foto será definida como principal.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="space-y-4">
-                          <ImageUpload
-                            bucket="property-photos"
-                            maxFiles={10}
-                            selectedImages={selectedImages}
-                            onImagesChange={setSelectedImages}
-                          />
-                          
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedImages([]);
-                                setSelectedProperty(null);
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button
-                              onClick={handleAddPhotos}
-                              disabled={isUploadingImages || selectedImages.length === 0}
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              {isUploadingImages ? 'Enviando...' : 'Adicionar Fotos'}
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <PropertyPhotoManager
+                      propertyId={property.id}
+                      propertyTitle={property.title}
+                      currentPhotos={property.property_photos || []}
+                      onPhotosUpdated={fetchProperties}
+                    />
                   )}
                 </div>
               </div>

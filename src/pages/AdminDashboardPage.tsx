@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
-import DemoModeToggle from "@/components/DemoModeToggle";
 
 // Admin component imports
 import PendingServices from "@/components/admin/PendingServices";
@@ -201,8 +200,6 @@ const AdminDashboardPage = () => {
           />
         </TabsContent>
       </Tabs>
-
-      <DemoModeToggle />
     </div>
   );
 };
