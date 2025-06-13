@@ -2,8 +2,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Plus, Edit, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,8 +25,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import CategoryFormDialog from "./CategoryFormDialog";
-import IconSelector from "./IconSelector";
+import SimpleCategoryFormDialog from "./SimpleCategoryFormDialog";
 import { useDemoMode } from "@/hooks/useDemoMode";
 
 interface SortableCategoryItemProps {
@@ -191,6 +188,7 @@ const CategoriesManagement = () => {
       };
       setCategories([...categories, newCategory]);
       toast.success("Categoria adicionada com sucesso!");
+      setShowAddDialog(false);
       return;
     }
 
@@ -221,18 +219,22 @@ const CategoriesManagement = () => {
 
       setCategories([...categories, newCategory]);
       toast.success("Categoria adicionada com sucesso!");
+      setShowAddDialog(false);
     } catch (error) {
       console.error('Erro ao adicionar categoria:', error);
       toast.error("Erro ao adicionar categoria");
     }
   };
 
-  const handleUpdateCategory = async (id: number, name: string, icon: string) => {
+  const handleUpdateCategory = async (name: string, icon: string) => {
+    if (!editingCategory) return;
+
     if (isDemoMode) {
       setCategories(categories.map(cat => 
-        cat.id === id ? { ...cat, name, icon, updated_at: new Date().toISOString() } : cat
+        cat.id === editingCategory.id ? { ...cat, name, icon, updated_at: new Date().toISOString() } : cat
       ));
       toast.success("Categoria atualizada com sucesso!");
+      setEditingCategory(null);
       return;
     }
 
@@ -240,7 +242,7 @@ const CategoriesManagement = () => {
       const { error } = await supabase
         .from('categories')
         .update({ name, icon, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', editingCategory.id);
 
       if (error) {
         console.error('Erro ao atualizar categoria:', error);
@@ -249,9 +251,10 @@ const CategoriesManagement = () => {
       }
 
       setCategories(categories.map(cat => 
-        cat.id === id ? { ...cat, name, icon, updated_at: new Date().toISOString() } : cat
+        cat.id === editingCategory.id ? { ...cat, name, icon, updated_at: new Date().toISOString() } : cat
       ));
       toast.success("Categoria atualizada com sucesso!");
+      setEditingCategory(null);
     } catch (error) {
       console.error('Erro ao atualizar categoria:', error);
       toast.error("Erro ao atualizar categoria");
@@ -350,7 +353,7 @@ const CategoriesManagement = () => {
           </DndContext>
         )}
 
-        <CategoryFormDialog
+        <SimpleCategoryFormDialog
           isOpen={showAddDialog}
           onClose={() => setShowAddDialog(false)}
           onSubmit={handleAddCategory}
@@ -358,10 +361,10 @@ const CategoriesManagement = () => {
         />
 
         {editingCategory && (
-          <CategoryFormDialog
+          <SimpleCategoryFormDialog
             isOpen={true}
             onClose={() => setEditingCategory(null)}
-            onSubmit={(name, icon) => handleUpdateCategory(editingCategory.id, name, icon)}
+            onSubmit={handleUpdateCategory}
             title="Editar Categoria"
             initialName={editingCategory.name}
             initialIcon={editingCategory.icon}

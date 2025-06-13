@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Navbar = () => {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, profile, isAdmin, logout } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState({
@@ -79,7 +79,7 @@ const Navbar = () => {
                 <Link to="/user-dashboard">
                   <Button variant="outline" size="sm">
                     <User className="h-4 w-4 mr-2" />
-                    {user.name}
+                    {profile?.name || 'Usuário'}
                   </Button>
                 </Link>
                 {isAdmin && (
@@ -144,7 +144,7 @@ const Navbar = () => {
                         <Link to="/user-dashboard" onClick={closeMenu}>
                           <Button variant="outline" className="w-full justify-start">
                             <User className="h-4 w-4 mr-2" />
-                            {user.name}
+                            {profile?.name || 'Usuário'}
                           </Button>
                         </Link>
                         {isAdmin && (

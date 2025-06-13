@@ -5,17 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Settings, Home, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
-import UserServiceEditor from "@/components/user/UserServiceEditor";
 import UserPropertyManager from "@/components/user/UserPropertyManager";
 
 const UserDashboardPage = () => {
-  const { user, logout } = useAuth();
+  const { profile, logout } = useAuth();
 
   return (
     <div className="container-custom py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">
-          Olá, {user?.name}! 👋
+          Olá, {profile?.name || 'Usuário'}! 👋
         </h1>
         <Button variant="outline" onClick={logout}>
           Sair
@@ -77,7 +76,9 @@ const UserDashboardPage = () => {
             </Card>
           </div>
 
-          <UserServiceEditor />
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Gerenciamento de serviços será implementado em breve</p>
+          </div>
         </TabsContent>
 
         <TabsContent value="properties" className="space-y-6">
