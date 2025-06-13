@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +49,7 @@ const FeaturedAd = () => {
           return;
         }
 
+        console.log('Propriedades aprovadas encontradas:', data);
         const transformedProperties = (data || []).map(transformProperty);
         setProperties(transformedProperties);
       } else {
@@ -69,6 +69,7 @@ const FeaturedAd = () => {
           return;
         }
 
+        console.log('Propriedades em destaque encontradas:', data);
         const transformedProperties = (data || []).map(transformProperty);
         setProperties(transformedProperties);
       }
@@ -79,16 +80,19 @@ const FeaturedAd = () => {
     }
   };
 
-  const transformProperty = (item: any): Property => ({
-    ...item,
-    type: item.type as "venda" | "aluguel",
-    profiles: item.profiles ? {
-      name: item.profiles.name,
-      block: item.profiles.block,
-      house_number: item.profiles.house_number
-    } : undefined,
-    property_photos: item.property_photos || []
-  });
+  const transformProperty = (item: any): Property => {
+    console.log('Transformando propriedade:', item);
+    return {
+      ...item,
+      type: item.type as "venda" | "aluguel",
+      profiles: item.profiles ? {
+        name: item.profiles.name,
+        block: item.profiles.block,
+        house_number: item.profiles.house_number
+      } : undefined,
+      property_photos: item.property_photos || []
+    };
+  };
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => 
@@ -134,6 +138,8 @@ const FeaturedAd = () => {
   }
 
   const currentProperty = properties[currentIndex];
+  console.log('Propriedade atual sendo exibida:', currentProperty);
+  console.log('Fotos da propriedade atual:', currentProperty.property_photos);
 
   return (
     <div className="relative">
@@ -146,6 +152,13 @@ const FeaturedAd = () => {
                 src={currentProperty.property_photos.find(p => p.is_primary)?.photo_url || currentProperty.property_photos[0]?.photo_url}
                 alt={currentProperty.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Erro ao carregar imagem:', e);
+                  console.log('URL da imagem que falhou:', e.currentTarget.src);
+                }}
+                onLoad={() => {
+                  console.log('Imagem carregada com sucesso:', currentProperty.property_photos[0]?.photo_url);
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

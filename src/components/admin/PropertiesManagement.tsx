@@ -60,17 +60,22 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
         return;
       }
 
+      console.log('Propriedades carregadas no admin:', data);
+
       // Transform data to match Property interface
-      const transformedProperties: Property[] = (data || []).map(item => ({
-        ...item,
-        type: item.type as "venda" | "aluguel",
-        profiles: item.profiles ? {
-          name: item.profiles.name,
-          block: item.profiles.block,
-          house_number: item.profiles.house_number
-        } : undefined,
-        property_photos: item.property_photos || []
-      }));
+      const transformedProperties: Property[] = (data || []).map(item => {
+        console.log('Transformando propriedade no admin:', item);
+        return {
+          ...item,
+          type: item.type as "venda" | "aluguel",
+          profiles: item.profiles ? {
+            name: item.profiles.name,
+            block: item.profiles.block,
+            house_number: item.profiles.house_number
+          } : undefined,
+          property_photos: item.property_photos || []
+        };
+      });
 
       setProperties(transformedProperties);
     } catch (error) {
@@ -320,6 +325,13 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                         src={property.property_photos.find(p => p.is_primary)?.photo_url || property.property_photos[0]?.photo_url}
                         alt={property.title}
                         className="w-full h-full object-cover rounded-md"
+                        onError={(e) => {
+                          console.error('Erro ao carregar imagem no admin:', e);
+                          console.log('URL da imagem que falhou no admin:', e.currentTarget.src);
+                        }}
+                        onLoad={() => {
+                          console.log('Imagem carregada com sucesso no admin:', property.property_photos?.[0]?.photo_url);
+                        }}
                       />
                     </div>
                   )}
