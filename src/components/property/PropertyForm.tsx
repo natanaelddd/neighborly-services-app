@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,20 +50,34 @@ const PropertyForm = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}-${index}.${fileExt}`;
       
-      const { data, error } = await supabase.storage
-        .from('property-photos')
-        .upload(fileName, file);
-      
-      if (error) throw error;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('property-photos')
-        .getPublicUrl(fileName);
-      
-      return publicUrl;
+      try {
+        const { data, error } = await supabase.storage
+          .from('property-photos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) throw error;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-photos')
+          .getPublicUrl(fileName);
+        
+        return publicUrl;
+      } catch (error) {
+        console.error(`Erro ao fazer upload da imagem ${index}:`, error);
+        throw error;
+      }
     });
     
-    return Promise.all(uploadPromises);
+    try {
+      return await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error('Erro no upload das imagens:', error);
+      toast.error("Erro ao fazer upload das imagens");
+      throw error;
+    }
   };
 
   const handleRetry = () => {
@@ -100,8 +115,14 @@ const PropertyForm = () => {
     setIsLoading(true);
     
     try {
-      // Upload das imagens
-      const photoUrls = await uploadImages();
+      // Upload das imagens (se houver)
+      let photoUrls: string[] = [];
+      try {
+        photoUrls = await uploadImages();
+      } catch (uploadError) {
+        console.error('Erro no upload, continuando sem imagens:', uploadError);
+        // Continua sem as imagens se houver erro no upload
+      }
       
       // Salvar com código do país (55) + DDD + número
       const fullWhatsApp = `55${whatsappNumbers}`;
@@ -157,8 +178,8 @@ const PropertyForm = () => {
 
         if (photosError) {
           console.error('Erro ao inserir fotos:', photosError);
-          setError(photosError);
-          return;
+          // Não definir como erro fatal, propriedade já foi criada
+          toast.error("Propriedade criada, mas houve erro ao salvar algumas fotos");
         }
       }
 

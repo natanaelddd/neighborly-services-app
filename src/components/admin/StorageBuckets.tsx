@@ -5,49 +5,33 @@ import { toast } from 'sonner';
 
 const StorageBuckets = () => {
   useEffect(() => {
-    const createBucketsIfNeeded = async () => {
+    const checkBuckets = async () => {
       try {
-        // Verificar se os buckets existem
-        const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+        // Apenas verificar se os buckets existem, não tentar criá-los
+        const { data: buckets, error } = await supabase.storage.listBuckets();
         
-        if (listError) {
-          console.error('Erro ao listar buckets:', listError);
+        if (error) {
+          console.error('Erro ao listar buckets:', error);
           return;
         }
 
         const bucketNames = buckets?.map(bucket => bucket.name) || [];
+        console.log('Buckets disponíveis:', bucketNames);
 
-        // Criar bucket para fotos de serviços se não existir
+        // Verificar se os buckets necessários existem
         if (!bucketNames.includes('service-photos')) {
-          const { error } = await supabase.storage.createBucket('service-photos', {
-            public: true,
-            fileSizeLimit: 5242880, // 5MB
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
-          });
-          
-          if (error && !error.message.includes('already exists')) {
-            console.error('Erro ao criar bucket service-photos:', error);
-          }
+          console.warn('Bucket service-photos não encontrado');
         }
 
-        // Criar bucket para fotos de propriedades se não existir
         if (!bucketNames.includes('property-photos')) {
-          const { error } = await supabase.storage.createBucket('property-photos', {
-            public: true,
-            fileSizeLimit: 5242880, // 5MB
-            allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
-          });
-          
-          if (error && !error.message.includes('already exists')) {
-            console.error('Erro ao criar bucket property-photos:', error);
-          }
+          console.warn('Bucket property-photos não encontrado');
         }
       } catch (error) {
-        console.error('Erro ao configurar storage buckets:', error);
+        console.error('Erro ao verificar storage buckets:', error);
       }
     };
 
-    createBucketsIfNeeded();
+    checkBuckets();
   }, []);
 
   return null; // Este componente não renderiza nada

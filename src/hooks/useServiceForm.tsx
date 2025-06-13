@@ -51,20 +51,29 @@ export const useServiceForm = () => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
     
-    const { data, error } = await supabase.storage
-      .from('service-photos')
-      .upload(fileName, file);
-    
-    if (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
+    try {
+      const { data, error } = await supabase.storage
+        .from('service-photos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        console.error('Erro ao fazer upload da imagem:', error);
+        throw error;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('service-photos')
+        .getPublicUrl(fileName);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      toast.error("Erro ao fazer upload da imagem");
       throw error;
     }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('service-photos')
-      .getPublicUrl(fileName);
-    
-    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,11 +100,27 @@ export const useServiceForm = () => {
     
     try {
       // Upload da imagem (se houver)
-      const photoUrl = await uploadImage();
+      let photoUrl = null;
+      try {
+        photoUrl = await uploadImage();
+      } catch (uploadError) {
+        console.error('Erro no upload, continuando sem imagem:', uploadError);
+        // Continua sem a imagem se houver erro no upload
+      }
       
       // Salvar com código do país (55) + DDD + número
       const fullWhatsApp = `55${whatsappNumbers}`;
       
+      console.log('Inserindo serviço:', {
+        unit_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        whatsapp: fullWhatsApp,
+        category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
+        photo_url: photoUrl,
+        status: 'pending'
+      });
+
       const { error } = await supabase
         .from('services')
         .insert({
@@ -108,7 +133,10 @@ export const useServiceForm = () => {
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao inserir serviço:', error);
+        throw error;
+      }
 
       toast.success("Serviço cadastrado com sucesso! Aguarde a aprovação da administração.");
       navigate('/user-dashboard');
