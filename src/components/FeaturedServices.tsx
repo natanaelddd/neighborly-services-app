@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import ServiceList from './ServiceList';
 import { ServiceWithProvider } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 const FeaturedServices = () => {
+  const { isDemoMode, mockServices } = useDemoMode();
   const [featuredServices, setFeaturedServices] = useState<ServiceWithProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -12,6 +14,40 @@ const FeaturedServices = () => {
     const fetchFeaturedServices = async () => {
       try {
         setIsLoading(true);
+        
+        if (isDemoMode) {
+          // Use mock data for demo mode
+          const approvedMockServices = mockServices
+            .filter(service => service.status === 'approved')
+            .slice(0, 6) // Limit to 6 featured services
+            .map(service => ({
+              id: service.id,
+              unitId: service.unit_id,
+              categoryId: service.category_id,
+              title: service.title,
+              description: service.description,
+              photoUrl: service.photo_url || '',
+              whatsapp: service.whatsapp,
+              status: service.status as 'pending' | 'approved' | 'rejected',
+              createdAt: service.created_at,
+              updatedAt: service.updated_at,
+              providerName: service.profiles?.name || 'Morador não identificado',
+              block: service.profiles?.block || '',
+              number: service.profiles?.house_number || '',
+              category: service.categories ? {
+                id: service.category_id,
+                name: service.categories.name,
+                icon: service.categories.icon,
+                created_at: service.categories.created_at || '',
+                updated_at: service.categories.updated_at || ''
+              } : undefined
+            }));
+
+          console.log('Serviços em destaque (modo demo):', approvedMockServices);
+          setFeaturedServices(approvedMockServices);
+          setIsLoading(false);
+          return;
+        }
         
         // Buscar serviços aprovados do banco de dados
         const { data: servicesData, error } = await supabase
@@ -66,7 +102,7 @@ const FeaturedServices = () => {
     };
 
     fetchFeaturedServices();
-  }, []);
+  }, [isDemoMode, mockServices]);
 
   if (isLoading) {
     return (
@@ -88,6 +124,9 @@ const FeaturedServices = () => {
       <div className="container-custom">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-semibold">Serviços em Destaque</h2>
+          {isDemoMode && (
+            <div className="text-sm text-muted-foreground">Modo Demo Ativo</div>
+          )}
         </div>
         <ServiceList 
           services={featuredServices} 

@@ -7,10 +7,12 @@ import SearchBar from "@/components/SearchBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoMode } from "@/hooks/useDemoMode";
 
 const ServicesListPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [searchParams] = useSearchParams();
+  const { isDemoMode, mockServices, mockCategories } = useDemoMode();
   const [services, setServices] = useState<ServiceWithProvider[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredServices, setFilteredServices] = useState<ServiceWithProvider[]>([]);
@@ -19,7 +21,7 @@ const ServicesListPage = () => {
   
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [isDemoMode]);
 
   useEffect(() => {
     const categoryFromQuery = searchParams.get('category');
@@ -39,6 +41,40 @@ const ServicesListPage = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      
+      if (isDemoMode) {
+        // Use mock data for demo mode
+        const transformedMockServices: ServiceWithProvider[] = mockServices
+          .filter(service => service.status === 'approved')
+          .map(service => ({
+            id: service.id,
+            unitId: service.unit_id,
+            categoryId: service.category_id,
+            title: service.title,
+            description: service.description,
+            photoUrl: service.photo_url || '',
+            whatsapp: service.whatsapp,
+            status: service.status as 'pending' | 'approved' | 'rejected',
+            createdAt: service.created_at,
+            updatedAt: service.updated_at,
+            providerName: service.profiles?.name || 'Morador não identificado',
+            block: service.profiles?.block || '',
+            number: service.profiles?.house_number || '',
+            category: service.categories ? {
+              id: service.category_id,
+              name: service.categories.name,
+              icon: service.categories.icon,
+              created_at: service.categories.created_at || '',
+              updated_at: service.categories.updated_at || ''
+            } : undefined
+          }));
+
+        setServices(transformedMockServices);
+        setFilteredServices(transformedMockServices);
+        setCategories(mockCategories as Category[]);
+        setIsLoading(false);
+        return;
+      }
       
       // Buscar categorias
       const { data: categoriesData, error: categoriesError } = await supabase
@@ -140,7 +176,12 @@ const ServicesListPage = () => {
 
   return (
     <div className="container-custom py-10">
-      <h1 className="text-3xl font-bold mb-6">Serviços Disponíveis</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Serviços Disponíveis</h1>
+        {isDemoMode && (
+          <div className="text-sm text-muted-foreground">Modo Demo Ativo</div>
+        )}
+      </div>
       
       <div className="mb-8">
         <SearchBar onSearch={handleSearch} />
