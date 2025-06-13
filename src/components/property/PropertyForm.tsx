@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import PropertyFormErrorHandler from "@/components/PropertyFormErrorHandler";
 import { PropertyBasicFields } from "./PropertyBasicFields";
 import { PropertyTypeAndPrice } from "./PropertyTypeAndPrice";
 import { PropertyCharacteristics } from "./PropertyCharacteristics";
-import { WhatsAppInput } from "@/components/forms/WhatsAppInput";
+import WhatsAppInput from "@/components/forms/WhatsAppInput";
 
 interface PropertyFormData {
   title: string;
