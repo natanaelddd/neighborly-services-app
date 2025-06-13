@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, CheckCircle, XCircle, Clock, Camera, Plus } from "lucide-react";
+import { Edit, Eye, CheckCircle, XCircle, Clock, Camera, Plus, Star, StarOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from "@/types";
@@ -23,6 +22,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [featuredProperties, setFeaturedProperties] = useState<number[]>([]);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -30,8 +30,16 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
       setIsLoading(false);
     } else {
       fetchProperties();
+      loadFeaturedProperties();
     }
   }, [isDemoMode]);
+
+  const loadFeaturedProperties = () => {
+    const stored = localStorage.getItem('featuredPropertyIds');
+    if (stored) {
+      setFeaturedProperties(JSON.parse(stored));
+    }
+  };
 
   const fetchProperties = async () => {
     try {
@@ -116,6 +124,18 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
       console.error('Erro ao atualizar status:', error);
       toast.error("Erro ao atualizar status");
     }
+  };
+
+  const toggleFeatured = (propertyId: number) => {
+    const newFeatured = featuredProperties.includes(propertyId)
+      ? featuredProperties.filter(id => id !== propertyId)
+      : [...featuredProperties, propertyId];
+    
+    setFeaturedProperties(newFeatured);
+    localStorage.setItem('featuredPropertyIds', JSON.stringify(newFeatured));
+    
+    const action = newFeatured.includes(propertyId) ? 'adicionada ao' : 'removida do';
+    toast.success(`Propriedade ${action} destaque!`);
   };
 
   const handleAddPhotos = async () => {
@@ -218,7 +238,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
       <CardHeader>
         <CardTitle>Gerenciar Propriedades {isDemoMode && <Badge variant="outline">DEMO</Badge>}</CardTitle>
         <CardDescription>
-          Gerencie as propriedades cadastradas pelos moradores. Propriedades aprovadas aparecerão no carousel da página inicial.
+          Gerencie as propriedades cadastradas pelos moradores. Propriedades aprovadas aparecem no site e podem ser destacadas no carousel da página inicial.
         </CardDescription>
         
         <div className="flex flex-wrap gap-2 mt-4">
@@ -270,6 +290,12 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                       <Badge variant="outline">
                         {property.type === 'venda' ? 'Venda' : 'Aluguel'}
                       </Badge>
+                      {featuredProperties.includes(property.id) && (
+                        <Badge className="bg-yellow-500">
+                          <Star className="w-3 h-3 mr-1" />
+                          Destaque
+                        </Badge>
+                      )}
                     </div>
                     
                     <p className="text-gray-600 mb-3 line-clamp-2">{property.description}</p>
@@ -321,14 +347,34 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                   )}
                   
                   {property.status === 'approved' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleStatusChange(property.id, 'pending')}
-                    >
-                      <Clock className="w-4 h-4 mr-2" />
-                      Marcar como Pendente
-                    </Button>
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStatusChange(property.id, 'pending')}
+                      >
+                        <Clock className="w-4 h-4 mr-2" />
+                        Marcar como Pendente
+                      </Button>
+                      
+                      <Button
+                        variant={featuredProperties.includes(property.id) ? "destructive" : "default"}
+                        size="sm"
+                        onClick={() => toggleFeatured(property.id)}
+                      >
+                        {featuredProperties.includes(property.id) ? (
+                          <>
+                            <StarOff className="w-4 h-4 mr-2" />
+                            Remover Destaque
+                          </>
+                        ) : (
+                          <>
+                            <Star className="w-4 h-4 mr-2" />
+                            Destacar
+                          </>
+                        )}
+                      </Button>
+                    </>
                   )}
                   
                   {property.status === 'rejected' && (
