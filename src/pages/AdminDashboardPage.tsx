@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
@@ -79,16 +80,61 @@ const AdminDashboardPage = () => {
       </h1>
       
       <Tabs defaultValue="pending-services">
-        <TabsList className="mb-6 flex flex-wrap">
-          <TabsTrigger value="pending-services">Serviços Pendentes</TabsTrigger>
-          <TabsTrigger value="all-services">Todos Serviços</TabsTrigger>
-          <TabsTrigger value="properties">Propriedades</TabsTrigger>
-          <TabsTrigger value="categories">Categorias</TabsTrigger>
-          <TabsTrigger value="featured-ad">Propriedades em Destaque</TabsTrigger>
-          <TabsTrigger value="menu">Menu</TabsTrigger>
-          <TabsTrigger value="recommendations">Indicações</TabsTrigger>
-          <TabsTrigger value="admins">Administradores</TabsTrigger>
-        </TabsList>
+        <div className="mb-6 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+            {/* Seção Principal - Serviços */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-muted-foreground px-3 py-1">SERVIÇOS</h3>
+              <TabsList className="flex flex-col h-auto space-y-1 bg-transparent p-0">
+                <TabsTrigger value="pending-services" className="w-full justify-start">
+                  Pendentes
+                </TabsTrigger>
+                <TabsTrigger value="all-services" className="w-full justify-start">
+                  Todos Serviços
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="w-full justify-start">
+                  Categorias
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Seção Propriedades */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-muted-foreground px-3 py-1">PROPRIEDADES</h3>
+              <TabsList className="flex flex-col h-auto space-y-1 bg-transparent p-0">
+                <TabsTrigger value="properties" className="w-full justify-start">
+                  Gerenciar
+                </TabsTrigger>
+                <TabsTrigger value="featured-ad" className="w-full justify-start">
+                  Em Destaque
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Seção Site */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-muted-foreground px-3 py-1">SITE</h3>
+              <TabsList className="flex flex-col h-auto space-y-1 bg-transparent p-0">
+                <TabsTrigger value="menu" className="w-full justify-start">
+                  Menu
+                </TabsTrigger>
+                <TabsTrigger value="recommendations" className="w-full justify-start">
+                  Indicações
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Seção Administração */}
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-muted-foreground px-3 py-1">SISTEMA</h3>
+              <TabsList className="flex flex-col h-auto space-y-1 bg-transparent p-0">
+                <TabsTrigger value="admins" className="w-full justify-start">
+                  Administradores
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
+        </div>
 
         {/* Serviços Pendentes */}
         <TabsContent value="pending-services">

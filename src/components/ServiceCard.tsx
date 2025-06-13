@@ -2,6 +2,7 @@
 import { ServiceWithProvider } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Lightbox } from "@/components/ui/lightbox";
 
 interface ServiceCardProps {
   service: ServiceWithProvider;
@@ -46,14 +47,20 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           </div>
           
           <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 ml-2">
-            <img 
-              src={service.photoUrl || "/placeholder.svg"} 
+            <Lightbox
+              src={service.photoUrl || "/placeholder.svg"}
               alt={service.photoUrl ? `Logo de ${service.title}` : "Logo Condo Indico"}
-              className="w-full h-full object-cover" 
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/placeholder.svg";
-              }}
+              trigger={
+                <img 
+                  src={service.photoUrl || "/placeholder.svg"} 
+                  alt={service.photoUrl ? `Logo de ${service.title}` : "Logo Condo Indico"}
+                  className="w-full h-full object-cover hover:opacity-80 transition-opacity cursor-pointer" 
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder.svg";
+                  }}
+                />
+              }
             />
           </div>
         </div>
