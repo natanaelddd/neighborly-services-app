@@ -1,18 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Settings, Home } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarMenu } from "./navbar/NavbarMenu";
-import { useMenuItems } from "@/hooks/useMenuItems";
+import { usePublicMenuItems } from "@/hooks/usePublicMenuItems";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-
-interface MenuItem {
-  id: number;
-  label: string;
-  path: string;
-  visible: boolean;
-}
 
 const HIDDEN_PATHS_IN_MAIN_MENU = [
   "/services",
@@ -20,29 +14,18 @@ const HIDDEN_PATHS_IN_MAIN_MENU = [
   "/properties/new"
 ];
 
-const defaultMenu: MenuItem[] = [
-  { id: 1, label: "Home", path: "/", visible: true },
-  { id: 2, label: "Services", path: "/services", visible: true },
-  { id: 3, label: "Categories", path: "/categories", visible: true },
-  { id: 4, label: "Properties", path: "/properties", visible: true },
-  { id: 5, label: "Recommendations", path: "/recommendations", visible: true },
-  { id: 6, label: "About", path: "/about", visible: true },
-  { id: 7, label: "Contact", path: "/contact", visible: true }
-];
-
 const Navbar = () => {
   const { user, profile, isAdmin, logout } = useAuth();
   const location = useLocation();
-  const { menuItems } = useMenuItems();
+  const { menuItems } = usePublicMenuItems();
 
-  // Só os visíveis e NÃO os três do HeroSection
+  // Só os visíveis e NÃO os três do HeroSection (igual antes)
   const navigation = menuItems.filter(
     item => 
       item.visible &&
       !HIDDEN_PATHS_IN_MAIN_MENU.includes(item.path)
   );
 
-  // Mesmo logic do isActive de antes
   const isActive = (href: string) => {
     if (href === "/") {
       return location.pathname === "/";

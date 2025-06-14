@@ -2,15 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Plus, Home, Search } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useMenuItems } from "@/hooks/useMenuItems";
+import { usePublicMenuItems } from "@/hooks/usePublicMenuItems";
 
-// Helper: retorna label + path baseado no label original padrão do menu
-const menuMap: Record<string, string> = {
-  "Encontrar Serviços": "find-services",
-  "Oferecer Serviço": "offer-service",
-  "Cadastrar Casa": "register-house",
-};
-
+// Mapeamento para nomes default, caso queira customizar labels
 const BOTAO_PADRAO = [
   { reference: "Encontrar Serviços", fallbackLabel: "Encontrar Serviços", fallbackPath: "/services" },
   { reference: "Oferecer Serviço", fallbackLabel: "Oferecer Serviço", fallbackPath: "/services/new" },
@@ -18,9 +12,9 @@ const BOTAO_PADRAO = [
 ];
 
 const HeroSection = () => {
-  const { menuItems } = useMenuItems();
+  const { menuItems } = usePublicMenuItems();
 
-  // Recupera label e link editáveis vindo do Admin
+  // Recupera label e link editáveis vindos do Admin/Supabase
   const getBotao = (padrao: typeof BOTAO_PADRAO[0]) => {
     // Busca no menuItems pelo label padrão, ignorando case, OU pelo path padrão
     let item = menuItems.find(mi =>
@@ -28,7 +22,6 @@ const HeroSection = () => {
         mi.label?.toLowerCase() === ref.toLowerCase()
       )
     );
-    // backfill por path caso alguém tenha alterado label
     if (!item) item = menuItems.find(mi => mi.path === padrao.fallbackPath);
     return {
       label: item?.label ?? padrao.fallbackLabel,

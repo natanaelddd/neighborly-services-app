@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { MenuItem } from "@/hooks/useMenuItems";
+import type { MenuItem } from "@/hooks/usePublicMenuItems";
 import { useState } from "react";
 
 interface NavbarMenuProps {
