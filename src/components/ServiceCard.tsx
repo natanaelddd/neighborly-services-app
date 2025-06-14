@@ -28,14 +28,12 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
     }
   };
 
-  // Função para compartilhar o link via WhatsApp
-  const handleShareWhatsApp = () => {
-    // Preferência: sempre usar /services/:id (padrão, ainda que /servicos exista)
-    const servicePath = `/services/${service.id}`;
-    const url = window.location.origin + servicePath;
+  // Função para compartilhar contato via WhatsApp
+  const handleShareWhatsAppContact = () => {
     const shareMessage =
-      `Confira este serviço que encontrei no Condo Indico:\n\n${service.title}\n` +
-      `Veja mais detalhes: ${url}`;
+      `Recomendação do Condo Indico:\n\n` +
+      `${service.title} por ${service.providerName}\n` +
+      `WhatsApp: ${service.whatsapp}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, "_blank");
   };
 
@@ -92,11 +90,11 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
             Falar no WhatsApp
           </Button>
           <Button
-            onClick={handleShareWhatsApp}
+            onClick={handleShareWhatsAppContact}
             variant="secondary"
             className="px-3"
-            title="Compartilhar link do serviço via WhatsApp"
-            aria-label="Compartilhar via WhatsApp"
+            title="Compartilhar contato do serviço pelo WhatsApp"
+            aria-label="Compartilhar contato do serviço"
           >
             <Share className="text-primary" />
           </Button>
