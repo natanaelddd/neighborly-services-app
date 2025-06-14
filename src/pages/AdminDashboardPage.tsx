@@ -3,8 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
-
-// Admin component imports
 import PendingServices from "@/components/admin/PendingServices";
 import AllServices from "@/components/admin/AllServices";
 import CategoriesManagement from "@/components/admin/CategoriesManagement"; 
@@ -13,6 +11,7 @@ import MenuManager from "@/components/admin/MenuManager";
 import RecommendationsManager from "@/components/admin/RecommendationsManager";
 import AdminsManager from "@/components/admin/AdminsManager";
 import PropertiesManagement from "@/components/admin/PropertiesManagement";
+import { useSupabaseMenuItems } from "@/hooks/useSupabaseMenuItems";
 
 const AdminDashboardPage = () => {
   const { isAdmin } = useAuth();
@@ -72,6 +71,17 @@ const AdminDashboardPage = () => {
     showRecommendationsMenu,
     setShowRecommendationsMenu
   });
+
+  // Supabase Menu
+  const {
+    menuItems,
+    isLoading: isMenuLoading,
+    fetchMenuItems,
+    addMenuItem,
+    updateMenuItem,
+    deleteMenuItem,
+    reorderMenuItems,
+  } = useSupabaseMenuItems();
 
   if (!isAdmin) {
     return (
@@ -192,10 +202,29 @@ const AdminDashboardPage = () => {
         <TabsContent value="menu">
           <MenuManager
             menuItems={menuItems}
+            isLoading={isMenuLoading}
             showRecommendationsMenu={showRecommendationsMenu}
-            onToggleMenuItem={toggleMenuItem}
+            onToggleMenuItem={async (id: number, visible: boolean) => {
+              await updateMenuItem(id, { visible });
+              fetchMenuItems();
+            }}
             onToggleRecommendations={toggleRecommendationsMenu}
-            onReorderMenuItems={(ordered) => setMenuItems(ordered)}
+            onReorderMenuItems={async (ordered) => {
+              await reorderMenuItems(ordered);
+              fetchMenuItems();
+            }}
+            onAddMenuItem={async (item) => {
+              await addMenuItem(item);
+              fetchMenuItems();
+            }}
+            onUpdateMenuItem={async (id, patch) => {
+              await updateMenuItem(id, patch);
+              fetchMenuItems();
+            }}
+            onDeleteMenuItem={async (id) => {
+              await deleteMenuItem(id);
+              fetchMenuItems();
+            }}
           />
         </TabsContent>
         

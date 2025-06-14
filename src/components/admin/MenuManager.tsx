@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,21 +5,18 @@ import { toast } from "sonner";
 import MenuManagerItem from "./MenuManagerItem";
 import MenuManagerAddForm from "./MenuManagerAddForm";
 import { Save } from "lucide-react";
-
-interface MenuItem {
-  id: number;
-  label: string;
-  path: string;
-  visible: boolean;
-}
+import { MenuItem } from "@/hooks/useSupabaseMenuItems";
 
 interface MenuManagerProps {
   menuItems: MenuItem[];
+  isLoading?: boolean;
   showRecommendationsMenu: boolean;
   onToggleMenuItem: (id: number, visible: boolean) => void;
   onToggleRecommendations: () => void;
   onReorderMenuItems?: (items: MenuItem[]) => void;
-  onUpdateMenuItemPath?: (id: number, newPath: string) => void;
+  onAddMenuItem?: (item: Omit<MenuItem, "id" | "created_at" | "updated_at">) => void;
+  onUpdateMenuItem?: (id: number, patch: Partial<MenuItem>) => void;
+  onDeleteMenuItem?: (id: number) => void;
 }
 
 const REQUIRED_BUTTONS = [
@@ -31,21 +27,21 @@ const REQUIRED_BUTTONS = [
 
 const MenuManager = ({
   menuItems,
+  isLoading,
   showRecommendationsMenu,
   onToggleMenuItem,
   onToggleRecommendations,
   onReorderMenuItems,
+  onAddMenuItem,
+  onUpdateMenuItem,
+  onDeleteMenuItem,
 }: MenuManagerProps) => {
-  // Estado local editável
+  // Local editável para alteração temporária de ordem
   const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>(menuItems);
 
-  // Só sincroniza se realmente mudou
+  // Sincroniza na entrada
   useEffect(() => {
-    // Só faz set se for diferente do atual para evitar sobrescrever edições em andamento
-    if (JSON.stringify(menuItems) !== JSON.stringify(pendingMenuItems)) {
-      setPendingMenuItems(menuItems);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setPendingMenuItems(menuItems);
   }, [menuItems]);
 
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
@@ -171,15 +167,12 @@ const MenuManager = ({
   // Agora só mostra o que for do pendingMenuItems (nada de botões obrigatórios)
   const allMenuItems = pendingMenuItems;
 
-  const handleSaveMenuChanges = () => {
-    localStorage.setItem("menuItemsOrder", JSON.stringify(pendingMenuItems));
+  // Salva no Supabase
+  const handleSaveMenuChanges = async () => {
     if (onReorderMenuItems) {
-      onReorderMenuItems(pendingMenuItems);
+      await onReorderMenuItems(pendingMenuItems);
+      toast.success("Menu publicado no site via Supabase!");
     }
-    // Após salvar e mexer no global, sincroniza o local também
-    setPendingMenuItems(pendingMenuItems);
-    // Notifica usuário
-    toast.success("Menu atualizado e publicado no site!");
   };
 
   return (
@@ -187,66 +180,70 @@ const MenuManager = ({
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edite nome, link, adicione ou remova itens do menu abaixo. Só o que está aqui será exibido no site.
+          Edite nome, link, adicione ou remova itens do menu abaixo. Agora sincronizado com Supabase.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="flex flex-row-reverse">
-            <Button variant="default" onClick={handleSaveMenuChanges} className="ml-auto flex gap-2">
-              <Save className="w-4 h-4" />
-              Salvar
-            </Button>
-          </div>
-          <MenuManagerAddForm
-            newMenuLabel={newMenuLabel}
-            newMenuPath={newMenuPath}
-            setNewMenuLabel={setNewMenuLabel}
-            setNewMenuPath={setNewMenuPath}
-            handleAddNewMenu={handleAddNewMenu}
-          />
-          {/* Lista de menus existentes */}
-          {allMenuItems.map((item) => (
-            <MenuManagerItem
-              key={item.id}
-              item={item}
-              editId={editId}
-              isDragging={draggedItemId === item.id}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDrop={handleDrop}
-              onEdit={handleEdit}
-              onSave={handleSaveEdit}
-              onCancelEdit={handleCancelEdit}
-              onUpdateEdited={handleUpdateEdited}
-              editedLabel={editedLabel}
-              editedPath={editedPath}
-              onToggleItem={handleToggleItem}
+        {isLoading ? (
+          <div className="text-center py-12">Carregando menus...</div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-row-reverse">
+              <Button variant="default" onClick={handleSaveMenuChanges} className="ml-auto flex gap-2">
+                <Save className="w-4 h-4" />
+                Salvar
+              </Button>
+            </div>
+            <MenuManagerAddForm
+              newMenuLabel={newMenuLabel}
+              newMenuPath={newMenuPath}
+              setNewMenuLabel={setNewMenuLabel}
+              setNewMenuPath={setNewMenuPath}
+              handleAddNewMenu={handleAddNewMenu}
             />
-          ))}
-          {/* Recomendações */}
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
-            <div className="bg-muted/30 p-4 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm">
-                    The recommendations menu allows you to add services from people who don't live in the condominium.
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Current status: {showRecommendationsMenu ? "Active" : "Inactive"}
-                  </p>
+            {/* Lista de menus existentes */}
+            {allMenuItems.map((item) => (
+              <MenuManagerItem
+                key={item.id}
+                item={item}
+                editId={editId}
+                isDragging={draggedItemId === item.id}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDrop={handleDrop}
+                onEdit={handleEdit}
+                onSave={handleSaveEdit}
+                onCancelEdit={handleCancelEdit}
+                onUpdateEdited={handleUpdateEdited}
+                editedLabel={editedLabel}
+                editedPath={editedPath}
+                onToggleItem={handleToggleItem}
+              />
+            ))}
+            {/* Recomendações */}
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
+              <div className="bg-muted/30 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm">
+                      The recommendations menu allows you to add services from people who don't live in the condominium.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Current status: {showRecommendationsMenu ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                  <Button
+                    variant={showRecommendationsMenu ? "outline" : "default"}
+                    onClick={handleToggleRecommendations}
+                  >
+                    {showRecommendationsMenu ? "Disable" : "Enable"}
+                  </Button>
                 </div>
-                <Button
-                  variant={showRecommendationsMenu ? "outline" : "default"}
-                  onClick={handleToggleRecommendations}
-                >
-                  {showRecommendationsMenu ? "Disable" : "Enable"}
-                </Button>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

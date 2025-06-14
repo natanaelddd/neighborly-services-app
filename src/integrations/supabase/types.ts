@@ -36,6 +36,36 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_items: {
+        Row: {
+          created_at: string | null
+          display_order: number
+          id: number
+          label: string
+          path: string
+          updated_at: string | null
+          visible: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number
+          id?: number
+          label: string
+          path: string
+          updated_at?: string | null
+          visible?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number
+          id?: number
+          label?: string
+          path?: string
+          updated_at?: string | null
+          visible?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           block: string
