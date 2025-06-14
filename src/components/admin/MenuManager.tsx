@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,8 +39,13 @@ const MenuManager = ({
   // Estado local editável
   const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>(menuItems);
 
+  // Só sincroniza se realmente mudou
   useEffect(() => {
-    setPendingMenuItems(menuItems);
+    // Só faz set se for diferente do atual para evitar sobrescrever edições em andamento
+    if (JSON.stringify(menuItems) !== JSON.stringify(pendingMenuItems)) {
+      setPendingMenuItems(menuItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuItems]);
 
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
@@ -170,6 +176,9 @@ const MenuManager = ({
     if (onReorderMenuItems) {
       onReorderMenuItems(pendingMenuItems);
     }
+    // Após salvar e mexer no global, sincroniza o local também
+    setPendingMenuItems(pendingMenuItems);
+    // Notifica usuário
     toast.success("Menu atualizado e publicado no site!");
   };
 
