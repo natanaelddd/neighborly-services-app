@@ -46,7 +46,8 @@ const UserDashboardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link to="/novo-servico">
+                {/* Corrigido para a rota correta */}
+                <Link to="/servicos/novo">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar Serviço
@@ -66,7 +67,8 @@ const UserDashboardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link to="/nova-propriedade">
+                {/* Corrigido para a rota correta */}
+                <Link to="/properties/new">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar Propriedade
