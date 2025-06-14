@@ -47,6 +47,8 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/services" element={<ServicesListPage />} />
                   <Route path="/services/:id" element={<ServiceDetailPage />} />
+                  <Route path="/servicos" element={<ServicesListPage />} />
+                  <Route path="/servicos/:id" element={<ServiceDetailPage />} />
                   <Route path="/category/:categoryId" element={<CategoryPage />} />
                   <Route path="/categories" element={<CategoriesPage />} />
                   <Route path="/about" element={<AboutPage />} />
@@ -59,6 +61,11 @@ function App() {
 
                   {/* Rotas protegidas */}
                   <Route path="/services/new" element={
+                    <ProtectedRoute>
+                      <NewServicePage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/servicos/novo" element={
                     <ProtectedRoute>
                       <NewServicePage />
                     </ProtectedRoute>
