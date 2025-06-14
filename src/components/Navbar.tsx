@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Settings, Home } from "lucide-react";
@@ -9,7 +8,6 @@ import { usePublicMenuItems } from "@/hooks/usePublicMenuItems";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const HIDDEN_PATHS_IN_MAIN_MENU = [
-  "/services",
   "/services/new",
   "/properties/new"
 ];
