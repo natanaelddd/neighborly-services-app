@@ -28,13 +28,21 @@ const SimpleCategoryFormDialog = ({
     icon: initialIcon
   });
 
+  // Resetar ao abrir o dialog (fix bug ficar dados antigos)
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: initialName,
+        icon: initialIcon
+      });
+    }
+  }, [isOpen, initialName, initialIcon]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name.trim()) {
       return;
     }
-
     await onSubmit(formData.name.trim(), formData.icon);
     setFormData({ name: "", icon: "📋" });
   };

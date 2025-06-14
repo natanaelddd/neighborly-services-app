@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,11 +51,19 @@ const MenuManager = ({
   const [newMenuPath, setNewMenuPath] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Adiciona recarregamento após salvar
+  const reloadMenuItems = async () => {
+    if (typeof window !== "undefined") {
+      const ev = new Event("reloadMenuItems");
+      window.dispatchEvent(ev);
+    }
+  };
+
   // Arraste/reordenar menus
   const handleDragStart = (id: number) => setDraggedItemId(id);
   const handleDragEnd = () => setDraggedItemId(null);
 
-  const handleDrop = (toId: number) => {
+  const handleDrop = async (toId: number) => {
     if (draggedItemId === null || draggedItemId === toId) return;
     const fromIdx = pendingMenuItems.findIndex(item => item.id === draggedItemId);
     const toIdx = pendingMenuItems.findIndex(item => item.id === toId);
@@ -67,6 +74,15 @@ const MenuManager = ({
     setPendingMenuItems(reordered);
     setDraggedItemId(null);
     toast.info("Ordem alterada, clique em Salvar para publicar.");
+
+    // Já salva reordenação após drop para evitar perder ação
+    if (onReorderMenuItems) {
+      setIsSaving(true);
+      await onReorderMenuItems(reordered as MenuItem[]);
+      setIsSaving(false);
+      toast.success("Ordem dos menus salva!");
+      reloadMenuItems();
+    }
   };
 
   // Alternar visibilidade (muda só local até clicar no Salvar)
@@ -92,8 +108,7 @@ const MenuManager = ({
     setEditedPath(currentPath);
   };
 
-  // Ao apertar Salvar dentro do "editar" do menu
-  const handleSaveEdit = (id: number, label: string, path: string) => {
+  const handleSaveEdit = async (id: number, label: string, path: string) => {
     if (!label.trim()) {
       toast.error("O nome do menu não pode ser vazio!");
       return;
@@ -115,10 +130,19 @@ const MenuManager = ({
         item.id === id ? { ...item, label: label.trim(), path: path.trim() } : item
       )
     );
-    toast.info("Alteração feita, clique em Salvar para publicar.");
     setEditId(null);
     setEditedLabel("");
     setEditedPath("");
+    toast.info("Alteração feita, clique em Salvar para publicar.");
+
+    // Já salva no Supabase imediatamente
+    if (onUpdateMenuItem) {
+      setIsSaving(true);
+      await onUpdateMenuItem(id, { label: label.trim(), path: path.trim() });
+      setIsSaving(false);
+      toast.success("Alteração salva!");
+      reloadMenuItems();
+    }
   };
 
   const handleCancelEdit = () => {
@@ -181,13 +205,11 @@ const MenuManager = ({
         display_order: idx
       }));
 
-      // Salva ordem dos menus (chama upsert no banco)
       await onReorderMenuItems(itemsToSave as MenuItem[]);
 
-      // Persiste alterações de label/path/visible de cada item (se houve)
+      // Persiste alterações de label/path/visible
       await Promise.all(itemsToSave.map(async item => {
         const original = menuItems.find(i => i.id === item.id);
-        // Se houve alteração fora ordem, salvar!
         if (
           original &&
           (
@@ -207,6 +229,7 @@ const MenuManager = ({
 
       setIsSaving(false);
       toast.success("Menu publicado com sucesso!");
+      reloadMenuItems();
     }
   };
 
@@ -296,4 +319,3 @@ const MenuManager = ({
 };
 
 export default MenuManager;
-

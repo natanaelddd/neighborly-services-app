@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,15 +125,15 @@ const CategoriesManagement = () => {
         .order('display_order', { ascending: true });
 
       if (error) {
-        console.error('Erro ao buscar categorias:', error);
         toast.error("Erro ao carregar categorias");
+        setCategories([]);
         return;
       }
 
       setCategories(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error);
+    } catch {
       toast.error("Erro ao carregar categorias");
+      setCategories([]);
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +153,6 @@ const CategoriesManagement = () => {
     setCategories(newCategories);
 
     if (!isDemoMode) {
-      // Update display_order in database
       try {
         const updates = newCategories.map((category, index) => ({
           id: category.id,
@@ -169,10 +167,10 @@ const CategoriesManagement = () => {
         }
 
         toast.success("Ordem das categorias atualizada!");
+        fetchCategories(); // Força reload após salvar para refletir ordem real
       } catch (error) {
-        console.error('Erro ao atualizar ordem:', error);
         toast.error("Erro ao atualizar ordem das categorias");
-        fetchCategories(); // Revert on error
+        fetchCategories(); // Reverter na UI se der erro
       }
     }
   };
@@ -204,7 +202,6 @@ const CategoriesManagement = () => {
         .single();
 
       if (error) {
-        console.error('Erro ao adicionar categoria:', error);
         toast.error("Erro ao adicionar categoria");
         return;
       }
@@ -218,10 +215,10 @@ const CategoriesManagement = () => {
       };
 
       setCategories([...categories, newCategory]);
-      toast.success("Categoria adicionada com sucesso!");
       setShowAddDialog(false);
-    } catch (error) {
-      console.error('Erro ao adicionar categoria:', error);
+      toast.success("Categoria adicionada com sucesso!");
+      fetchCategories(); // Atualiza imediatamente após add
+    } catch {
       toast.error("Erro ao adicionar categoria");
     }
   };
