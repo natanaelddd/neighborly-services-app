@@ -1,5 +1,7 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
@@ -27,26 +29,8 @@ const AdminDashboardPage = () => {
     setShowRecommendationsMenu,
     featuredProperties,
     setFeaturedProperties,
-    menuItems,
-    setMenuItems,
     isDemoMode
   } = useAdminState();
-
-  // Garante que menuItems sempre estará sincronizado com o localStorage ao entrar no Admin
-  useEffect(() => {
-    const data = localStorage.getItem("menuItemsOrder");
-    if (data) {
-      try {
-        let loaded = JSON.parse(data);
-        if (Array.isArray(loaded) && loaded.length > 0) {
-          setMenuItems(loaded);
-        }
-      } catch {
-        // fallback: não faz nada, manter como está
-      }
-    }
-    // eslint-disable-next-line
-  }, []);
 
   const serviceManager = ServiceManager({ services, setServices });
 
@@ -66,13 +50,14 @@ const AdminDashboardPage = () => {
     setAdmins,
     featuredProperties,
     setFeaturedProperties,
-    menuItems,
-    setMenuItems,
+    // Não usamos menuItems nem setMenuItems do state local - agora só o Supabase é fonte de verdade!
+    menuItems: [],
+    setMenuItems: () => {},
     showRecommendationsMenu,
     setShowRecommendationsMenu
   });
 
-  // Supabase Menu
+  // SUPABASE MENU - agora é a fonte única!
   const {
     menuItems,
     isLoading: isMenuLoading,
@@ -250,3 +235,4 @@ const AdminDashboardPage = () => {
 };
 
 export default AdminDashboardPage;
+

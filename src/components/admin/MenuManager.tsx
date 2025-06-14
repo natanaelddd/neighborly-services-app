@@ -141,24 +141,29 @@ const MenuManager = ({
       return;
     }
     if (
-      pendingMenuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())
+      pendingMenuItems.some(
+        (item) =>
+          item.label.toLowerCase() === newMenuLabel.trim().toLowerCase() ||
+          item.path.toLowerCase() === newMenuPath.trim().toLowerCase()
+      )
     ) {
-      toast.error("Já existe um menu com esse nome!");
+      toast.error("Já existe um menu com esse nome ou link!");
       return;
     }
-    if (
-      pendingMenuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())
-    ) {
-      toast.error("Já existe um menu com esse link!");
-      return;
-    }
+    const nextOrder =
+      pendingMenuItems.length > 0
+        ? Math.max(...pendingMenuItems.map((i) => i.display_order ?? 0)) + 1
+        : 0;
     const newItem: MenuItem = {
-      id: Math.max(0, ...pendingMenuItems.map(i => i.id)) + 1,
+      id: -1, // id só será definido após salvar no Supabase
       label: newMenuLabel.trim(),
       path: newMenuPath.trim(),
       visible: true,
+      display_order: nextOrder,
+      created_at: null,
+      updated_at: null,
     };
-    setPendingMenuItems(prev => [...prev, newItem]);
+    setPendingMenuItems((prev) => [...prev, newItem]);
     toast.info("Menu adicionado, clique em Salvar para publicar.");
     setNewMenuLabel("");
     setNewMenuPath("");
@@ -170,7 +175,13 @@ const MenuManager = ({
   // Salva no Supabase
   const handleSaveMenuChanges = async () => {
     if (onReorderMenuItems) {
-      await onReorderMenuItems(pendingMenuItems);
+      // Antes: corrige ids falsos (-1) para não mandar com id undefined para Supabase
+      const itemsToSave = pendingMenuItems.map((item, idx) => ({
+        ...item,
+        display_order: idx,
+        id: typeof item.id === "number" && item.id > 0 ? item.id : undefined,
+      }));
+      await onReorderMenuItems(itemsToSave as MenuItem[]);
       toast.success("Menu publicado no site via Supabase!");
     }
   };

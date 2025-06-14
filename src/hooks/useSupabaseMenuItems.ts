@@ -40,18 +40,25 @@ export function useSupabaseMenuItems() {
   }, [fetchMenuItems]);
 
   // CRUD helpers
-  const addMenuItem = async (item: Omit<MenuItem, "id" | "created_at" | "updated_at">) => {
+  const addMenuItem = async (
+    item: Omit<MenuItem, "id" | "created_at" | "updated_at">
+  ) => {
+    // Novo item recebe primeiro display_order vago (no fim da lista)
     const { data, error } = await supabase
       .from("menu_items")
       .insert([
-        { ...item }
+        {
+          ...item,
+          display_order: menuItems.length, // Ordem
+        },
       ])
       .select()
       .single();
 
-    if (!error && data) setMenuItems(items =>
-      [...items, data].sort((a, b) => a.display_order - b.display_order)
-    );
+    if (!error && data)
+      setMenuItems((items) =>
+        [...items, data].sort((a, b) => a.display_order - b.display_order)
+      );
     return { data, error };
   };
 
@@ -62,9 +69,10 @@ export function useSupabaseMenuItems() {
       .eq("id", id)
       .select()
       .single();
-    if (!error && data) setMenuItems(items =>
-      items.map(i => (i.id === id ? { ...i, ...patch } : i))
-    );
+    if (!error && data)
+      setMenuItems((items) =>
+        items.map((i) => (i.id === id ? { ...i, ...patch } : i))
+      );
     return { data, error };
   };
 
@@ -73,20 +81,22 @@ export function useSupabaseMenuItems() {
       .from("menu_items")
       .delete()
       .eq("id", id);
-    if (!error) setMenuItems(items => items.filter(i => i.id !== id));
+    if (!error) setMenuItems((items) => items.filter((i) => i.id !== id));
     return { error };
   };
 
   const reorderMenuItems = async (items: MenuItem[]) => {
-    // Lote update do display_order
+    // Lote update do display_order - precisa enviar todos campos obrigatórios do MenuItem!
     const updates = items.map((item, i) => ({
-      id: item.id,
-      display_order: i
+      ...item,
+      display_order: i,
+      updated_at: new Date().toISOString(),
     }));
     const { error } = await supabase
       .from("menu_items")
       .upsert(updates, { onConflict: "id" });
-    if (!error) setMenuItems(items.map((it, i) => ({ ...it, display_order: i })));
+    if (!error)
+      setMenuItems(items.map((it, i) => ({ ...it, display_order: i })));
     return { error };
   };
 
@@ -99,6 +109,6 @@ export function useSupabaseMenuItems() {
     updateMenuItem,
     deleteMenuItem,
     reorderMenuItems,
-    setMenuItems // só para uso interno avançado
+    setMenuItems, // só para uso interno avançado
   };
 }
