@@ -28,10 +28,10 @@ const MenuManager = ({
   onToggleMenuItem, 
   onToggleRecommendations,
   onReorderMenuItems,
-  onUpdateMenuItemPath
 }: MenuManagerProps) => {
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
-  const [editPathId, setEditPathId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editedLabel, setEditedLabel] = useState<string>("");
   const [editedPath, setEditedPath] = useState<string>("");
 
   const handleDragStart = (id: number) => setDraggedItemId(id);
@@ -78,26 +78,40 @@ const MenuManager = ({
     );
   };
 
-  const handleEditPath = (id: number, currentPath: string) => {
-    setEditPathId(id);
+  // Entrar no modo de edição de um item
+  const handleEdit = (id: number, currentLabel: string, currentPath: string) => {
+    setEditId(id);
+    setEditedLabel(currentLabel);
     setEditedPath(currentPath);
   };
 
-  const handleSavePath = (id: number) => {
-    if (!editedPath.trim().startsWith("/")) {
-      toast.error("The path must start with '/'");
+  // Salvar alterações de nome/label e link/path
+  const handleSave = (id: number) => {
+    if (!editedLabel.trim()) {
+      toast.error("O nome do menu não pode ser vazio!");
       return;
     }
-    if (onUpdateMenuItemPath) {
-      onUpdateMenuItemPath(id, editedPath.trim());
-      // Update on localStorage
-      const updatedItems = menuItems.map(item =>
-        item.id === id ? { ...item, path: editedPath.trim() } : item
-      );
-      localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
-      toast.success("Menu link updated!");
+    if (!editedPath.trim().startsWith("/")) {
+      toast.error("O link deve começar com '/'");
+      return;
     }
-    setEditPathId(null);
+
+    const updatedItems = menuItems.map(item => 
+      item.id === id ? { ...item, label: editedLabel.trim(), path: editedPath.trim() } : item
+    );
+    localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
+    if (onReorderMenuItems) onReorderMenuItems(updatedItems);
+
+    toast.success("Menu atualizado!");
+    setEditId(null);
+    setEditedLabel("");
+    setEditedPath("");
+  };
+
+  // Sair do modo de edição sem salvar
+  const handleCancelEdit = () => {
+    setEditId(null);
+    setEditedLabel("");
     setEditedPath("");
   };
 
@@ -106,7 +120,7 @@ const MenuManager = ({
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Customize and reorder the site menu options. You can also edit the link (path) for each menu item.
+          Edit menu options (name and link separately), toggle visibility, and reorder. These changes will be reflected on the site navigation.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -128,46 +142,50 @@ const MenuManager = ({
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
                 <div className="flex items-center gap-2">
                   <Move className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <div className="flex items-center gap-2 w-full">
-                  <span className="text-sm text-muted-foreground ml-2 hidden sm:inline">
-                    ({item.path})
-                  </span>
-                  {editPathId === item.id ? (
+                  {editId === item.id ? (
                     <form
                       onSubmit={e => {
                         e.preventDefault();
-                        handleSavePath(item.id);
+                        handleSave(item.id);
                       }}
+                      className="flex items-center gap-2"
                     >
                       <input
-                        className="ml-2 px-2 py-1 border rounded text-xs w-36"
-                        value={editedPath}
+                        className="px-2 py-1 border rounded text-xs w-28"
+                        value={editedLabel}
                         autoFocus
-                        onChange={e => setEditedPath(e.target.value)}
-                        onBlur={() => setEditPathId(null)}
+                        onChange={e => setEditedLabel(e.target.value)}
+                        placeholder="Menu name"
                       />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        type="submit"
-                        title="Save"
-                        className="ml-1"
-                      >
+                      <input
+                        className="px-2 py-1 border rounded text-xs w-36"
+                        value={editedPath}
+                        onChange={e => setEditedPath(e.target.value)}
+                        placeholder="/link"
+                      />
+                      <Button size="icon" variant="ghost" type="submit" title="Save" className="ml-1">
                         <Save className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" type="button" onClick={handleCancelEdit} title="Cancel">
+                        ✕
                       </Button>
                     </form>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditPath(item.id, item.path)}
-                      title="Edit path"
-                      className="ml-2"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <>
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-sm text-muted-foreground ml-2 hidden sm:inline">
+                        ({item.path})
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(item.id, item.label, item.path)}
+                        title="Edit menu item"
+                        className="ml-2"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -219,3 +237,4 @@ const MenuManager = ({
 };
 
 export default MenuManager;
+
