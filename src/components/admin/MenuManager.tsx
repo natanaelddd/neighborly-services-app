@@ -233,13 +233,32 @@ const MenuManager = ({
     }
   };
 
+  // MANUTENÇÃO: Nova função para deletar menu
+  const handleDeleteMenuItem = async (id: number) => {
+    if (!onDeleteMenuItem) return;
+    setIsSaving(true);
+    await onDeleteMenuItem(id);
+    setIsSaving(false);
+    toast.success("Menu deletado!");
+    // Após deletar, reordenar e salvar nova ordem
+    const newPending = pendingMenuItems.filter(item => item.id !== id);
+    setPendingMenuItems(newPending);
+    if (onReorderMenuItems) {
+      await onReorderMenuItems(newPending.map((item, idx) => ({
+        ...item,
+        display_order: idx
+      })));
+    }
+    reloadMenuItems();
+  };
+
   // Renderizar sempre de pendingMenuItems (permite pré-visualizar antes de salvar)
   return (
     <Card>
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edite nome, link, adicione ou remova itens do menu abaixo. Agora sincronizado com Supabase.
+          Edite nome, link, adicione, reordene ou remova itens do menu abaixo. Agora sincronizado com Supabase.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -287,6 +306,7 @@ const MenuManager = ({
                   editedLabel={editedLabel}
                   editedPath={editedPath}
                   onToggleItem={handleToggleItem}
+                  onDeleteItem={handleDeleteMenuItem}
                 />
               ))
             )}

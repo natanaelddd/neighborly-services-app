@@ -23,6 +23,7 @@ interface MenuItemProps {
   editedLabel: string;
   editedPath: string;
   onToggleItem: (id: number, visible: boolean) => void;
+  onDeleteItem?: (id: number) => void;
 }
 
 const MenuManagerItem = ({
@@ -39,6 +40,7 @@ const MenuManagerItem = ({
   editedLabel,
   editedPath,
   onToggleItem,
+  onDeleteItem,
 }: MenuItemProps) => {
   return (
     <div
@@ -114,9 +116,24 @@ const MenuManagerItem = ({
         >
           {item.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </Button>
+        {onDeleteItem && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              if (confirm('Deseja realmente deletar este menu?')) {
+                onDeleteItem(item.id);
+              }
+            }}
+            title="Deletar"
+          >
+            Deletar
+          </Button>
+        )}
       </div>
     </div>
   );
 };
 
 export default MenuManagerItem;
+
