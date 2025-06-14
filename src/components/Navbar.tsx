@@ -14,6 +14,12 @@ interface MenuItem {
   visible: boolean;
 }
 
+const HIDDEN_PATHS_IN_MAIN_MENU = [
+  "/services",
+  "/services/new",
+  "/properties/new"
+];
+
 const defaultMenu: MenuItem[] = [
   { id: 1, label: "Home", path: "/", visible: true },
   { id: 2, label: "Services", path: "/services", visible: true },
@@ -29,8 +35,12 @@ const Navbar = () => {
   const location = useLocation();
   const { menuItems } = useMenuItems();
 
-  // Só os visíveis
-  const navigation = menuItems.filter(item => item.visible);
+  // Só os visíveis e NÃO os três do HeroSection
+  const navigation = menuItems.filter(
+    item => 
+      item.visible &&
+      !HIDDEN_PATHS_IN_MAIN_MENU.includes(item.path)
+  );
 
   // Mesmo logic do isActive de antes
   const isActive = (href: string) => {
