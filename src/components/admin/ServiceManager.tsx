@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -101,10 +100,32 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
     }
   };
 
+  const handleDeleteService = async (serviceId: number) => {
+    try {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', serviceId);
+
+      if (error) {
+        console.error('Erro ao excluir serviço:', error);
+        toast.error("Erro ao excluir serviço");
+        return;
+      }
+
+      setServices(services.filter(service => service.id !== serviceId));
+      toast.success("Serviço excluído com sucesso!");
+    } catch (error) {
+      console.error('Erro ao excluir serviço:', error);
+      toast.error("Erro ao excluir serviço");
+    }
+  };
+
   return {
     handleApprove,
     handleReject,
-    handleUpdateService
+    handleUpdateService,
+    handleDeleteService
   };
 };
 

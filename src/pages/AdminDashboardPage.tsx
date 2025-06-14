@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect } from "react";
@@ -162,6 +161,7 @@ const AdminDashboardPage = () => {
             categories={categories}
             isLoading={isLoading}
             onUpdateService={serviceManager.handleUpdateService}
+            onDeleteService={serviceManager.handleDeleteService}
           />
         </TabsContent>
         
@@ -235,4 +235,3 @@ const AdminDashboardPage = () => {
 };
 
 export default AdminDashboardPage;
-

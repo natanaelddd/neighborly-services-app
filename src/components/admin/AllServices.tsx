@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,9 +39,10 @@ interface AllServicesProps {
   categories: Category[];
   isLoading: boolean;
   onUpdateService: (serviceId: number, updatedData: Partial<Service>) => void;
+  onDeleteService?: (serviceId: number) => void;
 }
 
-const AllServices = ({ services, categories, isLoading, onUpdateService }: AllServicesProps) => {
+const AllServices = ({ services, categories, isLoading, onUpdateService, onDeleteService }: AllServicesProps) => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
@@ -73,13 +73,21 @@ const AllServices = ({ services, categories, isLoading, onUpdateService }: AllSe
     onUpdateService(serviceId, updatedData);
   };
 
+  const handleDelete = (serviceId: number) => {
+    if (window.confirm("Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.")) {
+      if (onDeleteService) {
+        onDeleteService(serviceId);
+      }
+    }
+  };
+
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Todos os Serviços</CardTitle>
           <CardDescription>
-            Visualize e edite todos os serviços cadastrados
+            Visualize, edite ou remova todos os serviços cadastrados
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,6 +140,16 @@ const AllServices = ({ services, categories, isLoading, onUpdateService }: AllSe
                     >
                       <Edit className="mr-1 h-4 w-4" /> Editar
                     </Button>
+                    {onDeleteService && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(service.id)}
+                        title="Excluir serviço"
+                      >
+                        Excluir
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
@@ -139,7 +157,6 @@ const AllServices = ({ services, categories, isLoading, onUpdateService }: AllSe
           )}
         </CardContent>
       </Card>
-
       <ServiceEditor
         service={selectedService}
         categories={categories}
