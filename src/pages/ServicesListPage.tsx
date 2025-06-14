@@ -205,7 +205,7 @@ const ServicesListPage = () => {
             emptyMessage={
               filteredServices.length === 0 && services.length > 0
                 ? "Nenhum serviço encontrado para esta busca."
-                : "Nenhum serviço disponível nesta categoria."
+                : "Esta página ainda não tem conteúdo."
             }
           />
         </TabsContent>

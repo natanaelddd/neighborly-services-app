@@ -7,9 +7,9 @@ interface ServiceListProps {
   emptyMessage?: string;
 }
 
-const ServiceList = ({ 
-  services, 
-  emptyMessage = "Nenhum serviço encontrado." 
+const ServiceList = ({
+  services,
+  emptyMessage = "Esta página ainda não tem conteúdo."
 }: ServiceListProps) => {
   if (services.length === 0) {
     return (
