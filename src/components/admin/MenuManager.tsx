@@ -37,9 +37,8 @@ const MenuManager = ({
   onUpdateMenuItem,
   onDeleteMenuItem,
 }: MenuManagerProps) => {
-  // Pendentes e atuais sempre do supabase
+  // Estado local da lista editável; inicia com dados do banco
   const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>([]);
-
   useEffect(() => {
     setPendingMenuItems(menuItems);
   }, [menuItems]);
@@ -51,7 +50,9 @@ const MenuManager = ({
 
   const [newMenuLabel, setNewMenuLabel] = useState("");
   const [newMenuPath, setNewMenuPath] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Arraste/reordenar menus
   const handleDragStart = (id: number) => setDraggedItemId(id);
   const handleDragEnd = () => setDraggedItemId(null);
 
@@ -68,6 +69,7 @@ const MenuManager = ({
     toast.info("Ordem alterada, clique em Salvar para publicar.");
   };
 
+  // Alternar visibilidade (muda só local até clicar no Salvar)
   const handleToggleItem = (id: number, visible: boolean) => {
     setPendingMenuItems(prev =>
       prev.map(item =>
@@ -83,12 +85,14 @@ const MenuManager = ({
     toast.success(`Recommendations menu ${!showRecommendationsMenu ? "enabled" : "disabled"}`);
   };
 
+  // Editar label/path inline
   const handleEdit = (id: number, currentLabel: string, currentPath: string) => {
     setEditId(id);
     setEditedLabel(currentLabel);
     setEditedPath(currentPath);
   };
 
+  // Ao apertar Salvar dentro do "editar" do menu
   const handleSaveEdit = (id: number, label: string, path: string) => {
     if (!label.trim()) {
       toast.error("O nome do menu não pode ser vazio!");
@@ -106,7 +110,6 @@ const MenuManager = ({
       toast.error("Já existe um menu com esse link!");
       return;
     }
-
     setPendingMenuItems(prev =>
       prev.map(item =>
         item.id === id ? { ...item, label: label.trim(), path: path.trim() } : item
@@ -129,7 +132,7 @@ const MenuManager = ({
     setEditedPath(path);
   };
 
-  // Adicionar novo menu: salva no Supabase apenas
+  // Adicionar novo menu no Supabase
   const handleAddNewMenu = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -153,33 +156,61 @@ const MenuManager = ({
     }
 
     if (onAddMenuItem) {
+      setIsSaving(true);
       await onAddMenuItem({
         label: newMenuLabel.trim(),
         path: newMenuPath.trim(),
         visible: true,
         display_order: pendingMenuItems.length
       });
+      setIsSaving(false);
     }
     setNewMenuLabel("");
     setNewMenuPath("");
     toast.success("Menu adicionado com sucesso!");
   };
 
-  // Lista final: sempre do Supabase/banco
-  const allMenuItems = menuItems;
-
-  // Salva alterações na ordem do menu no Supabase
+  // Salva todas as alterações no banco
   const handleSaveMenuChanges = async () => {
-    if (onReorderMenuItems) {
+    if (onReorderMenuItems && onUpdateMenuItem) {
+      setIsSaving(true);
+
+      // Persiste ordem no Supabase
       const itemsToSave = pendingMenuItems.map((item, idx) => ({
         ...item,
         display_order: idx
       }));
+
+      // Salva ordem dos menus (chama upsert no banco)
       await onReorderMenuItems(itemsToSave as MenuItem[]);
-      toast.success("Menu publicado no site via Supabase!");
+
+      // Persiste alterações de label/path/visible de cada item (se houve)
+      await Promise.all(itemsToSave.map(async item => {
+        const original = menuItems.find(i => i.id === item.id);
+        // Se houve alteração fora ordem, salvar!
+        if (
+          original &&
+          (
+            item.label !== original.label ||
+            item.path !== original.path ||
+            item.visible !== original.visible
+          )
+        ) {
+          await onUpdateMenuItem(item.id, {
+            label: item.label,
+            path: item.path,
+            visible: item.visible,
+          });
+        }
+        return true;
+      }));
+
+      setIsSaving(false);
+      toast.success("Menu publicado com sucesso!");
     }
   };
 
+  // Renderizar sempre de pendingMenuItems (permite pré-visualizar antes de salvar)
   return (
     <Card>
       <CardHeader>
@@ -194,9 +225,14 @@ const MenuManager = ({
         ) : (
           <div className="space-y-4">
             <div className="flex flex-row-reverse">
-              <Button variant="default" onClick={handleSaveMenuChanges} className="ml-auto flex gap-2">
+              <Button 
+                variant="default" 
+                onClick={handleSaveMenuChanges} 
+                className="ml-auto flex gap-2"
+                disabled={isSaving}
+              >
                 <Save className="w-4 h-4" />
-                Salvar
+                {isSaving ? "Salvando..." : "Salvar"}
               </Button>
             </div>
             <MenuManagerAddForm
@@ -206,13 +242,13 @@ const MenuManager = ({
               setNewMenuPath={setNewMenuPath}
               handleAddNewMenu={handleAddNewMenu}
             />
-            {/* Lista de menus existentes */}
-            {allMenuItems.length === 0 ? (
+            {/* Lista de menus existente, exibindo estado local editável */}
+            {pendingMenuItems.length === 0 ? (
               <div className="text-center text-muted-foreground py-4">
                 Nenhum menu cadastrado ainda.
               </div>
             ) : (
-              allMenuItems.map((item) => (
+              pendingMenuItems.map((item) => (
                 <MenuManagerItem
                   key={item.id}
                   item={item}
@@ -231,7 +267,6 @@ const MenuManager = ({
                 />
               ))
             )}
-            {/* Recomendações */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
               <div className="bg-muted/30 p-4 rounded-lg">
