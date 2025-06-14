@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Move } from "lucide-react";
+import { Eye, EyeOff, Move, Pencil, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface MenuItem {
@@ -19,6 +19,7 @@ interface MenuManagerProps {
   onToggleMenuItem: (id: number, visible: boolean) => void;
   onToggleRecommendations: () => void;
   onReorderMenuItems?: (items: MenuItem[]) => void;
+  onUpdateMenuItemPath?: (id: number, newPath: string) => void;
 }
 
 const MenuManager = ({ 
@@ -26,11 +27,13 @@ const MenuManager = ({
   showRecommendationsMenu, 
   onToggleMenuItem, 
   onToggleRecommendations,
-  onReorderMenuItems
+  onReorderMenuItems,
+  onUpdateMenuItemPath
 }: MenuManagerProps) => {
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
+  const [editPathId, setEditPathId] = useState<number | null>(null);
+  const [editedPath, setEditedPath] = useState<string>("");
 
-  // Funções de drag-and-drop
   const handleDragStart = (id: number) => setDraggedItemId(id);
   const handleDragEnd = () => setDraggedItemId(null);
 
@@ -43,23 +46,21 @@ const MenuManager = ({
     reordered.splice(toIdx, 0, movedItem);
     if (onReorderMenuItems) onReorderMenuItems(reordered);
 
-    // Salvar no localStorage
     localStorage.setItem("menuItemsOrder", JSON.stringify(reordered));
-    toast.success("Ordem do menu atualizada!");
+    toast.success("Menu order updated!");
     setDraggedItemId(null);
   };
 
   const handleToggleItem = (id: number, visible: boolean) => {
     onToggleMenuItem(id, visible);
 
-    // Atualizar e salvar configuração
     const updatedItems = menuItems.map(item =>
       item.id === id ? { ...item, visible } : item
     );
     localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
     toast.success(
       `Menu "${updatedItems.find(i => i.id === id)?.label}" ${
-        visible ? "ativado" : "desativado"
+        visible ? "enabled" : "disabled"
       }`
     );
   };
@@ -71,18 +72,41 @@ const MenuManager = ({
       JSON.stringify(!showRecommendationsMenu)
     );
     toast.success(
-      `Menu de indicações ${
-        !showRecommendationsMenu ? "ativado" : "desativado"
+      `Recommendations menu ${
+        !showRecommendationsMenu ? "enabled" : "disabled"
       }`
     );
+  };
+
+  const handleEditPath = (id: number, currentPath: string) => {
+    setEditPathId(id);
+    setEditedPath(currentPath);
+  };
+
+  const handleSavePath = (id: number) => {
+    if (!editedPath.trim().startsWith("/")) {
+      toast.error("The path must start with '/'");
+      return;
+    }
+    if (onUpdateMenuItemPath) {
+      onUpdateMenuItemPath(id, editedPath.trim());
+      // Update on localStorage
+      const updatedItems = menuItems.map(item =>
+        item.id === id ? { ...item, path: editedPath.trim() } : item
+      );
+      localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
+      toast.success("Menu link updated!");
+    }
+    setEditPathId(null);
+    setEditedPath("");
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Gerenciamento do Menu</CardTitle>
+        <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Personalize e ordene as opções de menu do site
+          Customize and reorder the site menu options. You can also edit the link (path) for each menu item.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,22 +125,62 @@ const MenuManager = ({
               }}
               onDrop={() => handleDrop(item.id)}
             >
-              <div className="flex items-center gap-2">
-                <Move className="h-4 w-4 text-gray-500" />
-                <span className="font-medium">{item.label}</span>
-                <span className="text-sm text-muted-foreground ml-2">
-                  ({item.path})
-                </span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
+                <div className="flex items-center gap-2">
+                  <Move className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-2 w-full">
+                  <span className="text-sm text-muted-foreground ml-2 hidden sm:inline">
+                    ({item.path})
+                  </span>
+                  {editPathId === item.id ? (
+                    <form
+                      onSubmit={e => {
+                        e.preventDefault();
+                        handleSavePath(item.id);
+                      }}
+                    >
+                      <input
+                        className="ml-2 px-2 py-1 border rounded text-xs w-36"
+                        value={editedPath}
+                        autoFocus
+                        onChange={e => setEditedPath(e.target.value)}
+                        onBlur={() => setEditPathId(null)}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type="submit"
+                        title="Save"
+                        className="ml-1"
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </form>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditPath(item.id, item.path)}
+                      title="Edit path"
+                      className="ml-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={item.visible ? "default" : "outline"}>
-                  {item.visible ? "Visível" : "Oculto"}
+                  {item.visible ? "Visible" : "Hidden"}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleToggleItem(item.id, !item.visible)}
-                  disabled={item.label === "Início"}
+                  disabled={item.label === "Home"}
+                  title={item.visible ? "Hide" : "Show"}
                 >
                   {item.visible ? (
                     <EyeOff className="h-4 w-4" />
@@ -127,25 +191,23 @@ const MenuManager = ({
               </div>
             </div>
           ))}
-
           <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Menu de Indicações</h3>
+            <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
             <div className="bg-muted/30 p-4 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm">
-                    O menu de indicações permite cadastrar serviços de pessoas
-                    que não moram no condomínio.
+                    The recommendations menu allows you to add services from people who don't live in the condominium.
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Status atual: {showRecommendationsMenu ? "Ativo" : "Inativo"}
+                    Current status: {showRecommendationsMenu ? "Active" : "Inactive"}
                   </p>
                 </div>
                 <Button
                   variant={showRecommendationsMenu ? "outline" : "default"}
                   onClick={handleToggleRecommendations}
                 >
-                  {showRecommendationsMenu ? "Desativar" : "Ativar"}
+                  {showRecommendationsMenu ? "Disable" : "Enable"}
                 </Button>
               </div>
             </div>

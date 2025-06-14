@@ -73,13 +73,13 @@ export const useAdminState = () => {
 
   // State for menu management
   const [menuItems, setMenuItems] = useState([
-    { id: 1, label: "Início", path: "/", visible: true },
-    { id: 2, label: "Serviços", path: "/servicos", visible: true },
-    { id: 3, label: "Categorias", path: "/categorias", visible: true },
-    { id: 4, label: "Propriedades", path: "/propriedades", visible: true },
-    { id: 5, label: "Indicações", path: "/indicacoes", visible: true },
-    { id: 6, label: "Sobre", path: "/sobre", visible: true },
-    { id: 7, label: "Contato", path: "/contato", visible: true }
+    { id: 1, label: "Home", path: "/", visible: true },
+    { id: 2, label: "Services", path: "/services", visible: true },
+    { id: 3, label: "Categories", path: "/categories", visible: true },
+    { id: 4, label: "Properties", path: "/properties", visible: true },
+    { id: 5, label: "Recommendations", path: "/recommendations", visible: true },
+    { id: 6, label: "About", path: "/about", visible: true },
+    { id: 7, label: "Contact", path: "/contact", visible: true }
   ]);
 
   useEffect(() => {
