@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,9 @@ interface MenuManagerProps {
   onToggleMenuItem: (id: number, visible: boolean) => void;
   onToggleRecommendations: () => void;
   onReorderMenuItems?: (items: MenuItem[]) => void;
-  onAddMenuItem?: (item: Omit<MenuItem, "id" | "created_at" | "updated_at">) => void;
-  onUpdateMenuItem?: (id: number, patch: Partial<MenuItem>) => void;
-  onDeleteMenuItem?: (id: number) => void;
+  onAddMenuItem?: (item: Omit<MenuItem, "id" | "created_at" | "updated_at">) => Promise<void>;
+  onUpdateMenuItem?: (id: number, patch: Partial<MenuItem>) => Promise<void>;
+  onDeleteMenuItem?: (id: number) => Promise<void>;
 }
 
 const REQUIRED_BUTTONS = [
@@ -36,10 +37,9 @@ const MenuManager = ({
   onUpdateMenuItem,
   onDeleteMenuItem,
 }: MenuManagerProps) => {
-  // Local editável para alteração temporária de ordem
-  const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>(menuItems);
+  // Pendentes e atuais sempre do supabase
+  const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>([]);
 
-  // Sincroniza na entrada
   useEffect(() => {
     setPendingMenuItems(menuItems);
   }, [menuItems]);
@@ -49,7 +49,6 @@ const MenuManager = ({
   const [editedLabel, setEditedLabel] = useState<string>("");
   const [editedPath, setEditedPath] = useState<string>("");
 
-  // Novo estado para adicionar menus
   const [newMenuLabel, setNewMenuLabel] = useState("");
   const [newMenuPath, setNewMenuPath] = useState("");
 
@@ -60,6 +59,7 @@ const MenuManager = ({
     if (draggedItemId === null || draggedItemId === toId) return;
     const fromIdx = pendingMenuItems.findIndex(item => item.id === draggedItemId);
     const toIdx = pendingMenuItems.findIndex(item => item.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
     const reordered = [...pendingMenuItems];
     const [movedItem] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, movedItem);
@@ -129,9 +129,10 @@ const MenuManager = ({
     setEditedPath(path);
   };
 
-  // Adicionar novo menu
-  const handleAddNewMenu = (e: React.FormEvent) => {
+  // Adicionar novo menu: salva no Supabase apenas
+  const handleAddNewMenu = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!newMenuLabel.trim()) {
       toast.error("O nome do menu é obrigatório!");
       return;
@@ -150,36 +151,29 @@ const MenuManager = ({
       toast.error("Já existe um menu com esse nome ou link!");
       return;
     }
-    const nextOrder =
-      pendingMenuItems.length > 0
-        ? Math.max(...pendingMenuItems.map((i) => i.display_order ?? 0)) + 1
-        : 0;
-    const newItem: MenuItem = {
-      id: -1, // id só será definido após salvar no Supabase
-      label: newMenuLabel.trim(),
-      path: newMenuPath.trim(),
-      visible: true,
-      display_order: nextOrder,
-      created_at: null,
-      updated_at: null,
-    };
-    setPendingMenuItems((prev) => [...prev, newItem]);
-    toast.info("Menu adicionado, clique em Salvar para publicar.");
+
+    if (onAddMenuItem) {
+      await onAddMenuItem({
+        label: newMenuLabel.trim(),
+        path: newMenuPath.trim(),
+        visible: true,
+        display_order: pendingMenuItems.length
+      });
+    }
     setNewMenuLabel("");
     setNewMenuPath("");
+    toast.success("Menu adicionado com sucesso!");
   };
 
-  // Agora só mostra o que for do pendingMenuItems (nada de botões obrigatórios)
-  const allMenuItems = pendingMenuItems;
+  // Lista final: sempre do Supabase/banco
+  const allMenuItems = menuItems;
 
-  // Salva no Supabase
+  // Salva alterações na ordem do menu no Supabase
   const handleSaveMenuChanges = async () => {
     if (onReorderMenuItems) {
-      // Antes: corrige ids falsos (-1) para não mandar com id undefined para Supabase
       const itemsToSave = pendingMenuItems.map((item, idx) => ({
         ...item,
-        display_order: idx,
-        id: typeof item.id === "number" && item.id > 0 ? item.id : undefined,
+        display_order: idx
       }));
       await onReorderMenuItems(itemsToSave as MenuItem[]);
       toast.success("Menu publicado no site via Supabase!");
@@ -213,24 +207,30 @@ const MenuManager = ({
               handleAddNewMenu={handleAddNewMenu}
             />
             {/* Lista de menus existentes */}
-            {allMenuItems.map((item) => (
-              <MenuManagerItem
-                key={item.id}
-                item={item}
-                editId={editId}
-                isDragging={draggedItemId === item.id}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDrop={handleDrop}
-                onEdit={handleEdit}
-                onSave={handleSaveEdit}
-                onCancelEdit={handleCancelEdit}
-                onUpdateEdited={handleUpdateEdited}
-                editedLabel={editedLabel}
-                editedPath={editedPath}
-                onToggleItem={handleToggleItem}
-              />
-            ))}
+            {allMenuItems.length === 0 ? (
+              <div className="text-center text-muted-foreground py-4">
+                Nenhum menu cadastrado ainda.
+              </div>
+            ) : (
+              allMenuItems.map((item) => (
+                <MenuManagerItem
+                  key={item.id}
+                  item={item}
+                  editId={editId}
+                  isDragging={draggedItemId === item.id}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop}
+                  onEdit={handleEdit}
+                  onSave={handleSaveEdit}
+                  onCancelEdit={handleCancelEdit}
+                  onUpdateEdited={handleUpdateEdited}
+                  editedLabel={editedLabel}
+                  editedPath={editedPath}
+                  onToggleItem={handleToggleItem}
+                />
+              ))
+            )}
             {/* Recomendações */}
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
@@ -261,3 +261,4 @@ const MenuManager = ({
 };
 
 export default MenuManager;
+
