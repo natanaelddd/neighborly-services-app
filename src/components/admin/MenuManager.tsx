@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Move, Pencil, Save } from "lucide-react";
+import { Eye, EyeOff, Move, Pencil, Save, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface MenuItem {
@@ -22,10 +22,10 @@ interface MenuManagerProps {
   onUpdateMenuItemPath?: (id: number, newPath: string) => void;
 }
 
-const MenuManager = ({ 
-  menuItems, 
-  showRecommendationsMenu, 
-  onToggleMenuItem, 
+const MenuManager = ({
+  menuItems,
+  showRecommendationsMenu,
+  onToggleMenuItem,
   onToggleRecommendations,
   onReorderMenuItems,
 }: MenuManagerProps) => {
@@ -33,6 +33,10 @@ const MenuManager = ({
   const [editId, setEditId] = useState<number | null>(null);
   const [editedLabel, setEditedLabel] = useState<string>("");
   const [editedPath, setEditedPath] = useState<string>("");
+
+  // Novo estado para adicionar menus
+  const [newMenuLabel, setNewMenuLabel] = useState("");
+  const [newMenuPath, setNewMenuPath] = useState("");
 
   const handleDragStart = (id: number) => setDraggedItemId(id);
   const handleDragEnd = () => setDraggedItemId(null);
@@ -78,14 +82,12 @@ const MenuManager = ({
     );
   };
 
-  // Entrar no modo de edição de um item
   const handleEdit = (id: number, currentLabel: string, currentPath: string) => {
     setEditId(id);
     setEditedLabel(currentLabel);
     setEditedPath(currentPath);
   };
 
-  // Salvar alterações de nome/label e link/path
   const handleSave = (id: number) => {
     if (!editedLabel.trim()) {
       toast.error("O nome do menu não pode ser vazio!");
@@ -95,8 +97,17 @@ const MenuManager = ({
       toast.error("O link deve começar com '/'");
       return;
     }
+    // Validar unicidade de path, exceto para o próprio
+    if (
+      menuItems.some(
+        (item) => item.id !== id && item.path.toLowerCase() === editedPath.trim().toLowerCase()
+      )
+    ) {
+      toast.error("Já existe um menu com esse link!");
+      return;
+    }
 
-    const updatedItems = menuItems.map(item => 
+    const updatedItems = menuItems.map(item =>
       item.id === id ? { ...item, label: editedLabel.trim(), path: editedPath.trim() } : item
     );
     localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
@@ -108,11 +119,43 @@ const MenuManager = ({
     setEditedPath("");
   };
 
-  // Sair do modo de edição sem salvar
   const handleCancelEdit = () => {
     setEditId(null);
     setEditedLabel("");
     setEditedPath("");
+  };
+
+  // ADICIONAR NOVO MENU
+  const handleAddNewMenu = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMenuLabel.trim()) {
+      toast.error("O nome do menu é obrigatório!");
+      return;
+    }
+    if (!newMenuPath.trim().startsWith("/")) {
+      toast.error("O link deve começar com '/'");
+      return;
+    }
+    if (menuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())) {
+      toast.error("Já existe um menu com esse nome!");
+      return;
+    }
+    if (menuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())) {
+      toast.error("Já existe um menu com esse link!");
+      return;
+    }
+    const newItem: MenuItem = {
+      id: Math.max(...menuItems.map(i => i.id)) + 1,
+      label: newMenuLabel.trim(),
+      path: newMenuPath.trim(),
+      visible: true,
+    };
+    const updated = [...menuItems, newItem];
+    if (onReorderMenuItems) onReorderMenuItems(updated);
+    localStorage.setItem("menuItemsOrder", JSON.stringify(updated));
+    toast.success("Novo menu adicionado!");
+    setNewMenuLabel("");
+    setNewMenuPath("");
   };
 
   return (
@@ -120,11 +163,37 @@ const MenuManager = ({
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edit menu options (name and link separately), toggle visibility, and reorder. These changes will be reflected on the site navigation.
+          Edit menu options (name and link separately), toggle visibility, reorder and <span className="font-semibold">add new menus</span>. These changes will be reflected on the site navigation.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+
+          {/* Adicionar novo menu */}
+          <form
+            onSubmit={handleAddNewMenu}
+            className="flex flex-col sm:flex-row gap-2 items-start sm:items-center border mb-4 p-3 rounded-lg bg-muted/40"
+          >
+            <input
+              className="px-2 py-1 border rounded text-xs w-32"
+              value={newMenuLabel}
+              onChange={e => setNewMenuLabel(e.target.value)}
+              placeholder="Nome do menu"
+              required
+            />
+            <input
+              className="px-2 py-1 border rounded text-xs w-36"
+              value={newMenuPath}
+              onChange={e => setNewMenuPath(e.target.value)}
+              placeholder="/link"
+              required
+            />
+            <Button type="submit" size="sm" className="flex gap-1" title="Adicionar menu">
+              <Plus className="h-4 w-4" /> Adicionar
+            </Button>
+          </form>
+
+          {/* Lista de menus existentes */}
           {menuItems.map((item) => (
             <div
               key={item.id}
