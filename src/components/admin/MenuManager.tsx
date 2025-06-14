@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import MenuManagerItem from "./MenuManagerItem";
-import MenuManagerAddForm from "./MenuManagerAddForm";
 import { Save } from "lucide-react";
 import { MenuItem } from "@/hooks/useSupabaseMenuItems";
+import MenuManagerItem from "./MenuManagerItem";
+import MenuManagerAddForm from "./MenuManagerAddForm";
 
 interface MenuManagerProps {
   menuItems: MenuItem[];
