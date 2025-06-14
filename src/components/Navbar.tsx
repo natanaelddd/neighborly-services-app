@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Settings, Home, Briefcase } from "lucide-react";
@@ -16,11 +15,11 @@ interface MenuItem {
 const defaultMenu: MenuItem[] = [
   { id: 1, label: "Início", path: "/", visible: true },
   { id: 2, label: "Serviços", path: "/servicos", visible: true },
-  { id: 3, label: "Categorias", path: "/categorias", visible: true },
-  { id: 4, label: "Propriedades", path: "/propriedades", visible: true },
-  { id: 5, label: "Indicações", path: "/indicacoes", visible: true },
-  { id: 6, label: "Sobre", path: "/sobre", visible: true },
-  { id: 7, label: "Contato", path: "/contato", visible: true }
+  { id: 3, label: "Categorias", path: "/categories", visible: true },
+  { id: 4, label: "Propriedades", path: "/properties", visible: true },
+  { id: 5, label: "Indicações", path: "/recommendations", visible: true },
+  { id: 6, label: "Sobre", path: "/about", visible: true },
+  { id: 7, label: "Contato", path: "/contact", visible: true }
 ];
 
 const Navbar = () => {
