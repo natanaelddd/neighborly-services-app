@@ -28,12 +28,13 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenu);
 
+  // Carrega menu customizado do localStorage sempre que muda o localStorage
   useEffect(() => {
     const stored = localStorage.getItem("menuItemsOrder");
     if (stored) {
       try {
         const loaded: MenuItem[] = JSON.parse(stored);
-        setMenuItems(loaded);
+        setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
       } catch {
         setMenuItems(defaultMenu);
       }
@@ -42,13 +43,34 @@ const Navbar = () => {
     }
   }, []);
 
+  // Adiciona um event listener para atualizar o menu se mudar no Admin (por exemplo, em outro tab)
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "menuItemsOrder") {
+        const stored = localStorage.getItem("menuItemsOrder");
+        if (stored) {
+          try {
+            const loaded: MenuItem[] = JSON.parse(stored);
+            setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
+          } catch {
+            setMenuItems(defaultMenu);
+          }
+        } else {
+          setMenuItems(defaultMenu);
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const navigation = menuItems.filter(item => item.visible);
 
   const isActive = (href: string) => {
     if (href === "/") {
       return location.pathname === "/";
     }
-    return location.pathname.startsWith(href);
+    return location.pathname.startsWith(href) && href !== "/";
   };
 
   const closeMenu = () => setIsOpen(false);
