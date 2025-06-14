@@ -23,6 +23,12 @@ interface MenuManagerProps {
   onUpdateMenuItemPath?: (id: number, newPath: string) => void;
 }
 
+const REQUIRED_BUTTONS = [
+  { label: "Encontrar Serviços", path: "/services" },
+  { label: "Oferecer Serviço", path: "/services/new" },
+  { label: "Cadastrar Casa", path: "/properties/new" }
+];
+
 const MenuManager = ({
   menuItems,
   showRecommendationsMenu,
@@ -143,16 +149,21 @@ const MenuManager = ({
       toast.error("O link deve começar com '/'");
       return;
     }
-    if (menuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())) {
+    // Prevê duplicidade inclusive com REQUIRED_BUTTONS
+    if (
+      allMenuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())
+    ) {
       toast.error("Já existe um menu com esse nome!");
       return;
     }
-    if (menuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())) {
+    if (
+      allMenuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())
+    ) {
       toast.error("Já existe um menu com esse link!");
       return;
     }
     const newItem: MenuItem = {
-      id: Math.max(...menuItems.map(i => i.id)) + 1,
+      id: Math.max(...allMenuItems.map(i => i.id)) + 1,
       label: newMenuLabel.trim(),
       path: newMenuPath.trim(),
       visible: true,
@@ -165,12 +176,25 @@ const MenuManager = ({
     setNewMenuPath("");
   };
 
+  // Garante que os botões obrigatórios estejam sempre disponíveis
+  const allMenuItems = [
+    ...menuItems,
+    ...REQUIRED_BUTTONS.filter(
+      btn => !menuItems.some(item => item.path === btn.path)
+    ).map((btn, i) => ({
+      id: Math.max(0, ...menuItems.map(it => it.id)) + i + 1,
+      label: btn.label,
+      path: btn.path,
+      visible: true
+    }))
+  ];
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edit menu options (name and link separately), toggle visibility, reorder and <span className="font-semibold">add new menus</span>. These changes will be reflected on the site navigation.
+          Edite nome e link de cada botão separadamente, incluindo “Encontrar Serviços”, “Oferecer Serviço” e “Cadastrar Casa” que aparecerão na tela inicial.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -183,8 +207,8 @@ const MenuManager = ({
             setNewMenuPath={setNewMenuPath}
             handleAddNewMenu={handleAddNewMenu}
           />
-          {/* Lista de menus existentes */}
-          {menuItems.map((item) => (
+          {/* Lista de menus existentes, incluindo obrigatórios se não estavam listados ainda */}
+          {allMenuItems.map((item) => (
             <MenuManagerItem
               key={item.id}
               item={item}

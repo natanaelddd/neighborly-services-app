@@ -1,14 +1,47 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Search, Plus, Home } from "lucide-react";
+import { ArrowRight, Users, Plus, Home, Search } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMenuItems } from "@/hooks/useMenuItems";
+
+// Helper: retorna label + path baseado no label original padrão do menu
+const menuMap: Record<string, string> = {
+  "Encontrar Serviços": "find-services",
+  "Oferecer Serviço": "offer-service",
+  "Cadastrar Casa": "register-house",
+};
+
+const BOTAO_PADRAO = [
+  { reference: "Encontrar Serviços", fallbackLabel: "Encontrar Serviços", fallbackPath: "/services" },
+  { reference: "Oferecer Serviço", fallbackLabel: "Oferecer Serviço", fallbackPath: "/services/new" },
+  { reference: "Cadastrar Casa", fallbackLabel: "Cadastrar Casa", fallbackPath: "/properties/new" }
+];
 
 const HeroSection = () => {
+  const { menuItems } = useMenuItems();
+
+  // Recupera label e link editáveis vindo do Admin
+  const getBotao = (padrao: typeof BOTAO_PADRAO[0]) => {
+    // Busca no menuItems pelo label padrão, ignorando case, OU pelo path padrão
+    let item = menuItems.find(mi =>
+      [padrao.reference, padrao.fallbackLabel].some(ref =>
+        mi.label?.toLowerCase() === ref.toLowerCase()
+      )
+    );
+    // backfill por path caso alguém tenha alterado label
+    if (!item) item = menuItems.find(mi => mi.path === padrao.fallbackPath);
+    return {
+      label: item?.label ?? padrao.fallbackLabel,
+      path: item?.path ?? padrao.fallbackPath
+    };
+  };
+
+  const btns = BOTAO_PADRAO.map(getBotao);
+
   return (
     <section className="relative py-20">
       <div className="container-custom">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left side - Image */}
           <div className="relative">
             <img 
               src="/lovable-uploads/f5e0efa5-edc9-4e24-918f-8172b4020838.png"
@@ -17,7 +50,6 @@ const HeroSection = () => {
             />
           </div>
 
-          {/* Right side - Content and buttons */}
           <div className="space-y-8">
             <div className="text-center lg:text-left">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
@@ -28,40 +60,38 @@ const HeroSection = () => {
               </p>
             </div>
 
-            {/* Three buttons */}
+            {/* Botões dinâmicos */}
             <div className="space-y-4">
-              <Link to="/servicos">
+              <Link to={btns[0].path}>
                 <Button size="lg" className="w-full flex items-center justify-between gap-2 h-16">
                   <div className="flex items-center gap-3">
                     <Search className="w-6 h-6" />
                     <div className="text-left">
-                      <div className="font-semibold">Encontrar Serviços</div>
+                      <div className="font-semibold">{btns[0].label}</div>
                       <div className="text-sm opacity-90">Descubra profissionais qualificados</div>
                     </div>
                   </div>
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-
-              <Link to="/novo-servico">
+              <Link to={btns[1].path}>
                 <Button variant="outline" size="lg" className="w-full flex items-center justify-between gap-2 h-16">
                   <div className="flex items-center gap-3">
                     <Users className="w-6 h-6" />
                     <div className="text-left">
-                      <div className="font-semibold">Oferecer Serviço</div>
+                      <div className="font-semibold">{btns[1].label}</div>
                       <div className="text-sm opacity-75">Cadastre seus serviços</div>
                     </div>
                   </div>
                   <Plus className="w-5 h-5" />
                 </Button>
               </Link>
-
-              <Link to="/nova-propriedade">
+              <Link to={btns[2].path}>
                 <Button variant="outline" size="lg" className="w-full flex items-center justify-between gap-2 h-16">
                   <div className="flex items-center gap-3">
                     <Home className="w-6 h-6" />
                     <div className="text-left">
-                      <div className="font-semibold">Cadastrar Casa</div>
+                      <div className="font-semibold">{btns[2].label}</div>
                       <div className="text-sm opacity-75">Anuncie sua propriedade</div>
                     </div>
                   </div>
