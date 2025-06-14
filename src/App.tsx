@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -28,6 +27,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import StorageBuckets from "@/components/admin/StorageBuckets";
 import DemoModeToggle from "@/components/DemoModeToggle";
+import PropertiesPage from './pages/PropertiesPage';
 
 const queryClient = new QueryClient();
 
@@ -58,6 +58,7 @@ function App() {
                   <Route path="/recommendations" element={<RecommendationsPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/properties" element={<PropertiesPage />} />
 
                   {/* Rotas protegidas */}
                   <Route path="/services/new" element={
