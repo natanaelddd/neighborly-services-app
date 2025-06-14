@@ -6,39 +6,48 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
+interface MenuItem {
+  id: number;
+  label: string;
+  path: string;
+  visible: boolean;
+}
+
+const defaultMenu: MenuItem[] = [
+  { id: 1, label: "Início", path: "/", visible: true },
+  { id: 2, label: "Serviços", path: "/servicos", visible: true },
+  { id: 3, label: "Categorias", path: "/categorias", visible: true },
+  { id: 4, label: "Propriedades", path: "/propriedades", visible: true },
+  { id: 5, label: "Indicações", path: "/indicacoes", visible: true },
+  { id: 6, label: "Sobre", path: "/sobre", visible: true },
+  { id: 7, label: "Contato", path: "/contato", visible: true }
+];
+
 const Navbar = () => {
   const { user, profile, isAdmin, logout } = useAuth();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState({
-    services: true,
-    categories: true,
-    properties: true,
-    recommendations: true,
-    about: true,
-    contact: true
-  });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenu);
 
   useEffect(() => {
-    const stored = localStorage.getItem('menuItems');
+    const stored = localStorage.getItem("menuItemsOrder");
     if (stored) {
-      setMenuItems(JSON.parse(stored));
+      try {
+        const loaded: MenuItem[] = JSON.parse(stored);
+        setMenuItems(loaded);
+      } catch {
+        setMenuItems(defaultMenu);
+      }
+    } else {
+      setMenuItems(defaultMenu);
     }
   }, []);
 
-  const navigation = [
-    { name: 'Início', href: '/', key: 'home', show: true },
-    { name: 'Serviços', href: '/servicos', key: 'services', show: menuItems.services },
-    { name: 'Categorias', href: '/categorias', key: 'categories', show: menuItems.categories },
-    { name: 'Propriedades', href: '/propriedades', key: 'properties', show: menuItems.properties },
-    { name: 'Indicações', href: '/indicacoes', key: 'recommendations', show: menuItems.recommendations },
-    { name: 'Sobre', href: '/sobre', key: 'about', show: menuItems.about },
-    { name: 'Contato', href: '/contato', key: 'contact', show: menuItems.contact },
-  ].filter(item => item.show);
+  const navigation = menuItems.filter(item => item.visible);
 
   const isActive = (href: string) => {
-    if (href === '/') {
-      return location.pathname === '/';
+    if (href === "/") {
+      return location.pathname === "/";
     }
     return location.pathname.startsWith(href);
   };
@@ -56,7 +65,6 @@ const Navbar = () => {
               alt="Condo Indico Logo" 
               className="h-8 w-8"
               onError={(e) => {
-                // Fallback to icon if image fails to load
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
               }}
@@ -64,24 +72,22 @@ const Navbar = () => {
             <Home className="h-8 w-8 text-primary hidden" />
             <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
-
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
             {navigation.map((item) => (
               <Link
-                key={item.name}
-                to={item.href}
+                key={item.id}
+                to={item.path}
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-gray-700 hover:text-primary'
+                  isActive(item.path)
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-gray-700 hover:text-primary"
                 }`}
               >
-                {item.name}
+                {item.label}
               </Link>
             ))}
           </div>
-
           {/* User Actions */}
           <div className="hidden lg:flex items-center space-x-4">
             {user ? (
@@ -89,7 +95,7 @@ const Navbar = () => {
                 <Link to="/user-dashboard">
                   <Button variant="outline" size="sm">
                     <User className="h-4 w-4 mr-2" />
-                    {profile?.name || 'Usuário'}
+                    {profile?.name || "Usuário"}
                   </Button>
                 </Link>
                 {isAdmin && (
@@ -119,7 +125,6 @@ const Navbar = () => {
               </div>
             )}
           </div>
-
           {/* Mobile menu button */}
           <div className="lg:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -135,26 +140,25 @@ const Navbar = () => {
                 <div className="flex flex-col space-y-4 mt-6">
                   {navigation.map((item) => (
                     <Link
-                      key={item.name}
-                      to={item.href}
+                      key={item.id}
+                      to={item.path}
                       onClick={closeMenu}
                       className={`px-3 py-2 text-base font-medium rounded-md transition-colors ${
-                        isActive(item.href)
-                          ? 'bg-primary text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
+                        isActive(item.path)
+                          ? "bg-primary text-white"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
-                      {item.name}
+                      {item.label}
                     </Link>
                   ))}
-                  
                   <div className="border-t pt-4 mt-4">
                     {user ? (
                       <div className="space-y-2">
                         <Link to="/user-dashboard" onClick={closeMenu}>
                           <Button variant="outline" className="w-full justify-start">
                             <User className="h-4 w-4 mr-2" />
-                            {profile?.name || 'Usuário'}
+                            {profile?.name || "Usuário"}
                           </Button>
                         </Link>
                         {isAdmin && (

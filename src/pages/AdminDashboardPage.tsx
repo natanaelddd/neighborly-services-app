@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminState } from "@/hooks/useAdminState";
@@ -180,6 +179,7 @@ const AdminDashboardPage = () => {
             showRecommendationsMenu={showRecommendationsMenu}
             onToggleMenuItem={toggleMenuItem}
             onToggleRecommendations={toggleRecommendationsMenu}
+            onReorderMenuItems={(ordered) => setMenuItems(ordered)}
           />
         </TabsContent>
         

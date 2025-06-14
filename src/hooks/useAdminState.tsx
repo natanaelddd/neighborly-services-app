@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,10 +74,12 @@ export const useAdminState = () => {
   // State for menu management
   const [menuItems, setMenuItems] = useState([
     { id: 1, label: "Início", path: "/", visible: true },
-    { id: 2, label: "Categorias", path: "/categories", visible: true },
-    { id: 3, label: "Sobre", path: "/about", visible: true },
-    { id: 4, label: "Contato", path: "/contact", visible: true },
-    { id: 5, label: "Indicações", path: "/recommendations", visible: false },
+    { id: 2, label: "Serviços", path: "/servicos", visible: true },
+    { id: 3, label: "Categorias", path: "/categorias", visible: true },
+    { id: 4, label: "Propriedades", path: "/propriedades", visible: true },
+    { id: 5, label: "Indicações", path: "/indicacoes", visible: true },
+    { id: 6, label: "Sobre", path: "/sobre", visible: true },
+    { id: 7, label: "Contato", path: "/contato", visible: true }
   ]);
 
   useEffect(() => {
