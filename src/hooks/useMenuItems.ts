@@ -21,32 +21,38 @@ const defaultMenu: MenuItem[] = [
   { id: 8, label: "Contact", path: "/contact", visible: true }
 ];
 
-export function useMenuItems() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenu);
+function ensureRequiredButtons(arr: MenuItem[]): MenuItem[] {
+  // Só adiciona os botões obrigatórios se eles não existem (pelo path)
+  const required = defaultMenu.filter(dm =>
+    ["/services", "/services/new", "/properties/new"].includes(dm.path)
+  );
+  let next = [...arr];
+  required.forEach(req => {
+    if (!next.some(item => item.path === req.path)) {
+      // Garante id único
+      next.push({ ...req, id: Math.max(...next.map(n => n.id)) + 1 });
+    }
+  });
+  return next;
+}
 
-  // Carrega do localStorage ou usa default, sempre garantindo os botões padrão
-  useEffect(() => {
+export function useMenuItems() {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
     const stored = localStorage.getItem("menuItemsOrder");
-    let nextMenu: MenuItem[] = defaultMenu;
     if (stored) {
       try {
         let loaded: MenuItem[] = JSON.parse(stored);
-        // Garante que existam as três opções, adicionando se não existem (pelo path)
-        for (const add of defaultMenu) {
-          if (!loaded.some(item => item.path === add.path)) {
-            loaded.push(add);
-          }
-        }
-        setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
+        // Garante botões obrigatórios sem sobrescrever edições!
+        loaded = ensureRequiredButtons(loaded);
+        return Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu;
       } catch {
-        setMenuItems(defaultMenu);
+        return defaultMenu;
       }
-    } else {
-      setMenuItems(defaultMenu);
     }
-  }, []);
+    return defaultMenu;
+  });
 
-  // Atualiza menuItems no cross-tab incluindo os três botões obrigatórios
+  // Atualiza menuItems se localStorage mudar (multi-tab)
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key === "menuItemsOrder") {
@@ -54,11 +60,7 @@ export function useMenuItems() {
         if (stored) {
           try {
             let loaded: MenuItem[] = JSON.parse(stored);
-            for (const add of defaultMenu) {
-              if (!loaded.some(item => item.path === add.path)) {
-                loaded.push(add);
-              }
-            }
+            loaded = ensureRequiredButtons(loaded);
             setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
           } catch {
             setMenuItems(defaultMenu);
@@ -72,5 +74,19 @@ export function useMenuItems() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  return { menuItems, setMenuItems };
+  // Sempre que menuItems mudar, salva no localStorage (a não ser que seja igual ao atual)
+  useEffect(() => {
+    const stored = localStorage.getItem("menuItemsOrder");
+    let loaded: MenuItem[] = [];
+    try {
+      if (stored) loaded = JSON.parse(stored);
+    } catch {}
+    // Evita sobrescrever se já está igual
+    if (JSON.stringify(menuItems) !== JSON.stringify(loaded)) {
+      localStorage.setItem("menuItemsOrder", JSON.stringify(menuItems));
+    }
+  }, [menuItems]);
+
+  // No retorno, garanta sempre os obrigatórios presentes
+  return { menuItems: ensureRequiredButtons(menuItems), setMenuItems };
 }
