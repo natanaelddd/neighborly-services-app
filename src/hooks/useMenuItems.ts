@@ -21,16 +21,23 @@ const defaultMenu: MenuItem[] = [
   { id: 8, label: "Contact", path: "/contact", visible: true }
 ];
 
+// Corrige: mantém `visible` já escolhido pelo usuário para botões obrigatórios!
 function ensureRequiredButtons(arr: MenuItem[]): MenuItem[] {
-  // Só adiciona os botões obrigatórios se eles não existem (pelo path)
   const required = defaultMenu.filter(dm =>
     ["/services", "/services/new", "/properties/new"].includes(dm.path)
   );
   let next = [...arr];
+
   required.forEach(req => {
+    // Já existe no array, nada a fazer
     if (!next.some(item => item.path === req.path)) {
-      // Garante id único
-      next.push({ ...req, id: Math.max(...next.map(n => n.id)) + 1 });
+      // Busca se já tivemos esse path antes (oculto), para manter o valor de "visible"
+      const previous = arr.find(item => item.path === req.path);
+      next.push({
+        ...req,
+        id: Math.max(...next.map(n => n.id)) + 1,
+        visible: previous ? previous.visible : req.visible
+      });
     }
   });
   return next;
@@ -87,6 +94,7 @@ export function useMenuItems() {
     }
   }, [menuItems]);
 
-  // No retorno, garanta sempre os obrigatórios presentes
+  // No retorno, garanta sempre os obrigatórios presentes (mas respeite "visible")
   return { menuItems: ensureRequiredButtons(menuItems), setMenuItems };
 }
+
