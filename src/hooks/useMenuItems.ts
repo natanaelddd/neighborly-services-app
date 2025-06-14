@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 // MenuItem interface igual ao restante do projeto
@@ -9,39 +8,18 @@ export interface MenuItem {
   visible: boolean;
 }
 
-// Inclui as três opções administráveis!
+// Retirar qualquer lógica de botões obrigatórios!
+// Mantém só o que está salvo no localStorage ou então o menu padrão inicial
+
 const defaultMenu: MenuItem[] = [
   { id: 1, label: "Home", path: "/", visible: true },
-  { id: 2, label: "Encontrar Serviços", path: "/services", visible: true },
-  { id: 3, label: "Oferecer Serviço", path: "/services/new", visible: true },
-  { id: 4, label: "Cadastrar Casa", path: "/properties/new", visible: true },
-  { id: 5, label: "Properties", path: "/properties", visible: true },
-  { id: 6, label: "Recommendations", path: "/recommendations", visible: true },
-  { id: 7, label: "About", path: "/about", visible: true },
-  { id: 8, label: "Contact", path: "/contact", visible: true }
+  { id: 2, label: "Services", path: "/services", visible: true },
+  { id: 3, label: "Categories", path: "/categories", visible: true },
+  { id: 4, label: "Properties", path: "/properties", visible: true },
+  { id: 5, label: "Recommendations", path: "/recommendations", visible: true },
+  { id: 6, label: "About", path: "/about", visible: true },
+  { id: 7, label: "Contact", path: "/contact", visible: true }
 ];
-
-// Corrige: mantém `visible` já escolhido pelo usuário para botões obrigatórios!
-function ensureRequiredButtons(arr: MenuItem[]): MenuItem[] {
-  const required = defaultMenu.filter(dm =>
-    ["/services", "/services/new", "/properties/new"].includes(dm.path)
-  );
-  let next = [...arr];
-
-  required.forEach(req => {
-    // Já existe no array, nada a fazer
-    if (!next.some(item => item.path === req.path)) {
-      // Busca se já tivemos esse path antes (oculto), para manter o valor de "visible"
-      const previous = arr.find(item => item.path === req.path);
-      next.push({
-        ...req,
-        id: Math.max(...next.map(n => n.id)) + 1,
-        visible: previous ? previous.visible : req.visible
-      });
-    }
-  });
-  return next;
-}
 
 export function useMenuItems() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -49,8 +27,7 @@ export function useMenuItems() {
     if (stored) {
       try {
         let loaded: MenuItem[] = JSON.parse(stored);
-        // Garante botões obrigatórios sem sobrescrever edições!
-        loaded = ensureRequiredButtons(loaded);
+        // Garante: se estiver salvo, usa, senão usa padrão
         return Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu;
       } catch {
         return defaultMenu;
@@ -67,7 +44,6 @@ export function useMenuItems() {
         if (stored) {
           try {
             let loaded: MenuItem[] = JSON.parse(stored);
-            loaded = ensureRequiredButtons(loaded);
             setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
           } catch {
             setMenuItems(defaultMenu);
@@ -81,20 +57,18 @@ export function useMenuItems() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  // Sempre que menuItems mudar, salva no localStorage (a não ser que seja igual ao atual)
+  // Sempre sincroniza/dispara update do localStorage se mudou
   useEffect(() => {
     const stored = localStorage.getItem("menuItemsOrder");
     let loaded: MenuItem[] = [];
     try {
       if (stored) loaded = JSON.parse(stored);
     } catch {}
-    // Evita sobrescrever se já está igual
     if (JSON.stringify(menuItems) !== JSON.stringify(loaded)) {
       localStorage.setItem("menuItemsOrder", JSON.stringify(menuItems));
     }
   }, [menuItems]);
 
-  // No retorno, garanta sempre os obrigatórios presentes (mas respeite "visible")
-  return { menuItems: ensureRequiredButtons(menuItems), setMenuItems };
+  // Retorna exatamente o que foi cadastrado, sem iteração extra
+  return { menuItems, setMenuItems };
 }
-

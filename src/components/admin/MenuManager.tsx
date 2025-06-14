@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,10 +35,9 @@ const MenuManager = ({
   onToggleRecommendations,
   onReorderMenuItems,
 }: MenuManagerProps) => {
-  // Estado local para edição antes de salvar de fato
+  // Estado local editável
   const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>(menuItems);
 
-  // Sempre que menuItems global mudar (ex: outros admins salvaram), atualiza local
   useEffect(() => {
     setPendingMenuItems(menuItems);
   }, [menuItems]);
@@ -79,15 +77,8 @@ const MenuManager = ({
 
   const handleToggleRecommendations = () => {
     onToggleRecommendations();
-    localStorage.setItem(
-      "showRecommendationsMenu",
-      JSON.stringify(!showRecommendationsMenu)
-    );
-    toast.success(
-      `Recommendations menu ${
-        !showRecommendationsMenu ? "enabled" : "disabled"
-      }`
-    );
+    localStorage.setItem("showRecommendationsMenu", JSON.stringify(!showRecommendationsMenu));
+    toast.success(`Recommendations menu ${!showRecommendationsMenu ? "enabled" : "disabled"}`);
   };
 
   const handleEdit = (id: number, currentLabel: string, currentPath: string) => {
@@ -105,7 +96,6 @@ const MenuManager = ({
       toast.error("O link deve começar com '/'");
       return;
     }
-    // Validar unicidade de path, exceto para o próprio
     if (
       pendingMenuItems.some(
         (item) => item.id !== id && item.path.toLowerCase() === path.trim().toLowerCase()
@@ -132,13 +122,12 @@ const MenuManager = ({
     setEditedPath("");
   };
 
-  // Para edição controlada
   const handleUpdateEdited = (label: string, path: string) => {
     setEditedLabel(label);
     setEditedPath(path);
   };
 
-  // ADICIONAR NOVO MENU
+  // Adicionar novo menu
   const handleAddNewMenu = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMenuLabel.trim()) {
@@ -150,19 +139,19 @@ const MenuManager = ({
       return;
     }
     if (
-      allMenuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())
+      pendingMenuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())
     ) {
       toast.error("Já existe um menu com esse nome!");
       return;
     }
     if (
-      allMenuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())
+      pendingMenuItems.some(item => item.path.toLowerCase() === newMenuPath.trim().toLowerCase())
     ) {
       toast.error("Já existe um menu com esse link!");
       return;
     }
     const newItem: MenuItem = {
-      id: Math.max(0, ...allMenuItems.map(i => i.id)) + 1,
+      id: Math.max(0, ...pendingMenuItems.map(i => i.id)) + 1,
       label: newMenuLabel.trim(),
       path: newMenuPath.trim(),
       visible: true,
@@ -173,20 +162,9 @@ const MenuManager = ({
     setNewMenuPath("");
   };
 
-  // Garante que os botões obrigatórios estejam sempre disponíveis
-  const allMenuItems = [
-    ...pendingMenuItems,
-    ...REQUIRED_BUTTONS.filter(
-      btn => !pendingMenuItems.some(item => item.path === btn.path)
-    ).map((btn, i) => ({
-      id: Math.max(0, ...pendingMenuItems.map(it => it.id)) + i + 1,
-      label: btn.label,
-      path: btn.path,
-      visible: true
-    }))
-  ];
+  // Agora só mostra o que for do pendingMenuItems (nada de botões obrigatórios)
+  const allMenuItems = pendingMenuItems;
 
-  // FUNÇÃO PRINCIPAL: SALVAR (atualiza storage e site)
   const handleSaveMenuChanges = () => {
     localStorage.setItem("menuItemsOrder", JSON.stringify(pendingMenuItems));
     if (onReorderMenuItems) onReorderMenuItems(pendingMenuItems);
@@ -198,7 +176,7 @@ const MenuManager = ({
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edite nome e link de cada botão separadamente, incluindo “Encontrar Serviços”, “Oferecer Serviço” e “Cadastrar Casa” que aparecerão na tela inicial.
+          Edite nome, link, adicione ou remova itens do menu abaixo. Só o que está aqui será exibido no site.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -216,7 +194,7 @@ const MenuManager = ({
             setNewMenuPath={setNewMenuPath}
             handleAddNewMenu={handleAddNewMenu}
           />
-          {/* Lista de menus existentes, incluindo obrigatórios se não estavam listados ainda */}
+          {/* Lista de menus existentes */}
           {allMenuItems.map((item) => (
             <MenuManagerItem
               key={item.id}
@@ -264,4 +242,3 @@ const MenuManager = ({
 };
 
 export default MenuManager;
-
