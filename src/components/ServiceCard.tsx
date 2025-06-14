@@ -28,12 +28,15 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
     }
   };
 
-  // Função para compartilhar contato via WhatsApp
+  // Compartilhamento do contato para indicação por WhatsApp
   const handleShareWhatsAppContact = () => {
+    // Mensagem recomendando o contato, com número clicável para WhatsApp
     const shareMessage =
-      `Recomendação do Condo Indico:\n\n` +
+      `Recomendo este serviço do Condo Indico:\n\n` +
       `${service.title} por ${service.providerName}\n` +
-      `WhatsApp: ${service.whatsapp}`;
+      `Fale com: https://wa.me/${service.whatsapp}\n\n` +
+      `Enviei pelo Condo Indico!`;
+    // Abre o WhatsApp Web/aplicativo já com a mensagem modelo preenchida
     window.open(`https://wa.me/?text=${encodeURIComponent(shareMessage)}`, "_blank");
   };
 
@@ -105,3 +108,4 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
 };
 
 export default ServiceCard;
+
