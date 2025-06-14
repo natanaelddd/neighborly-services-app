@@ -167,7 +167,9 @@ const MenuManager = ({
 
   const handleSaveMenuChanges = () => {
     localStorage.setItem("menuItemsOrder", JSON.stringify(pendingMenuItems));
-    if (onReorderMenuItems) onReorderMenuItems(pendingMenuItems);
+    if (onReorderMenuItems) {
+      onReorderMenuItems(pendingMenuItems);
+    }
     toast.success("Menu atualizado e publicado no site!");
   };
 
