@@ -1,11 +1,11 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Eye, EyeOff, Move, Pencil, Save, Plus } from "lucide-react";
 import { toast } from "sonner";
 import MenuManagerItem from "./MenuManagerItem";
 import MenuManagerAddForm from "./MenuManagerAddForm";
+import { Save } from "lucide-react";
 
 interface MenuItem {
   id: number;
@@ -36,6 +36,14 @@ const MenuManager = ({
   onToggleRecommendations,
   onReorderMenuItems,
 }: MenuManagerProps) => {
+  // Estado local para edição antes de salvar de fato
+  const [pendingMenuItems, setPendingMenuItems] = useState<MenuItem[]>(menuItems);
+
+  // Sempre que menuItems global mudar (ex: outros admins salvaram), atualiza local
+  useEffect(() => {
+    setPendingMenuItems(menuItems);
+  }, [menuItems]);
+
   const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const [editedLabel, setEditedLabel] = useState<string>("");
@@ -50,30 +58,23 @@ const MenuManager = ({
 
   const handleDrop = (toId: number) => {
     if (draggedItemId === null || draggedItemId === toId) return;
-    const fromIdx = menuItems.findIndex(item => item.id === draggedItemId);
-    const toIdx = menuItems.findIndex(item => item.id === toId);
-    const reordered = [...menuItems];
+    const fromIdx = pendingMenuItems.findIndex(item => item.id === draggedItemId);
+    const toIdx = pendingMenuItems.findIndex(item => item.id === toId);
+    const reordered = [...pendingMenuItems];
     const [movedItem] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, movedItem);
-    if (onReorderMenuItems) onReorderMenuItems(reordered);
-
-    localStorage.setItem("menuItemsOrder", JSON.stringify(reordered));
-    toast.success("Menu order updated!");
+    setPendingMenuItems(reordered);
     setDraggedItemId(null);
+    toast.info("Ordem alterada, clique em Salvar para publicar.");
   };
 
   const handleToggleItem = (id: number, visible: boolean) => {
-    onToggleMenuItem(id, visible);
-
-    const updatedItems = menuItems.map(item =>
-      item.id === id ? { ...item, visible } : item
+    setPendingMenuItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, visible } : item
+      )
     );
-    localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
-    toast.success(
-      `Menu "${updatedItems.find(i => i.id === id)?.label}" ${
-        visible ? "enabled" : "disabled"
-      }`
-    );
+    toast.info("Visibilidade alterada, clique em Salvar para publicar.");
   };
 
   const handleToggleRecommendations = () => {
@@ -95,7 +96,7 @@ const MenuManager = ({
     setEditedPath(currentPath);
   };
 
-  const handleSave = (id: number, label: string, path: string) => {
+  const handleSaveEdit = (id: number, label: string, path: string) => {
     if (!label.trim()) {
       toast.error("O nome do menu não pode ser vazio!");
       return;
@@ -106,7 +107,7 @@ const MenuManager = ({
     }
     // Validar unicidade de path, exceto para o próprio
     if (
-      menuItems.some(
+      pendingMenuItems.some(
         (item) => item.id !== id && item.path.toLowerCase() === path.trim().toLowerCase()
       )
     ) {
@@ -114,13 +115,12 @@ const MenuManager = ({
       return;
     }
 
-    const updatedItems = menuItems.map(item =>
-      item.id === id ? { ...item, label: label.trim(), path: path.trim() } : item
+    setPendingMenuItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, label: label.trim(), path: path.trim() } : item
+      )
     );
-    localStorage.setItem("menuItemsOrder", JSON.stringify(updatedItems));
-    if (onReorderMenuItems) onReorderMenuItems(updatedItems);
-
-    toast.success("Menu atualizado!");
+    toast.info("Alteração feita, clique em Salvar para publicar.");
     setEditId(null);
     setEditedLabel("");
     setEditedPath("");
@@ -149,7 +149,6 @@ const MenuManager = ({
       toast.error("O link deve começar com '/'");
       return;
     }
-    // Prevê duplicidade inclusive com REQUIRED_BUTTONS
     if (
       allMenuItems.some(item => item.label.toLowerCase() === newMenuLabel.trim().toLowerCase())
     ) {
@@ -163,31 +162,36 @@ const MenuManager = ({
       return;
     }
     const newItem: MenuItem = {
-      id: Math.max(...allMenuItems.map(i => i.id)) + 1,
+      id: Math.max(0, ...allMenuItems.map(i => i.id)) + 1,
       label: newMenuLabel.trim(),
       path: newMenuPath.trim(),
       visible: true,
     };
-    const updated = [...menuItems, newItem];
-    if (onReorderMenuItems) onReorderMenuItems(updated);
-    localStorage.setItem("menuItemsOrder", JSON.stringify(updated));
-    toast.success("Novo menu adicionado!");
+    setPendingMenuItems(prev => [...prev, newItem]);
+    toast.info("Menu adicionado, clique em Salvar para publicar.");
     setNewMenuLabel("");
     setNewMenuPath("");
   };
 
   // Garante que os botões obrigatórios estejam sempre disponíveis
   const allMenuItems = [
-    ...menuItems,
+    ...pendingMenuItems,
     ...REQUIRED_BUTTONS.filter(
-      btn => !menuItems.some(item => item.path === btn.path)
+      btn => !pendingMenuItems.some(item => item.path === btn.path)
     ).map((btn, i) => ({
-      id: Math.max(0, ...menuItems.map(it => it.id)) + i + 1,
+      id: Math.max(0, ...pendingMenuItems.map(it => it.id)) + i + 1,
       label: btn.label,
       path: btn.path,
       visible: true
     }))
   ];
+
+  // FUNÇÃO PRINCIPAL: SALVAR (atualiza storage e site)
+  const handleSaveMenuChanges = () => {
+    localStorage.setItem("menuItemsOrder", JSON.stringify(pendingMenuItems));
+    if (onReorderMenuItems) onReorderMenuItems(pendingMenuItems);
+    toast.success("Menu atualizado e publicado no site!");
+  };
 
   return (
     <Card>
@@ -199,7 +203,12 @@ const MenuManager = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Adicionar novo menu */}
+          <div className="flex flex-row-reverse">
+            <Button variant="default" onClick={handleSaveMenuChanges} className="ml-auto flex gap-2">
+              <Save className="w-4 h-4" />
+              Salvar
+            </Button>
+          </div>
           <MenuManagerAddForm
             newMenuLabel={newMenuLabel}
             newMenuPath={newMenuPath}
@@ -218,7 +227,7 @@ const MenuManager = ({
               onDragEnd={handleDragEnd}
               onDrop={handleDrop}
               onEdit={handleEdit}
-              onSave={handleSave}
+              onSave={handleSaveEdit}
               onCancelEdit={handleCancelEdit}
               onUpdateEdited={handleUpdateEdited}
               editedLabel={editedLabel}
@@ -255,3 +264,4 @@ const MenuManager = ({
 };
 
 export default MenuManager;
+
