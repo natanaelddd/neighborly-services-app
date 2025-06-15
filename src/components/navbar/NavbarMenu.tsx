@@ -9,9 +9,10 @@ import { useState } from "react";
 interface NavbarMenuProps {
   navigation: MenuItem[];
   isActive: (href: string) => boolean;
+  user?: any; // Passado da Navbar
 }
 
-export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
+export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -39,7 +40,7 @@ export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
       <div className="lg:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" aria-label="Abrir menu">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
@@ -62,6 +63,20 @@ export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
                   {item.label}
                 </Link>
               ))}
+              {!user && (
+                <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                  <Link to="/login" onClick={closeMenu}>
+                    <Button variant="outline" className="w-full">
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={closeMenu}>
+                    <Button className="w-full">
+                      Cadastrar
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </SheetContent>
         </Sheet>
