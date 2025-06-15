@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, CheckCircle, XCircle, Clock, Camera, Plus, Star, StarOff } from "lucide-react";
+import { Edit, Eye, CheckCircle, XCircle, Clock, Camera, Plus, Star, StarOff, Delete } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from "@/types";
@@ -157,6 +156,47 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Rejeitada</Badge>;
       default:
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Pendente</Badge>;
+    }
+  };
+
+  const handleDeleteProperty = async (propertyId: number) => {
+    if (!window.confirm("Deseja excluir esta propriedade? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', propertyId);
+
+      if (error) {
+        console.error('Erro ao excluir propriedade:', error);
+        toast.error("Erro ao excluir propriedade.");
+        return;
+      }
+
+      // Se estava em destaque, remove também dos destaques locais
+      const featuredPropertyIdsStr = localStorage.getItem('featuredPropertyIds');
+      if (featuredPropertyIdsStr) {
+        let featuredPropertyIds: number[] = [];
+        try {
+          featuredPropertyIds = JSON.parse(featuredPropertyIdsStr);
+        } catch (_) {
+          featuredPropertyIds = [];
+        }
+        if (Array.isArray(featuredPropertyIds)) {
+          const updatedFeatured = featuredPropertyIds.filter(id => id !== propertyId);
+          localStorage.setItem('featuredPropertyIds', JSON.stringify(updatedFeatured));
+          setFeaturedProperties(updatedFeatured);
+        }
+      }
+
+      setProperties(properties.filter(property => property.id !== propertyId));
+      toast.success("Propriedade excluída com sucesso!");
+    } catch (error) {
+      console.error('Erro ao excluir propriedade:', error);
+      toast.error("Erro ao excluir propriedade.");
     }
   };
 
@@ -341,6 +381,17 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                       Reabrir
                     </Button>
                   )}
+
+                  {/* Botão para deletar a propriedade */}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteProperty(property.id)}
+                    title="Excluir propriedade"
+                  >
+                    <Delete className="w-4 h-4 mr-2" />
+                    Excluir
+                  </Button>
 
                   {!isDemoMode && (
                     <PropertyPhotoManager
