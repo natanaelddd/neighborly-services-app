@@ -5,37 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import ServiceEditor from "./ServiceEditor";
-
-interface Service {
-  id: number;
-  unit_id: string;
-  category_id: number | null;
-  title: string;
-  description: string;
-  whatsapp: string;
-  status: string;
-  block: string;
-  house_number: string;
-  created_at: string;
-  updated_at: string;
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  categories?: {
-    name: string;
-    icon: string;
-  };
-}
-
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Service, Category } from "@/types";
 
 interface AllServicesProps {
   services: Service[];
@@ -112,21 +82,15 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                       {getStatusBadge(service.status)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {service.categories && (
+                      {service.category && (
                         <span className="inline-flex items-center gap-1 mr-4">
-                          <span>{service.categories.icon}</span>
-                          <span>{service.categories.name}</span>
+                          <span>{service.category.icon}</span>
+                          <span>{service.category.name}</span>
                         </span>
                       )}
-                      {service.profiles ? (
-                        <span>
-                          por {service.profiles.name} - Bloco {service.profiles.block}, Casa {service.profiles.house_number}
-                        </span>
-                      ) : (
-                        <span>
-                          Bloco {service.block}, Casa {service.house_number}
-                        </span>
-                      )}
+                      <span>
+                        Bloco {service.block}, Casa {service.house_number}
+                      </span>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -135,8 +99,8 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                       <strong>WhatsApp:</strong> {service.whatsapp}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Cadastrado em: {new Date(service.created_at).toLocaleDateString('pt-BR')} | 
-                      Atualizado em: {new Date(service.updated_at).toLocaleDateString('pt-BR')}
+                      Cadastrado em: {new Date(service.createdAt).toLocaleDateString('pt-BR')} | 
+                      Atualizado em: {new Date(service.updatedAt).toLocaleDateString('pt-BR')}
                     </p>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2">

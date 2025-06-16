@@ -57,8 +57,25 @@ export const useAdminState = () => {
 
   useEffect(() => {
     if (isDemoMode) {
-      // Use mock data for demo
-      setServices(mockServices as Service[]);
+      // Transform mock services to match the Service interface from types/index.ts
+      const transformedMockServices: Service[] = (mockServices as any[]).map(service => ({
+        id: service.id,
+        unitId: service.unit_id || service.unitId,
+        categoryId: service.category_id || service.categoryId || 0,
+        title: service.title,
+        description: service.description,
+        photoUrl: service.photo_url || service.photoUrl,
+        whatsapp: service.whatsapp,
+        status: service.status as 'pending' | 'approved' | 'rejected',
+        rejectionReason: service.rejection_reason || service.rejectionReason,
+        createdAt: service.created_at || service.createdAt,
+        updatedAt: service.updated_at || service.updatedAt,
+        block: service.block || '',
+        house_number: service.house_number || '',
+        category: service.category
+      }));
+      
+      setServices(transformedMockServices);
       setCategories(mockCategories as Category[]);
       setFeaturedProperties([...featuredProperties, ...mockProperties.filter(p => p.status === 'approved').map(p => ({
         id: p.id + 10,

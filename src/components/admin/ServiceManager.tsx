@@ -1,29 +1,7 @@
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Service {
-  id: number;
-  unit_id: string;
-  category_id: number | null;
-  title: string;
-  description: string;
-  whatsapp: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  block: string;
-  house_number: string;
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  categories?: {
-    name: string;
-    icon: string;
-  };
-}
+import { Service } from "@/types";
 
 interface ServiceManagerProps {
   services: Service[];
@@ -82,7 +60,10 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
       const { error } = await supabase
         .from('services')
         .update({
-          ...updatedData,
+          title: updatedData.title,
+          description: updatedData.description,
+          whatsapp: updatedData.whatsapp,
+          category_id: updatedData.categoryId,
           updated_at: new Date().toISOString()
         })
         .eq('id', serviceId);
@@ -148,4 +129,3 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
 };
 
 export default ServiceManager;
-
