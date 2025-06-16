@@ -101,6 +101,7 @@ export const useAdminState = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      console.log('Iniciando carregamento dos dados...');
 
       // Buscar serviços com informações do usuário e categoria
       const { data: servicesData, error: servicesError } = await supabase
@@ -115,7 +116,9 @@ export const useAdminState = () => {
       if (servicesError) {
         console.error('Erro ao buscar serviços:', servicesError);
         toast.error("Erro ao carregar serviços");
+        setServices([]);
       } else {
+        console.log('Serviços carregados do banco:', servicesData?.length || 0);
         // Transform the Supabase data to match our Service interface from types/index.ts
         const transformedServices: Service[] = (servicesData || []).map(service => ({
           id: service.id,
@@ -141,6 +144,7 @@ export const useAdminState = () => {
           } : undefined
         }));
         
+        console.log('Serviços transformados:', transformedServices.length);
         setServices(transformedServices);
       }
 
@@ -153,7 +157,9 @@ export const useAdminState = () => {
       if (categoriesError) {
         console.error('Erro ao buscar categorias:', categoriesError);
         toast.error("Erro ao carregar categorias");
+        setCategories([]);
       } else {
+        console.log('Categorias carregadas:', categoriesData?.length || 0);
         setCategories(categoriesData || []);
       }
 
