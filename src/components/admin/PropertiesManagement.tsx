@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -355,6 +356,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                       <Button
                         size="sm"
                         onClick={() => handleStatusChange(property.id, 'approved')}
+                        type="button"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Aprovar
@@ -363,6 +365,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                         variant="destructive"
                         size="sm"
                         onClick={() => handleStatusChange(property.id, 'rejected')}
+                        type="button"
                       >
                         <XCircle className="w-4 h-4 mr-2" />
                         Rejeitar
@@ -376,6 +379,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                         variant="outline"
                         size="sm"
                         onClick={() => handleStatusChange(property.id, 'pending')}
+                        type="button"
                       >
                         <Clock className="w-4 h-4 mr-2" />
                         Marcar como Pendente
@@ -385,6 +389,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                         variant={featuredProperties.includes(property.id) ? "destructive" : "default"}
                         size="sm"
                         onClick={() => toggleFeatured(property.id)}
+                        type="button"
                       >
                         {featuredProperties.includes(property.id) ? (
                           <>
@@ -406,6 +411,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                       variant="outline"
                       size="sm"
                       onClick={() => handleStatusChange(property.id, 'pending')}
+                      type="button"
                     >
                       <Clock className="w-4 h-4 mr-2" />
                       Reabrir
@@ -417,6 +423,7 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                     size="sm"
                     onClick={() => handleDeleteProperty(property.id)}
                     title="Excluir propriedade"
+                    type="button"
                   >
                     <Delete className="w-4 h-4 mr-2" />
                     Excluir
