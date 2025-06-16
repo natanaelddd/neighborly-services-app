@@ -26,7 +26,7 @@ const ServiceDetailPage = () => {
           .select(`
             *,
             profiles:unit_id (name, block, house_number),
-            categories:category_id (name, icon)
+            categories:category_id (id, name, icon, created_at, updated_at)
           `)
           .eq('id', parseInt(id))
           .eq('status', 'approved')
@@ -55,7 +55,7 @@ const ServiceDetailPage = () => {
             block: data.profiles?.block || '',
             number: data.profiles?.house_number || '',
             category: data.categories ? {
-              id: data.category_id || 0,
+              id: data.categories.id || data.category_id || 0,
               name: data.categories.name,
               icon: data.categories.icon,
               created_at: data.categories.created_at || '',
