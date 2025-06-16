@@ -1,40 +1,9 @@
 
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDemoMode } from "./useDemoMode";
-
-interface Service {
-  id: number;
-  unit_id: string;
-  category_id: number | null;
-  title: string;
-  description: string;
-  whatsapp: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  block: string;
-  house_number: string;
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  categories?: {
-    name: string;
-    icon: string;
-  };
-}
-
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Service, Category } from "@/types";
 
 export const useAdminState = () => {
   const { isDemoMode, mockServices, mockCategories, mockProperties } = useDemoMode();
@@ -130,27 +99,28 @@ export const useAdminState = () => {
         console.error('Erro ao buscar serviços:', servicesError);
         toast.error("Erro ao carregar serviços");
       } else {
-        // Transform the Supabase data to match our Service interface
+        // Transform the Supabase data to match our Service interface from types/index.ts
         const transformedServices: Service[] = (servicesData || []).map(service => ({
           id: service.id,
-          unit_id: service.unit_id,
-          category_id: service.category_id,
+          unitId: service.unit_id,
+          categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
+          photoUrl: service.photo_url || undefined,
           whatsapp: service.whatsapp,
-          status: service.status,
-          created_at: service.created_at,
-          updated_at: service.updated_at,
+          status: service.status as 'pending' | 'approved' | 'rejected',
+          rejectionReason: undefined,
+          createdAt: service.created_at,
+          updatedAt: service.updated_at,
           block: service.block || service.profiles?.block || '',
           house_number: service.house_number || service.profiles?.house_number || '',
-          profiles: service.profiles ? {
-            name: service.profiles.name,
-            block: service.profiles.block,
-            house_number: service.profiles.house_number
-          } : undefined,
-          categories: service.categories ? {
+          // Add the category and unit relations if they exist
+          category: service.categories ? {
+            id: service.category_id || 0,
             name: service.categories.name,
-            icon: service.categories.icon
+            icon: service.categories.icon,
+            created_at: '',
+            updated_at: ''
           } : undefined
         }));
         
@@ -196,4 +166,3 @@ export const useAdminState = () => {
     isDemoMode
   };
 };
-
