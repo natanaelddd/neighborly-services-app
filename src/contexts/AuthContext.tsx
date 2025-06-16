@@ -1,112 +1,134 @@
 
-import { createContext, ReactNode } from "react";
-import { AuthContextType } from "@/types/auth";
-import { useAuthState } from "@/hooks/useAuthState";
-import { isUserAdmin } from "@/utils/authHelpers";
-import { 
-  loginWithEmail, 
-  loginWithGoogle, 
-  signupWithEmail, 
-  resetPassword, 
-  signOut 
-} from "@/services/authService";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { Profile } from '@/types/auth';
+import { isUserAdmin } from '@/utils/authHelpers';
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  profile: null,
-  session: null,
-  isAdmin: false,
-  login: async () => {},
-  loginWithGoogle: async () => {},
-  signup: async () => {},
-  logout: async () => {},
-  isLoading: false,
-  forgotPassword: async () => {},
-});
-
-interface AuthProviderProps {
-  children: ReactNode;
+interface AuthContextType {
+  user: User | null;
+  profile: Profile | null;
+  isLoading: boolean;
+  isAdmin: boolean;
+  signOut: () => Promise<void>;
 }
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { user, profile, session, isLoading, setIsLoading, setUser, setProfile, setSession } = useAuthState();
-  const isAdmin = isUserAdmin(profile);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-  const login = async (email: string, password: string): Promise<void> => {
-    setIsLoading(true);
-    try {
-      await loginWithEmail(email, password);
-    } catch (error) {
-      console.error('Erro no login:', error);
-      throw error;
-    } finally {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  console.log('AuthProvider - Current state:', {
+    user: user ? user.email : 'null',
+    profile: profile ? profile.email : 'null',
+    isLoading,
+    isAdmin
+  });
+
+  useEffect(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      console.log('AuthProvider - Getting initial session...');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting initial session:', error);
+        } else {
+          console.log('Initial session:', session ? 'exists' : 'null');
+          if (session?.user) {
+            setUser(session.user);
+            await fetchProfile(session.user.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session ? 'session exists' : 'no session');
+      
+      if (session?.user) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+      }
       setIsLoading(false);
-    }
-  };
+    });
 
-  const handleLoginWithGoogle = async (): Promise<void> => {
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    console.log('AuthProvider - Fetching profile for user:', userId);
     try {
-      await loginWithGoogle();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      console.log('Profile fetched:', data);
+      setProfile(data);
+      
+      // Check admin status
+      const adminStatus = isUserAdmin(data);
+      console.log('Admin status check result:', adminStatus);
+      setIsAdmin(adminStatus);
     } catch (error) {
-      console.error('Erro no login com Google:', error);
-      throw error;
+      console.error('Error in fetchProfile:', error);
     }
   };
 
-  const signup = async (
-    email: string, 
-    password: string, 
-    name: string, 
-    block: string, 
-    houseNumber: string
-  ): Promise<void> => {
-    setIsLoading(true);
+  const signOut = async () => {
+    console.log('AuthProvider - Signing out...');
     try {
-      await signupWithEmail(email, password, name, block, houseNumber);
-    } catch (error) {
-      console.error('Erro no cadastro:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const forgotPassword = async (email: string): Promise<void> => {
-    setIsLoading(true);
-    try {
-      await resetPassword(email);
-    } catch (error) {
-      console.error('Erro ao recuperar senha:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+      }
       setUser(null);
       setProfile(null);
-      setSession(null);
+      setIsAdmin(false);
     } catch (error) {
-      console.error('Erro no logout:', error);
+      console.error('Error in signOut:', error);
     }
+  };
+
+  const value = {
+    user,
+    profile, 
+    isLoading,
+    isAdmin,
+    signOut
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile,
-      session,
-      isAdmin,
-      login,
-      loginWithGoogle: handleLoginWithGoogle,
-      signup,
-      logout, 
-      isLoading, 
-      forgotPassword 
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
