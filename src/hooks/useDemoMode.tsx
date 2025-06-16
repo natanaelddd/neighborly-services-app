@@ -8,10 +8,15 @@ export const useDemoMode = () => {
   useEffect(() => {
     // Verificar se está em modo demo apenas via query param
     const checkDemoMode = () => {
-      const urlSearchParams = new URLSearchParams(window.location.search);
-      const queryParamDemo = urlSearchParams.get('demo') === 'true';
-      
-      return queryParamDemo;
+      try {
+        const urlSearchParams = new URLSearchParams(window.location.search);
+        const queryParamDemo = urlSearchParams.get('demo') === 'true';
+        
+        return queryParamDemo;
+      } catch (error) {
+        console.error('Erro ao verificar modo demo:', error);
+        return false;
+      }
     };
 
     const demoMode = checkDemoMode();
@@ -32,8 +37,8 @@ export const useDemoMode = () => {
     isDemoMode,
     enableDemoMode,
     disableDemoMode,
-    mockServices,
-    mockCategories,
-    mockProperties
+    mockServices: mockServices || [],
+    mockCategories: mockCategories || [],
+    mockProperties: mockProperties || []
   };
 };
