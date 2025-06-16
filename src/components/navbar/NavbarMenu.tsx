@@ -2,17 +2,20 @@
 import { Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, User, Settings, LogOut } from "lucide-react";
 import type { MenuItem } from "@/hooks/usePublicMenuItems";
 import { useState } from "react";
 
 interface NavbarMenuProps {
   navigation: MenuItem[];
   isActive: (href: string) => boolean;
-  user?: any; // Passado da Navbar
+  user?: any;
+  profile?: any;
+  isAdmin?: boolean;
+  onLogout?: () => void;
 }
 
-export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
+export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLogout }: NavbarMenuProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,6 +39,7 @@ export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
           </Link>
         ))}
       </div>
+      
       {/* Mobile menu button */}
       <div className="lg:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -49,6 +53,7 @@ export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
               <SheetTitle className="text-left">Menu</SheetTitle>
             </SheetHeader>
             <div className="flex flex-col space-y-4 mt-6">
+              {/* Navigation Links */}
               {navigation.map((item) => (
                 <Link
                   key={item.id}
@@ -63,20 +68,57 @@ export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
                   {item.label}
                 </Link>
               ))}
-              {!user && (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                  <Link to="/login" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full">
-                      Entrar
+              
+              {/* User Actions */}
+              <div className="pt-4 border-t border-gray-200">
+                {user ? (
+                  <div className="flex flex-col space-y-2">
+                    {/* User Dashboard */}
+                    <Link to="/user-dashboard" onClick={closeMenu}>
+                      <Button variant="outline" className="w-full justify-start">
+                        <User className="h-4 w-4 mr-2" />
+                        {profile?.name || "Usuário"}
+                      </Button>
+                    </Link>
+                    
+                    {/* Admin Button - Only show if user is admin */}
+                    {isAdmin && (
+                      <Link to="/admin" onClick={closeMenu}>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
+                    
+                    {/* Logout */}
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start" 
+                      onClick={() => {
+                        onLogout?.();
+                        closeMenu();
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sair
                     </Button>
-                  </Link>
-                  <Link to="/register" onClick={closeMenu}>
-                    <Button className="w-full">
-                      Cadastrar
-                    </Button>
-                  </Link>
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-2">
+                    <Link to="/login" onClick={closeMenu}>
+                      <Button variant="outline" className="w-full">
+                        Entrar
+                      </Button>
+                    </Link>
+                    <Link to="/register" onClick={closeMenu}>
+                      <Button className="w-full">
+                        Cadastrar
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </SheetContent>
         </Sheet>

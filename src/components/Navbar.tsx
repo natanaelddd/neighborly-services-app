@@ -50,8 +50,15 @@ const Navbar = () => {
             <span className="text-xl font-bold text-primary">Condo Indico</span>
           </Link>
 
-          {/* Menu de Navegação extraído */}
-          <NavbarMenu navigation={navigation} isActive={isActive} user={user} />
+          {/* Menu de Navegação com dados do usuário */}
+          <NavbarMenu 
+            navigation={navigation} 
+            isActive={isActive} 
+            user={user}
+            profile={profile}
+            isAdmin={isAdmin}
+            onLogout={logout}
+          />
 
           {/* User Actions (desktop only) */}
           <div className="hidden lg:flex items-center space-x-4">
