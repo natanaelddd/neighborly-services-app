@@ -5,6 +5,7 @@ import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-r
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 interface Category {
   id: number;
@@ -15,6 +16,7 @@ interface Category {
 }
 
 const CategoryList = () => {
+  const { isDemoMode, mockCategories } = useDemoMode();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -25,6 +27,14 @@ const CategoryList = () => {
       try {
         setIsLoading(true);
         
+        if (isDemoMode) {
+          // Use mock data for demo mode
+          console.log('Carregando categorias (modo demo):', mockCategories);
+          setCategories(mockCategories as Category[]);
+          setIsLoading(false);
+          return;
+        }
+        
         const { data: categoriesData, error } = await supabase
           .from('categories')
           .select('*')
@@ -34,6 +44,7 @@ const CategoryList = () => {
           console.error('Erro ao buscar categorias:', error);
           setCategories([]);
         } else {
+          console.log('Categorias carregadas:', categoriesData);
           setCategories(categoriesData || []);
         }
       } catch (error) {
@@ -45,7 +56,7 @@ const CategoryList = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [isDemoMode, mockCategories]);
   
   // Função para obter o ícone baseado no nome do ícone ou emoji
   const getIcon = (iconName?: string) => {
@@ -79,7 +90,7 @@ const CategoryList = () => {
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    navigate(`/categories/${categoryId}`);
+    navigate(`/services?category=${categoryId}`);
   };
 
   if (isLoading) {
@@ -135,7 +146,7 @@ const CategoryList = () => {
         {categories.map((category) => (
           <Link
             key={category.id}
-            to={`/categories/${category.id}`}
+            to={`/services?category=${category.id}`}
             className="flex flex-col items-center justify-center p-6 glass-morphism rounded-xl shadow-sm hover:shadow-md transition-shadow text-center group"
           >
             <div className="w-14 h-14 flex items-center justify-center bg-blue-800/30 rounded-full mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
@@ -151,7 +162,7 @@ const CategoryList = () => {
         {categories.map((category) => (
           <Link
             key={category.id}
-            to={`/categories/${category.id}`}
+            to={`/services?category=${category.id}`}
             className="flex flex-col items-center justify-center p-4 glass-morphism rounded-xl shadow-sm hover:shadow-md transition-shadow text-center group"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-blue-800/30 rounded-full mb-3 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
