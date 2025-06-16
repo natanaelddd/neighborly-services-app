@@ -2,20 +2,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Settings, LogOut, Plus, Home } from "lucide-react";
+import { Menu } from "lucide-react";
 import type { MenuItem } from "@/hooks/usePublicMenuItems";
 import { useState } from "react";
 
 interface NavbarMenuProps {
   navigation: MenuItem[];
   isActive: (href: string) => boolean;
-  user?: any;
-  profile?: any;
-  isAdmin?: boolean;
-  onLogout?: () => void;
 }
 
-export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLogout }: NavbarMenuProps) {
+export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,31 +34,12 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
             {item.label}
           </Link>
         ))}
-        
-        {/* Quick Actions for logged users */}
-        {user && (
-          <>
-            <Link
-              to="/services/new"
-              className="px-3 py-2 text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
-            >
-              + Serviço
-            </Link>
-            <Link
-              to="/properties/new"
-              className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              + Casa
-            </Link>
-          </>
-        )}
       </div>
-      
       {/* Mobile menu button */}
       <div className="lg:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" aria-label="Abrir menu">
+            <Button variant="ghost" size="sm">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
@@ -71,7 +48,6 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
               <SheetTitle className="text-left">Menu</SheetTitle>
             </SheetHeader>
             <div className="flex flex-col space-y-4 mt-6">
-              {/* Navigation Links */}
               {navigation.map((item) => (
                 <Link
                   key={item.id}
@@ -86,74 +62,6 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
                   {item.label}
                 </Link>
               ))}
-              
-              {/* Quick Actions for logged users */}
-              {user && (
-                <>
-                  <Link to="/services/new" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full justify-start text-green-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Serviço
-                    </Button>
-                  </Link>
-                  <Link to="/properties/new" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full justify-start text-blue-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Casa
-                    </Button>
-                  </Link>
-                </>
-              )}
-              
-              {/* Separator */}
-              <div className="pt-4 border-t border-gray-200">
-                {user ? (
-                  /* Logged in user options */
-                  <div className="flex flex-col space-y-2">
-                    <Link to="/user-dashboard" onClick={closeMenu}>
-                      <Button variant="outline" className="w-full justify-start">
-                        <User className="h-4 w-4 mr-2" />
-                        {profile?.name || "Painel do Usuário"}
-                      </Button>
-                    </Link>
-                    
-                    {isAdmin && (
-                      <Link to="/admin" onClick={closeMenu}>
-                        <Button variant="outline" className="w-full justify-start">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Administração
-                        </Button>
-                      </Link>
-                    )}
-                    
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start" 
-                      onClick={() => {
-                        onLogout?.();
-                        closeMenu();
-                      }}
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Sair
-                    </Button>
-                  </div>
-                ) : (
-                  /* Login/Register options for non-logged users */
-                  <div className="flex flex-col space-y-2">
-                    <Link to="/login" onClick={closeMenu}>
-                      <Button variant="outline" className="w-full">
-                        Entrar
-                      </Button>
-                    </Link>
-                    <Link to="/register" onClick={closeMenu}>
-                      <Button className="w-full">
-                        Cadastrar
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
             </div>
           </SheetContent>
         </Sheet>

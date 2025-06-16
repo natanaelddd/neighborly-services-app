@@ -13,7 +13,7 @@ interface Category {
 
 export const useServiceForm = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -22,17 +22,12 @@ export const useServiceForm = () => {
     title: "",
     description: "",
     whatsapp: "",
-    categoryId: "",
-    houseNumber: profile?.house_number || ""
+    categoryId: ""
   });
 
   useEffect(() => {
     fetchCategories();
-    // Atualizar número da casa quando o perfil for carregado
-    if (profile?.house_number && !formData.houseNumber) {
-      setFormData(prev => ({ ...prev, houseNumber: profile.house_number }));
-    }
-  }, [profile]);
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -81,24 +76,6 @@ export const useServiceForm = () => {
     }
   };
 
-  const updateProfileHouseNumber = async (houseNumber: string) => {
-    if (!user || !profile) return;
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ house_number: houseNumber })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Erro ao atualizar número da casa:', error);
-        // Não bloqueia o cadastro do serviço se falhar
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar perfil:', error);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -107,7 +84,7 @@ export const useServiceForm = () => {
       return;
     }
 
-    if (!formData.title || !formData.description || !formData.whatsapp || !formData.houseNumber) {
+    if (!formData.title || !formData.description || !formData.whatsapp) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -122,11 +99,6 @@ export const useServiceForm = () => {
     setIsLoading(true);
     
     try {
-      // Atualizar número da casa no perfil se necessário
-      if (profile?.house_number !== formData.houseNumber) {
-        await updateProfileHouseNumber(formData.houseNumber);
-      }
-
       // Upload da imagem (se houver)
       let photoUrl = null;
       try {
