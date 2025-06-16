@@ -15,8 +15,8 @@ interface Service {
   status: string;
   created_at: string;
   updated_at: string;
-  block: string;  // Added missing property
-  house_number: string;  // Added missing property
+  block: string;
+  house_number: string;
   profiles?: {
     name: string;
     block: string;
@@ -143,8 +143,15 @@ export const useAdminState = () => {
           updated_at: service.updated_at,
           block: service.block || service.profiles?.block || '',
           house_number: service.house_number || service.profiles?.house_number || '',
-          profiles: service.profiles,
-          categories: service.categories
+          profiles: service.profiles ? {
+            name: service.profiles.name,
+            block: service.profiles.block,
+            house_number: service.profiles.house_number
+          } : undefined,
+          categories: service.categories ? {
+            name: service.categories.name,
+            icon: service.categories.icon
+          } : undefined
         }));
         
         setServices(transformedServices);
