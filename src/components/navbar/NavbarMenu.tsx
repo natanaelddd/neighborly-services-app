@@ -69,29 +69,27 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
                 </Link>
               ))}
               
-              {/* User Actions */}
+              {/* Separator */}
               <div className="pt-4 border-t border-gray-200">
                 {user ? (
+                  /* Logged in user options */
                   <div className="flex flex-col space-y-2">
-                    {/* User Dashboard */}
                     <Link to="/user-dashboard" onClick={closeMenu}>
                       <Button variant="outline" className="w-full justify-start">
                         <User className="h-4 w-4 mr-2" />
-                        {profile?.name || "Usuário"}
+                        {profile?.name || "Painel do Usuário"}
                       </Button>
                     </Link>
                     
-                    {/* Admin Button - Only show if user is admin */}
                     {isAdmin && (
                       <Link to="/admin" onClick={closeMenu}>
                         <Button variant="outline" className="w-full justify-start">
                           <Settings className="h-4 w-4 mr-2" />
-                          Admin
+                          Administração
                         </Button>
                       </Link>
                     )}
                     
-                    {/* Logout */}
                     <Button 
                       variant="ghost" 
                       className="w-full justify-start" 
@@ -105,6 +103,7 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
                     </Button>
                   </div>
                 ) : (
+                  /* Login/Register options for non-logged users */
                   <div className="flex flex-col space-y-2">
                     <Link to="/login" onClick={closeMenu}>
                       <Button variant="outline" className="w-full">

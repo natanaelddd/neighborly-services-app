@@ -31,6 +31,10 @@ const Navbar = () => {
     return location.pathname.startsWith(href) && href !== "/";
   };
 
+  console.log('Navbar - user:', user);
+  console.log('Navbar - profile:', profile);
+  console.log('Navbar - isAdmin:', isAdmin);
+
   return (
     <nav className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="container-custom">
