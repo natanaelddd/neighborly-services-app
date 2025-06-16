@@ -7,6 +7,7 @@ import ImageUpload from "./ImageUpload";
 import ServiceBasicFields from "./forms/ServiceBasicFields";
 import ServiceCategorySelect from "./forms/ServiceCategorySelect";
 import WhatsAppInput from "./forms/WhatsAppInput";
+import AddressFields from "./forms/AddressFields";
 import { useServiceForm } from "@/hooks/useServiceForm";
 
 const ServiceForm = () => {
@@ -59,6 +60,13 @@ const ServiceForm = () => {
                   description={formData.description}
                   onTitleChange={(value) => setFormData({...formData, title: value})}
                   onDescriptionChange={(value) => setFormData({...formData, description: value})}
+                />
+
+                <AddressFields
+                  block={formData.block}
+                  houseNumber={formData.houseNumber}
+                  onBlockChange={(value) => setFormData({...formData, block: value})}
+                  onHouseNumberChange={(value) => setFormData({...formData, houseNumber: value})}
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">

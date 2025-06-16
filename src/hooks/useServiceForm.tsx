@@ -22,7 +22,9 @@ export const useServiceForm = () => {
     title: "",
     description: "",
     whatsapp: "",
-    categoryId: ""
+    categoryId: "",
+    block: "",
+    houseNumber: ""
   });
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export const useServiceForm = () => {
       const { data, error } = await supabase.storage
         .from('service-photos')
         .upload(fileName, file, {
-          cacheControl: '3600',
+          caches: '3600',
           upsert: false
         });
       
@@ -84,7 +86,7 @@ export const useServiceForm = () => {
       return;
     }
 
-    if (!formData.title || !formData.description || !formData.whatsapp) {
+    if (!formData.title || !formData.description || !formData.whatsapp || !formData.block || !formData.houseNumber) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -118,7 +120,9 @@ export const useServiceForm = () => {
         whatsapp: fullWhatsApp,
         category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
         photo_url: photoUrl,
-        status: 'pending'
+        status: 'pending',
+        block: formData.block,
+        house_number: formData.houseNumber
       });
 
       const { error } = await supabase
