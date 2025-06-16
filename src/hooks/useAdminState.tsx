@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ interface Service {
   status: string;
   created_at: string;
   updated_at: string;
+  block: string;  // Added missing property
+  house_number: string;  // Added missing property
   profiles?: {
     name: string;
     block: string;
