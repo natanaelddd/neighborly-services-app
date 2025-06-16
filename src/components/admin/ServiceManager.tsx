@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,6 +12,8 @@ interface Service {
   status: string;
   created_at: string;
   updated_at: string;
+  block: string;
+  house_number: string;
   profiles?: {
     name: string;
     block: string;
@@ -145,3 +148,4 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
 };
 
 export default ServiceManager;
+

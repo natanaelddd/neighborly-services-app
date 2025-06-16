@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -129,7 +130,24 @@ export const useAdminState = () => {
         console.error('Erro ao buscar serviços:', servicesError);
         toast.error("Erro ao carregar serviços");
       } else {
-        setServices(servicesData || []);
+        // Transform the Supabase data to match our Service interface
+        const transformedServices: Service[] = (servicesData || []).map(service => ({
+          id: service.id,
+          unit_id: service.unit_id,
+          category_id: service.category_id,
+          title: service.title,
+          description: service.description,
+          whatsapp: service.whatsapp,
+          status: service.status,
+          created_at: service.created_at,
+          updated_at: service.updated_at,
+          block: service.block || service.profiles?.block || '',
+          house_number: service.house_number || service.profiles?.house_number || '',
+          profiles: service.profiles,
+          categories: service.categories
+        }));
+        
+        setServices(transformedServices);
       }
 
       // Buscar categorias
@@ -171,3 +189,4 @@ export const useAdminState = () => {
     isDemoMode
   };
 };
+

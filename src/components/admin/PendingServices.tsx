@@ -1,4 +1,5 @@
 
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,8 @@ interface Service {
   status: string;
   created_at: string;
   updated_at: string;
+  block: string;
+  house_number: string;
   profiles?: {
     name: string;
     block: string;
@@ -110,3 +113,4 @@ const PendingServices = ({ services, isLoading, onApprove, onReject }: PendingSe
 };
 
 export default PendingServices;
+
