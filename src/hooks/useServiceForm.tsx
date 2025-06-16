@@ -57,7 +57,7 @@ export const useServiceForm = () => {
       const { data, error } = await supabase.storage
         .from('service-photos')
         .upload(fileName, file, {
-          caches: '3600',
+          cacheControl: '3600',
           upsert: false
         });
       
