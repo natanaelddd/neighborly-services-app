@@ -134,7 +134,9 @@ export const useServiceForm = () => {
           whatsapp: fullWhatsApp,
           category_id: formData.categoryId ? parseInt(formData.categoryId) : null,
           photo_url: photoUrl,
-          status: 'pending'
+          status: 'pending',
+          block: formData.block,
+          house_number: formData.houseNumber
         });
 
       if (error) {

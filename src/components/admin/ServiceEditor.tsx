@@ -1,13 +1,11 @@
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Save } from "lucide-react";
-import { toast } from "sonner";
 
 interface Service {
   id: number;
@@ -17,6 +15,8 @@ interface Service {
   description: string;
   whatsapp: string;
   status: string;
+  block: string;
+  house_number: string;
   created_at: string;
   updated_at: string;
   profiles?: {
@@ -47,98 +47,133 @@ interface ServiceEditorProps {
 }
 
 const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: ServiceEditorProps) => {
-  const [editedService, setEditedService] = useState<Partial<Service>>({});
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    whatsapp: "",
+    category_id: "",
+    status: "",
+    block: "",
+    house_number: ""
+  });
 
-  const handleOpen = () => {
+  useEffect(() => {
     if (service) {
-      setEditedService({
+      setFormData({
         title: service.title,
         description: service.description,
         whatsapp: service.whatsapp,
-        category_id: service.category_id,
-        status: service.status
+        category_id: service.category_id?.toString() || "",
+        status: service.status,
+        block: service.block,
+        house_number: service.house_number
       });
     }
-  };
+  }, [service]);
 
   const handleSave = () => {
-    if (!service || !editedService.title || !editedService.description || !editedService.whatsapp) {
-      toast.error("Todos os campos obrigatórios devem ser preenchidos");
-      return;
-    }
+    if (!service) return;
 
-    onSave(service.id, editedService);
-    onClose();
-  };
+    const updatedData: Partial<Service> = {
+      title: formData.title,
+      description: formData.description,
+      whatsapp: formData.whatsapp,
+      category_id: formData.category_id ? parseInt(formData.category_id) : null,
+      status: formData.status,
+      block: formData.block,
+      house_number: formData.house_number
+    };
 
-  const handleCancel = () => {
-    setEditedService({});
+    onSave(service.id, updatedData);
     onClose();
   };
 
   if (!service) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (open) handleOpen();
-      else handleCancel();
-    }}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Serviço</DialogTitle>
           <DialogDescription>
-            Modifique as informações do serviço de {service.profiles?.name}.
+            Edite as informações do serviço abaixo.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4">
           <div>
-            <Label htmlFor="edit-title">Título do Serviço *</Label>
+            <Label htmlFor="title">Título</Label>
             <Input
-              id="edit-title"
-              value={editedService.title || ''}
-              onChange={(e) => setEditedService({...editedService, title: e.target.value})}
-              placeholder="Ex: Limpeza de apartamentos"
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Título do serviço"
             />
           </div>
 
           <div>
-            <Label htmlFor="edit-description">Descrição *</Label>
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
-              id="edit-description"
-              value={editedService.description || ''}
-              onChange={(e) => setEditedService({...editedService, description: e.target.value})}
-              placeholder="Descreva detalhadamente o serviço oferecido..."
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Descrição do serviço"
               rows={4}
             />
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="block">Bloco</Label>
+              <Select value={formData.block} onValueChange={(value) => setFormData({ ...formData, block: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o bloco" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Bloco 1</SelectItem>
+                  <SelectItem value="2">Bloco 2</SelectItem>
+                  <SelectItem value="3">Bloco 3</SelectItem>
+                  <SelectItem value="4">Bloco 4</SelectItem>
+                  <SelectItem value="5">Bloco 5</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="house_number">Número da Casa</Label>
+              <Input
+                id="house_number"
+                value={formData.house_number}
+                onChange={(e) => setFormData({ ...formData, house_number: e.target.value })}
+                placeholder="Ex: 101, 102A"
+              />
+            </div>
+          </div>
+
           <div>
-            <Label htmlFor="edit-whatsapp">WhatsApp *</Label>
+            <Label htmlFor="whatsapp">WhatsApp</Label>
             <Input
-              id="edit-whatsapp"
-              value={editedService.whatsapp || ''}
-              onChange={(e) => setEditedService({...editedService, whatsapp: e.target.value})}
-              placeholder="Ex: 5511999999999"
+              id="whatsapp"
+              value={formData.whatsapp}
+              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              placeholder="(11) 99999-9999"
             />
           </div>
 
           <div>
-            <Label htmlFor="edit-category">Categoria</Label>
-            <Select
-              value={editedService.category_id?.toString() || ''}
-              onValueChange={(value) => setEditedService({...editedService, category_id: parseInt(value)})}
+            <Label htmlFor="category">Categoria</Label>
+            <Select 
+              value={formData.category_id} 
+              onValueChange={(value) => setFormData({ ...formData, category_id: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
+                <SelectItem value="">Sem categoria</SelectItem>
+                {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </div>
+                    {category.icon} {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -146,37 +181,28 @@ const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Service
           </div>
 
           <div>
-            <Label htmlFor="edit-status">Status</Label>
-            <Select
-              value={editedService.status || ''}
-              onValueChange={(value) => setEditedService({...editedService, status: value})}
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={formData.status} 
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="approved">Aprovado</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="approved">Aprovado</SelectItem>
                 <SelectItem value="rejected">Rejeitado</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="bg-muted p-3 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              <strong>Prestador:</strong> {service.profiles?.name}<br/>
-              <strong>Endereço:</strong> Bloco {service.profiles?.block}, Casa {service.profiles?.house_number}
-            </p>
-          </div>
         </div>
 
-        <div className="flex gap-2 justify-end pt-4 border-t">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            <X className="mr-2 h-4 w-4" />
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
           <Button onClick={handleSave}>
-            <Save className="mr-2 h-4 w-4" />
             Salvar Alterações
           </Button>
         </div>

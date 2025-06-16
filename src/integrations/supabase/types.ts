@@ -224,9 +224,11 @@ export type Database = {
       }
       services: {
         Row: {
+          block: string
           category_id: number | null
           created_at: string
           description: string
+          house_number: string
           id: number
           photo_url: string | null
           status: string
@@ -236,9 +238,11 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          block: string
           category_id?: number | null
           created_at?: string
           description: string
+          house_number: string
           id?: number
           photo_url?: string | null
           status?: string
@@ -248,9 +252,11 @@ export type Database = {
           whatsapp: string
         }
         Update: {
+          block?: string
           category_id?: number | null
           created_at?: string
           description?: string
+          house_number?: string
           id?: number
           photo_url?: string | null
           status?: string

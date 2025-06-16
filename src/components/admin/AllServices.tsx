@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ interface Service {
   description: string;
   whatsapp: string;
   status: string;
+  block: string;
+  house_number: string;
   created_at: string;
   updated_at: string;
   profiles?: {
@@ -115,9 +118,13 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                           <span>{service.categories.name}</span>
                         </span>
                       )}
-                      {service.profiles && (
+                      {service.profiles ? (
                         <span>
                           por {service.profiles.name} - Bloco {service.profiles.block}, Casa {service.profiles.house_number}
+                        </span>
+                      ) : (
+                        <span>
+                          Bloco {service.block}, Casa {service.house_number}
                         </span>
                       )}
                     </div>
