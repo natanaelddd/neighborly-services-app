@@ -8,7 +8,11 @@ const CategoryPage = () => {
 
   useEffect(() => {
     // Redirecionamento para a página de serviços com o filtro de categoria aplicado
-    navigate(`/services?category=${categoryId}`);
+    if (categoryId) {
+      navigate(`/services?category=${categoryId}`);
+    } else {
+      navigate('/services');
+    }
   }, [categoryId, navigate]);
 
   return null;

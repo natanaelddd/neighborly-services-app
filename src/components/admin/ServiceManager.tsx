@@ -64,6 +64,9 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
           description: updatedData.description,
           whatsapp: updatedData.whatsapp,
           category_id: updatedData.categoryId,
+          block: updatedData.block,
+          house_number: updatedData.house_number,
+          status: updatedData.status,
           updated_at: new Date().toISOString()
         })
         .eq('id', serviceId);

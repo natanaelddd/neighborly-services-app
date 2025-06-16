@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import ServiceList from './ServiceList';
 import { ServiceWithProvider } from '@/types';
@@ -70,11 +71,11 @@ const FeaturedServices = () => {
         // Transformar os dados para o formato ServiceWithProvider
         const transformedServices: ServiceWithProvider[] = (servicesData || []).map(service => ({
           id: service.id,
-          unitId: service.unit_id || '', // Changed to string and provide fallback
+          unitId: service.unit_id || '',
           categoryId: service.category_id || 0,
           title: service.title,
           description: service.description,
-          photoUrl: service.photo_url || '', // Agora usando o campo correto do banco
+          photoUrl: service.photo_url || '',
           whatsapp: service.whatsapp,
           status: service.status as 'pending' | 'approved' | 'rejected',
           createdAt: service.created_at,
