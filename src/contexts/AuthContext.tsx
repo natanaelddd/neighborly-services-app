@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/auth';
 import { isUserAdmin } from '@/utils/authHelpers';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -11,9 +12,14 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, block: string, houseNumber: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -104,6 +110,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const login = async (email: string, password: string) => {
+    console.log('AuthProvider - Logging in...');
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
+
+    console.log('Login successful:', data.user?.email);
+  };
+
+  const signup = async (email: string, password: string, name: string, block: string, houseNumber: string) => {
+    console.log('AuthProvider - Signing up...');
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          block,
+          house_number: houseNumber,
+        },
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) {
+      console.error('Signup error:', error);
+      throw error;
+    }
+
+    console.log('Signup successful:', data.user?.email);
+  };
+
+  const loginWithGoogle = async () => {
+    console.log('AuthProvider - Logging in with Google...');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+
+    console.log('Google login initiated');
+  };
+
+  const forgotPassword = async (email: string) => {
+    console.log('AuthProvider - Sending password reset...');
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      console.error('Password reset error:', error);
+      throw error;
+    }
+
+    toast.success('Link de recuperação enviado para seu email!');
+  };
+
   const signOut = async () => {
     console.log('AuthProvider - Signing out...');
     try {
@@ -119,12 +194,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const logout = signOut; // Alias for signOut
+
   const value = {
     user,
     profile, 
     isLoading,
     isAdmin,
-    signOut
+    signOut,
+    login,
+    signup,
+    loginWithGoogle,
+    forgotPassword,
+    logout
   };
 
   return (
