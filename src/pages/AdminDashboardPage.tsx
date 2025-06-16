@@ -1,6 +1,7 @@
+
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
@@ -16,6 +17,12 @@ import { useSupabaseMenuItems } from "@/hooks/useSupabaseMenuItems";
 
 const AdminDashboardPage = () => {
   const { isAdmin } = useAuth();
+  const [activeTab, setActiveTab] = useState(() => {
+    // Recuperar a aba ativa do sessionStorage ou usar padrão
+    const savedTab = sessionStorage.getItem('admin-active-tab');
+    return savedTab || 'pending-services';
+  });
+
   const {
     services,
     setServices,
@@ -67,6 +74,11 @@ const AdminDashboardPage = () => {
     reorderMenuItems,
   } = useSupabaseMenuItems();
 
+  // Salvar a aba ativa no sessionStorage sempre que mudar
+  useEffect(() => {
+    sessionStorage.setItem('admin-active-tab', activeTab);
+  }, [activeTab]);
+
   if (!isAdmin) {
     return (
       <div className="container-custom py-10">
@@ -87,7 +99,7 @@ const AdminDashboardPage = () => {
         {isDemoMode && <span className="text-sm font-normal text-blue-600 ml-2">(Modo Demonstração)</span>}
       </h1>
       
-      <Tabs defaultValue="pending-services">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="mb-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
             {/* Seção Principal - Serviços */}

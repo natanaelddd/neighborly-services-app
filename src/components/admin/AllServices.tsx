@@ -44,6 +44,7 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
 
   const handleSaveService = (serviceId: number, updatedData: Partial<Service>) => {
     onUpdateService(serviceId, updatedData);
+    handleCloseEditor();
   };
 
   const handleDelete = (serviceId: number) => {
@@ -108,6 +109,7 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                       variant="outline" 
                       size="sm"
                       onClick={() => handleEditService(service)}
+                      type="button"
                     >
                       <Edit className="mr-1 h-4 w-4" /> Editar
                     </Button>
@@ -117,6 +119,7 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                         size="sm"
                         onClick={() => handleDelete(service.id)}
                         title="Excluir serviço"
+                        type="button"
                       >
                         Excluir
                       </Button>
