@@ -91,19 +91,15 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
     try {
       console.log('Iniciando exclusão do serviço:', serviceId);
       
-      // Primeiro, remover o serviço dos destaques no localStorage
-      const featuredServiceIdsStr = localStorage.getItem('featuredServiceIds');
-      if (featuredServiceIdsStr) {
-        try {
-          const featuredServiceIds: number[] = JSON.parse(featuredServiceIdsStr);
-          if (Array.isArray(featuredServiceIds)) {
-            const updatedFeatured = featuredServiceIds.filter(id => id !== serviceId);
-            localStorage.setItem('featuredServiceIds', JSON.stringify(updatedFeatured));
-            console.log('Serviço removido dos destaques');
-          }
-        } catch (parseError) {
-          console.error('Erro ao parsear featuredServiceIds:', parseError);
-        }
+      // Primeiro, remover o serviço dos destaques na tabela featured_services
+      const { error: featuredError } = await supabase
+        .from('featured_services')
+        .delete()
+        .eq('service_id', serviceId);
+
+      if (featuredError) {
+        console.error('Erro ao remover serviço dos destaques:', featuredError);
+        // Não vamos parar aqui, continuamos com a exclusão
       }
 
       // Excluir fotos do serviço primeiro (se existirem)

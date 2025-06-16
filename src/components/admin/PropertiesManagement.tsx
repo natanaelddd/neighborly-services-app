@@ -30,10 +30,18 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
     }
   }, [isDemoMode]);
 
-  const loadFeaturedProperties = () => {
-    const stored = localStorage.getItem('featuredPropertyIds');
-    if (stored) {
-      setFeaturedProperties(JSON.parse(stored));
+  const loadFeaturedProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('featured_services')
+        .select('service_id');
+
+      if (!error && data) {
+        const featuredIds = data.map(item => item.service_id);
+        setFeaturedProperties(featuredIds);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar propriedades em destaque:', error);
     }
   };
 
@@ -127,16 +135,44 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
     }
   };
 
-  const toggleFeatured = (propertyId: number) => {
-    const newFeatured = featuredProperties.includes(propertyId)
-      ? featuredProperties.filter(id => id !== propertyId)
-      : [...featuredProperties, propertyId];
+  const toggleFeatured = async (propertyId: number) => {
+    const isFeatured = featuredProperties.includes(propertyId);
     
-    setFeaturedProperties(newFeatured);
-    localStorage.setItem('featuredPropertyIds', JSON.stringify(newFeatured));
-    
-    const action = newFeatured.includes(propertyId) ? 'adicionada ao' : 'removida do';
-    toast.success(`Propriedade ${action} destaque!`);
+    try {
+      if (isFeatured) {
+        // Remove from featured
+        const { error } = await supabase
+          .from('featured_services')
+          .delete()
+          .eq('service_id', propertyId);
+
+        if (error) {
+          console.error('Erro ao remover destaque:', error);
+          toast.error("Erro ao remover destaque");
+          return;
+        }
+
+        setFeaturedProperties(featuredProperties.filter(id => id !== propertyId));
+        toast.success('Propriedade removida do destaque!');
+      } else {
+        // Add to featured
+        const { error } = await supabase
+          .from('featured_services')
+          .insert([{ service_id: propertyId }]);
+
+        if (error) {
+          console.error('Erro ao adicionar destaque:', error);
+          toast.error("Erro ao adicionar destaque");
+          return;
+        }
+
+        setFeaturedProperties([...featuredProperties, propertyId]);
+        toast.success('Propriedade adicionada ao destaque!');
+      }
+    } catch (error) {
+      console.error('Erro ao alterar destaque:', error);
+      toast.error("Erro ao alterar destaque");
+    }
   };
 
   const formatWhatsApp = (whatsapp: string) => {
@@ -176,20 +212,14 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
         return;
       }
 
-      // Se estava em destaque, remove também dos destaques locais
-      const featuredPropertyIdsStr = localStorage.getItem('featuredPropertyIds');
-      if (featuredPropertyIdsStr) {
-        let featuredPropertyIds: number[] = [];
-        try {
-          featuredPropertyIds = JSON.parse(featuredPropertyIdsStr);
-        } catch (_) {
-          featuredPropertyIds = [];
-        }
-        if (Array.isArray(featuredPropertyIds)) {
-          const updatedFeatured = featuredPropertyIds.filter(id => id !== propertyId);
-          localStorage.setItem('featuredPropertyIds', JSON.stringify(updatedFeatured));
-          setFeaturedProperties(updatedFeatured);
-        }
+      // Remove from featured if it was featured
+      if (featuredProperties.includes(propertyId)) {
+        await supabase
+          .from('featured_services')
+          .delete()
+          .eq('service_id', propertyId);
+        
+        setFeaturedProperties(featuredProperties.filter(id => id !== propertyId));
       }
 
       setProperties(properties.filter(property => property.id !== propertyId));
@@ -382,7 +412,6 @@ const PropertiesManagement = ({ onUpdateProperty }: PropertiesManagementProps) =
                     </Button>
                   )}
 
-                  {/* Botão para deletar a propriedade */}
                   <Button
                     variant="destructive"
                     size="sm"

@@ -6,54 +6,18 @@ import { useDemoMode } from "./useDemoMode";
 import { Service, Category } from "@/types";
 
 export const useAdminState = () => {
-  const { isDemoMode, mockServices, mockCategories, mockProperties } = useDemoMode();
+  const { isDemoMode, mockServices, mockCategories } = useDemoMode();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [admins, setAdmins] = useState<string[]>(["admin@example.com"]);
   const [showRecommendationsMenu, setShowRecommendationsMenu] = useState(false);
   
-  // State for featured properties management
-  const [featuredProperties, setFeaturedProperties] = useState([
-    {
-      id: 1,
-      title: "Evidence Resort - Seu novo lar",
-      description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
-      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda" as const,
-      price: "A partir de R$ 450.000"
-    },
-    {
-      id: 2,
-      title: "Casa Moderna - Bloco 2",
-      description: "Casa de 3 quartos com suíte, sala ampla, cozinha planejada e área gourmet. Localizada no Bloco 2 com vista privilegiada para a área verde do condomínio.",
-      details: "Acabamento de primeira qualidade, garagem para 2 carros, jardim privativo e acesso direto à área de lazer do condomínio.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda" as const,
-      price: "R$ 520.000"
-    },
-    {
-      id: 3,
-      title: "Casa para Locação - Bloco 4",
-      description: "Oportunidade única de morar no Evidence Resort. Casa mobiliada de 2 quartos, ideal para casais ou pequenas famílias que buscam conforto e segurança.",
-      details: "Inclui móveis planejados, ar condicionado, área de serviço completa e vaga de garagem coberta.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "aluguel" as const,
-      price: "R$ 2.800/mês"
-    }
-  ]);
+  // State for featured properties management (now from database)
+  const [featuredProperties, setFeaturedProperties] = useState([]);
 
-  // State for menu management
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, label: "Home", path: "/", visible: true },
-    { id: 2, label: "Services", path: "/services", visible: true },
-    { id: 3, label: "Categories", path: "/categories", visible: true },
-    { id: 4, label: "Properties", path: "/properties", visible: true },
-    { id: 5, label: "Recommendations", path: "/recommendations", visible: true },
-    { id: 6, label: "About", path: "/about", visible: true },
-    { id: 7, label: "Contact", path: "/contact", visible: true }
-  ]);
+  // State for menu management (removed - now handled by useSupabaseMenuItems)
+  const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
     if (isDemoMode) {
@@ -77,26 +41,53 @@ export const useAdminState = () => {
       
       setServices(transformedMockServices);
       setCategories(mockCategories as Category[]);
-      setFeaturedProperties([...featuredProperties, ...mockProperties.filter(p => p.status === 'approved').map(p => ({
-        id: p.id + 10,
-        title: p.title,
-        description: p.description,
-        details: p.description,
-        imageUrl: p.property_photos?.[0]?.photo_url || "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-        type: p.type,
-        price: p.price || "Consulte preço"
-      }))]);
       setIsLoading(false);
     } else {
       fetchData();
-    }
-    
-    // Check if recommendations menu is enabled
-    const storedShowRecommendations = localStorage.getItem("showRecommendationsMenu");
-    if (storedShowRecommendations) {
-      setShowRecommendationsMenu(JSON.parse(storedShowRecommendations));
+      fetchSystemSettings();
+      fetchFeaturedProperties();
     }
   }, [isDemoMode]);
+
+  const fetchSystemSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('setting_key', 'showRecommendationsMenu')
+        .single();
+
+      if (!error && data) {
+        setShowRecommendationsMenu(data.setting_value as boolean);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações do sistema:', error);
+    }
+  };
+
+  const fetchFeaturedProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('featured_properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const transformedProperties = data.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          description: prop.description,
+          details: prop.details,
+          imageUrl: prop.image_url,
+          type: prop.type as 'venda' | 'aluguel',
+          price: prop.price || "Consulte preço"
+        }));
+        setFeaturedProperties(transformedProperties);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar propriedades em destaque:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -186,6 +177,8 @@ export const useAdminState = () => {
     menuItems,
     setMenuItems,
     fetchData,
+    fetchSystemSettings,
+    fetchFeaturedProperties,
     isDemoMode
   };
 };
