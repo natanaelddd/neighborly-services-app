@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, LogOut, Settings, Home } from "lucide-react";
@@ -17,9 +18,8 @@ const Navbar = () => {
   const location = useLocation();
   const { menuItems } = usePublicMenuItems();
 
-  // Só os visíveis e NÃO os três do HeroSection (igual antes)
   const navigation = menuItems.filter(
-    item => 
+    item =>
       item.visible &&
       !HIDDEN_PATHS_IN_MAIN_MENU.includes(item.path)
   );
@@ -37,9 +37,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png" 
-              alt="Condo Indico Logo" 
+            <img
+              src="/lovable-uploads/3e37d1e7-9e83-40ae-9414-bfdbf75723c1.png"
+              alt="Condo Indico Logo"
               className="h-8 w-8"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -51,7 +51,7 @@ const Navbar = () => {
           </Link>
 
           {/* Menu de Navegação extraído */}
-          <NavbarMenu navigation={navigation} isActive={isActive} />
+          <NavbarMenu navigation={navigation} isActive={isActive} user={user} />
 
           {/* User Actions (desktop only) */}
           <div className="hidden lg:flex items-center space-x-4">

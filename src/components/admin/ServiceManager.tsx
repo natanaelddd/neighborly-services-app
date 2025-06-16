@@ -113,6 +113,21 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
         return;
       }
 
+      // Remove o serviço deletado dos destaques (featuredServiceIds)
+      const featuredServiceIdsStr = localStorage.getItem('featuredServiceIds');
+      if (featuredServiceIdsStr) {
+        let featuredServiceIds: number[] = [];
+        try {
+          featuredServiceIds = JSON.parse(featuredServiceIdsStr);
+        } catch (_) {
+          featuredServiceIds = [];
+        }
+        if (Array.isArray(featuredServiceIds)) {
+          const updatedFeatured = featuredServiceIds.filter(id => id !== serviceId);
+          localStorage.setItem('featuredServiceIds', JSON.stringify(updatedFeatured));
+        }
+      }
+
       setServices(services.filter(service => service.id !== serviceId));
       toast.success("Serviço excluído com sucesso!");
     } catch (error) {
