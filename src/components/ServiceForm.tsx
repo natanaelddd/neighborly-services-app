@@ -57,8 +57,10 @@ const ServiceForm = () => {
                 <ServiceBasicFields
                   title={formData.title}
                   description={formData.description}
+                  houseNumber={formData.houseNumber}
                   onTitleChange={(value) => setFormData({...formData, title: value})}
                   onDescriptionChange={(value) => setFormData({...formData, description: value})}
+                  onHouseNumberChange={(value) => setFormData({...formData, houseNumber: value})}
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">

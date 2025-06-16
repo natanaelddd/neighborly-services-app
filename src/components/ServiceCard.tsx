@@ -3,7 +3,7 @@ import { ServiceWithProvider } from "@/types";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Lightbox } from "@/components/ui/lightbox";
-import { Share } from "lucide-react";
+import { Share, MapPin, Phone } from "lucide-react";
 
 interface ServiceCardProps {
   service: ServiceWithProvider;
@@ -34,6 +34,7 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
     const shareMessage =
       `Recomendo este serviço do Condo Indico:\n\n` +
       `${service.title} por ${service.providerName}\n` +
+      `Bloco ${service.block}, Casa ${service.number}\n` +
       `Fale com: https://wa.me/${service.whatsapp}\n\n` +
       `Veja mais em: https://www.condoindico.com.br`;
     // Abre o WhatsApp Web/aplicativo já com a mensagem modelo preenchida
@@ -47,15 +48,28 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
 
   return (
     <Card className="service-card h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <div className="text-xs text-primary font-medium mb-1">
-              {service.category?.name}
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex-1 min-w-0">
+            {service.category && (
+              <div className="text-xs text-primary font-medium mb-2">
+                {service.category.name}
+              </div>
+            )}
+            <h3 className="font-semibold text-lg text-foreground leading-tight mb-2">
+              {service.title}
+            </h3>
+            
+            {/* DESTAQUE PARA NÚMERO DA CASA */}
+            <div className="flex items-center gap-2 bg-primary/10 px-2 py-1 rounded-md w-fit">
+              <MapPin className="w-3 h-3 text-primary" />
+              <span className="text-xs font-semibold text-primary">
+                Casa {service.number} - Bloco {service.block}
+              </span>
             </div>
-            <h3 className="font-medium text-lg text-foreground">{service.title}</h3>
           </div>
-          <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 ml-2">
+          
+          <div className="w-12 h-12 rounded-md overflow-hidden border border-gray-200 shrink-0">
             <Lightbox
               src={service.photoUrl || "/placeholder.svg"}
               alt={service.photoUrl ? `Logo de ${service.title}` : "Logo Condo Indico"}
@@ -74,38 +88,37 @@ const ServiceCard = ({ service }: ServiceCardProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-muted-foreground text-sm line-clamp-3">
+      
+      <CardContent className="flex-grow pt-0">
+        <p className="text-muted-foreground text-sm line-clamp-3 mb-3">
           {service.description}
         </p>
-      </CardContent>
-      <CardFooter className="flex flex-col items-start pt-2 border-t border-border">
-        <div className="flex items-center text-sm text-muted-foreground mb-3">
+        
+        <div className="text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{service.providerName}</span>
-          <span className="mx-2">•</span>
-          <span>Bloco {service.block}, Casa {service.number}</span>
         </div>
-        <div className="flex w-full gap-2">
-          <Button
-            onClick={handleContactWhatsApp}
-            className="flex-1 bg-brand-green hover:bg-green-600"
-          >
-            Falar no WhatsApp
-          </Button>
-          <Button
-            onClick={handleShareWhatsAppContact}
-            variant="secondary"
-            className="px-3"
-            title="Compartilhar contato do serviço pelo WhatsApp"
-            aria-label="Compartilhar contato do serviço"
-          >
-            <Share className="text-primary" />
-          </Button>
-        </div>
+      </CardContent>
+      
+      <CardFooter className="flex gap-2 pt-3 border-t border-border">
+        <Button
+          onClick={handleContactWhatsApp}
+          className="flex-1 bg-brand-green hover:bg-green-600 text-sm"
+        >
+          <Phone className="w-4 h-4 mr-1" />
+          WhatsApp
+        </Button>
+        <Button
+          onClick={handleShareWhatsAppContact}
+          variant="secondary"
+          className="px-3"
+          title="Compartilhar contato do serviço pelo WhatsApp"
+          aria-label="Compartilhar contato do serviço"
+        >
+          <Share className="w-4 h-4" />
+        </Button>
       </CardFooter>
     </Card>
   );
 };
 
 export default ServiceCard;
-
