@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { ServiceWithProvider, Category } from "@/types";
@@ -57,8 +56,9 @@ const ServicesListPage = () => {
             status: service.status as 'pending' | 'approved' | 'rejected',
             createdAt: service.created_at,
             updatedAt: service.updated_at,
-            providerName: service.profiles?.name || 'Morador não identificado',
             block: service.profiles?.block || '',
+            house_number: service.profiles?.house_number || '',
+            providerName: service.profiles?.name || 'Morador não identificado',
             number: service.profiles?.house_number || '',
             category: service.categories ? {
               id: service.category_id,
@@ -114,9 +114,10 @@ const ServicesListPage = () => {
           status: service.status as 'pending' | 'approved' | 'rejected',
           createdAt: service.created_at,
           updatedAt: service.updated_at,
+          block: service.block || service.profiles?.block || '',
+          house_number: service.house_number || service.profiles?.house_number || '',
           providerName: service.profiles?.name || 'Morador não identificado',
-          block: service.profiles?.block || '',
-          number: service.profiles?.house_number || '',
+          number: service.house_number || service.profiles?.house_number || '',
           category: service.categories ? {
             id: service.category_id || 0,
             name: service.categories.name,

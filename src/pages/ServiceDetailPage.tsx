@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getServiceById } from "@/data/mockData";
@@ -15,7 +14,16 @@ const ServiceDetailPage = () => {
     if (id) {
       // Em um cenário real, isso seria uma chamada de API
       const serviceData = getServiceById(parseInt(id));
-      setService(serviceData || null);
+      if (serviceData) {
+        // Transform the service data to include house_number
+        const transformedService: ServiceWithProvider = {
+          ...serviceData,
+          house_number: serviceData.number || '', // Map number to house_number
+        };
+        setService(transformedService);
+      } else {
+        setService(null);
+      }
       setLoading(false);
     }
   }, [id]);

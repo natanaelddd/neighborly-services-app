@@ -57,8 +57,7 @@ export interface Service {
 
 export interface ServiceWithProvider extends Service {
   providerName?: string;
-  block?: string;
-  number?: string;
+  number?: string; // This represents the house_number for display
 }
 
 // Add Property interface to match database schema
