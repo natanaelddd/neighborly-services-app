@@ -48,6 +48,8 @@ export interface Service {
   rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
+  block: string; // Added required block field
+  house_number: string; // Added required house_number field
   // Relações
   category?: Category;
   unit?: Unit;
