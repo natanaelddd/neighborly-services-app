@@ -2,7 +2,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Settings, LogOut } from "lucide-react";
+import { Menu, User, Settings, LogOut, Plus, Home } from "lucide-react";
 import type { MenuItem } from "@/hooks/usePublicMenuItems";
 import { useState } from "react";
 
@@ -38,6 +38,24 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
             {item.label}
           </Link>
         ))}
+        
+        {/* Quick Actions for logged users */}
+        {user && (
+          <>
+            <Link
+              to="/services/new"
+              className="px-3 py-2 text-sm font-medium text-green-600 hover:text-green-700 transition-colors"
+            >
+              + Serviço
+            </Link>
+            <Link
+              to="/properties/new"
+              className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              + Casa
+            </Link>
+          </>
+        )}
       </div>
       
       {/* Mobile menu button */}
@@ -68,6 +86,24 @@ export function NavbarMenu({ navigation, isActive, user, profile, isAdmin, onLog
                   {item.label}
                 </Link>
               ))}
+              
+              {/* Quick Actions for logged users */}
+              {user && (
+                <>
+                  <Link to="/services/new" onClick={closeMenu}>
+                    <Button variant="outline" className="w-full justify-start text-green-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Serviço
+                    </Button>
+                  </Link>
+                  <Link to="/properties/new" onClick={closeMenu}>
+                    <Button variant="outline" className="w-full justify-start text-blue-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Casa
+                    </Button>
+                  </Link>
+                </>
+              )}
               
               {/* Separator */}
               <div className="pt-4 border-t border-gray-200">
