@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import ServiceEditor from "./ServiceEditor";
 import { Service, Category } from "@/types";
 
@@ -121,7 +121,7 @@ const AllServices = ({ services, categories, isLoading, onUpdateService, onDelet
                         title="Excluir serviço"
                         type="button"
                       >
-                        Excluir
+                        <Trash2 className="mr-1 h-4 w-4" /> Remover
                       </Button>
                     )}
                   </CardFooter>
