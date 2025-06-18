@@ -16,10 +16,9 @@ const FeaturedServices = () => {
         setIsLoading(true);
         
         if (isDemoMode) {
-          // Use mock data for demo mode
           const approvedMockServices = (mockServices || [])
             .filter(service => service.status === 'approved')
-            .slice(0, 6) // Limit to 6 featured services
+            .slice(0, 6)
             .map(service => ({
               id: service.id,
               unitId: service.unit_id,
@@ -46,11 +45,9 @@ const FeaturedServices = () => {
 
           console.log('Serviços em destaque (modo demo):', approvedMockServices);
           setFeaturedServices(approvedMockServices);
-          setIsLoading(false);
           return;
         }
         
-        // Buscar serviços aprovados do banco de dados
         const { data: servicesData, error } = await supabase
           .from('services')
           .select(`
@@ -60,121 +57,22 @@ const FeaturedServices = () => {
           `)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })
-          .limit(6); // Limitar a 6 serviços em destaque
+          .limit(6);
 
         if (error) {
           console.error('Erro ao buscar serviços em destaque:', error);
-          // Em caso de erro, criar serviços de exemplo
-          const exampleServices = [
-            {
-              id: 1,
-              unitId: 'exemplo-1',
-              categoryId: 1,
-              title: 'Limpeza Residencial',
-              description: 'Serviços completos de limpeza para sua casa',
-              photoUrl: '',
-              whatsapp: '11999999999',
-              status: 'approved' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'A',
-              house_number: '101',
-              providerName: 'Maria Silva',
-              number: '101',
-              category: {
-                id: 1,
-                name: 'Limpeza',
-                icon: '🧹',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            },
-            {
-              id: 2,
-              unitId: 'exemplo-2',
-              categoryId: 2,
-              title: 'Reparos Domésticos',
-              description: 'Consertos e reparos em geral para sua casa',
-              photoUrl: '',
-              whatsapp: '11888888888',
-              status: 'approved' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'B',
-              house_number: '202',
-              providerName: 'João Santos',
-              number: '202',
-              category: {
-                id: 2,
-                name: 'Reparos',
-                icon: '🔧',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            }
-          ];
-          setFeaturedServices(exampleServices);
-          setIsLoading(false);
+          setFeaturedServices([]);
           return;
         }
 
-        // Se não há serviços no banco, criar serviços de exemplo
+        console.log('Serviços carregados do banco:', servicesData);
+
         if (!servicesData || servicesData.length === 0) {
-          const exampleServices = [
-            {
-              id: 1,
-              unitId: 'exemplo-1',
-              categoryId: 1,
-              title: 'Limpeza Residencial',
-              description: 'Serviços completos de limpeza para sua casa',
-              photoUrl: '',
-              whatsapp: '11999999999',
-              status: 'approved' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'A',
-              house_number: '101',
-              providerName: 'Maria Silva',
-              number: '101',
-              category: {
-                id: 1,
-                name: 'Limpeza',
-                icon: '🧹',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            },
-            {
-              id: 2,
-              unitId: 'exemplo-2',
-              categoryId: 2,
-              title: 'Reparos Domésticos',
-              description: 'Consertos e reparos em geral para sua casa',
-              photoUrl: '',
-              whatsapp: '11888888888',
-              status: 'approved' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'B',
-              house_number: '202',
-              providerName: 'João Santos',
-              number: '202',
-              category: {
-                id: 2,
-                name: 'Reparos',
-                icon: '🔧',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            }
-          ];
-          console.log('Nenhum serviço no banco, usando serviços de exemplo:', exampleServices);
-          setFeaturedServices(exampleServices);
-          setIsLoading(false);
+          console.log('Nenhum serviço aprovado encontrado no banco');
+          setFeaturedServices([]);
           return;
         }
 
-        // Transformar os dados para o formato ServiceWithProvider
         const transformedServices: ServiceWithProvider[] = (servicesData || []).map(service => ({
           id: service.id,
           unitId: service.unit_id || '',
@@ -199,60 +97,11 @@ const FeaturedServices = () => {
           } : undefined
         }));
 
-        console.log('Serviços em destaque carregados:', transformedServices);
+        console.log('Serviços em destaque transformados:', transformedServices);
         setFeaturedServices(transformedServices);
       } catch (error) {
         console.error('Erro ao carregar serviços em destaque:', error);
-        // Em caso de erro, criar serviços de exemplo
-        const exampleServices = [
-          {
-            id: 1,
-            unitId: 'exemplo-1',
-            categoryId: 1,
-            title: 'Limpeza Residencial',
-            description: 'Serviços completos de limpeza para sua casa',
-            photoUrl: '',
-            whatsapp: '11999999999',
-            status: 'approved' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            block: 'A',
-            house_number: '101',
-            providerName: 'Maria Silva',
-            number: '101',
-            category: {
-              id: 1,
-              name: 'Limpeza',
-              icon: '🧹',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          },
-          {
-            id: 2,
-            unitId: 'exemplo-2',
-            categoryId: 2,
-            title: 'Reparos Domésticos',
-            description: 'Consertos e reparos em geral para sua casa',
-            photoUrl: '',
-            whatsapp: '11888888888',
-            status: 'approved' as const,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            block: 'B',
-            house_number: '202',
-            providerName: 'João Santos',
-            number: '202',
-            category: {
-              id: 2,
-              name: 'Reparos',
-              icon: '🔧',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          }
-        ];
-        setFeaturedServices(exampleServices);
+        setFeaturedServices([]);
       } finally {
         setIsLoading(false);
       }
@@ -287,7 +136,7 @@ const FeaturedServices = () => {
         </div>
         <ServiceList 
           services={featuredServices} 
-          emptyMessage="Nenhum serviço encontrado. Os serviços aparecerão aqui quando forem cadastrados e aprovados."
+          emptyMessage="Nenhum serviço aprovado encontrado. Os serviços aparecerão aqui quando forem cadastrados e aprovados por um administrador."
         />
       </div>
     </section>

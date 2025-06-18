@@ -27,10 +27,8 @@ const CategoryList = () => {
         setIsLoading(true);
         
         if (isDemoMode) {
-          // Use mock data for demo mode
           console.log('Carregando categorias (modo demo):', mockCategories);
           setCategories(mockCategories as Category[]);
-          setIsLoading(false);
           return;
         }
         
@@ -41,42 +39,15 @@ const CategoryList = () => {
 
         if (error) {
           console.error('Erro ao buscar categorias:', error);
-          // Em caso de erro, usar categorias padrão
-          const defaultCategories = [
-            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          ];
-          setCategories(defaultCategories);
-        } else {
-          console.log('Categorias carregadas:', categoriesData);
-          // Se não há categorias no banco, usar categorias padrão
-          if (!categoriesData || categoriesData.length === 0) {
-            const defaultCategories = [
-              { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-              { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-              { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-              { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-              { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            ];
-            setCategories(defaultCategories);
-          } else {
-            setCategories(categoriesData);
-          }
+          setCategories([]);
+          return;
         }
+
+        console.log('Categorias carregadas do banco:', categoriesData);
+        setCategories(categoriesData || []);
       } catch (error) {
         console.error('Erro ao carregar categorias:', error);
-        // Em caso de erro, usar categorias padrão
-        const defaultCategories = [
-          { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        ];
-        setCategories(defaultCategories);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
