@@ -17,7 +17,7 @@ const FeaturedServices = () => {
         
         if (isDemoMode) {
           // Use mock data for demo mode
-          const approvedMockServices = mockServices
+          const approvedMockServices = (mockServices || [])
             .filter(service => service.status === 'approved')
             .slice(0, 6) // Limit to 6 featured services
             .map(service => ({

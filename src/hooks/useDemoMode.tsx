@@ -28,12 +28,17 @@ export const useDemoMode = () => {
     console.log('Modo demo desativado');
   };
 
+  // Garantir que os arrays sempre existam
+  const safeMockServices = Array.isArray(mockServices) ? mockServices : [];
+  const safeMockCategories = Array.isArray(mockCategories) ? mockCategories : [];
+  const safeMockProperties = Array.isArray(mockProperties) ? mockProperties : [];
+
   return {
     isDemoMode,
     enableDemoMode,
     disableDemoMode,
-    mockServices,
-    mockCategories,
-    mockProperties
+    mockServices: safeMockServices,
+    mockCategories: safeMockCategories,
+    mockProperties: safeMockProperties
   };
 };

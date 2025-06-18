@@ -57,7 +57,7 @@ const Navbar = () => {
           </Link>
 
           {/* Menu de Navegação extraído */}
-          <NavbarMenu navigation={navigation} isActive={isActive} user={user} />
+          <NavbarMenu navigation={navigation} isActive={isActive} />
 
           {/* User Actions (desktop only) */}
           <div className="hidden lg:flex items-center space-x-4">

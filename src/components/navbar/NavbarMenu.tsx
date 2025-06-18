@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 interface NavbarMenuProps {
   navigation: MenuItem[];
   isActive: (href: string) => boolean;
-  user?: any;
 }
 
 export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
