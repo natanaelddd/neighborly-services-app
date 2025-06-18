@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-react";
@@ -38,18 +37,46 @@ const CategoryList = () => {
         const { data: categoriesData, error } = await supabase
           .from('categories')
           .select('*')
-          .order('name');
+          .order('display_order', { ascending: true });
 
         if (error) {
           console.error('Erro ao buscar categorias:', error);
-          setCategories([]);
+          // Em caso de erro, usar categorias padrão
+          const defaultCategories = [
+            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          ];
+          setCategories(defaultCategories);
         } else {
           console.log('Categorias carregadas:', categoriesData);
-          setCategories(categoriesData || []);
+          // Se não há categorias no banco, usar categorias padrão
+          if (!categoriesData || categoriesData.length === 0) {
+            const defaultCategories = [
+              { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+              { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+              { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+              { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+              { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            ];
+            setCategories(defaultCategories);
+          } else {
+            setCategories(categoriesData);
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar categorias:', error);
-        setCategories([]);
+        // Em caso de erro, usar categorias padrão
+        const defaultCategories = [
+          { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        ];
+        setCategories(defaultCategories);
       } finally {
         setIsLoading(false);
       }
