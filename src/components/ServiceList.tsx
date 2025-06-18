@@ -8,11 +8,10 @@ interface ServiceListProps {
 }
 
 const ServiceList = ({
-  services = [], // Garantir que services nunca é undefined
+  services,
   emptyMessage = "Esta página ainda não tem conteúdo."
 }: ServiceListProps) => {
-  // Verificar se services é um array válido
-  if (!Array.isArray(services) || services.length === 0) {
+  if (services.length === 0) {
     return (
       <div className="py-10 text-center">
         <p className="text-gray-500">{emptyMessage}</p>
