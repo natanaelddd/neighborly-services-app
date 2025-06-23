@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-react";
@@ -18,6 +19,7 @@ const CategoryList = () => {
   const { isDemoMode, mockCategories } = useDemoMode();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const navigate = useNavigate();
 
@@ -25,13 +27,15 @@ const CategoryList = () => {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         
         if (isDemoMode) {
-          console.log('Carregando categorias (modo demo):', mockCategories);
+          console.log('Carregando categorias em modo demo...');
           setCategories(mockCategories as Category[]);
           return;
         }
         
+        console.log('Buscando categorias do banco de dados...');
         const { data: categoriesData, error } = await supabase
           .from('categories')
           .select('*')
@@ -39,15 +43,50 @@ const CategoryList = () => {
 
         if (error) {
           console.error('Erro ao buscar categorias:', error);
-          setCategories([]);
+          setError(`Erro ao carregar categorias: ${error.message}`);
+          
+          // Criar categorias de exemplo quando há erro
+          const defaultCategories = [
+            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 6, name: "Tecnologia", icon: "💻", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          ];
+          setCategories(defaultCategories);
           return;
         }
 
-        console.log('Categorias carregadas do banco:', categoriesData);
+        if (!categoriesData || categoriesData.length === 0) {
+          console.log('Nenhuma categoria encontrada no banco, criando exemplos...');
+          
+          // Criar categorias de exemplo quando não há dados
+          const defaultCategories = [
+            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { id: 6, name: "Tecnologia", icon: "💻", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          ];
+          setCategories(defaultCategories);
+          return;
+        }
+
+        console.log(`${categoriesData.length} categorias carregadas do banco`);
         setCategories(categoriesData || []);
       } catch (error) {
-        console.error('Erro ao carregar categorias:', error);
-        setCategories([]);
+        console.error('Erro inesperado ao carregar categorias:', error);
+        setError('Erro inesperado ao carregar dados');
+        
+        // Fallback para categorias padrão
+        const defaultCategories = [
+          { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        ];
+        setCategories(defaultCategories);
       } finally {
         setIsLoading(false);
       }
@@ -58,12 +97,10 @@ const CategoryList = () => {
   
   // Função para obter o ícone baseado no nome do ícone ou emoji
   const getIcon = (iconName?: string) => {
-    // Se for um emoji, retorna diretamente
     if (iconName && iconName.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName)) {
       return <span className="text-xl">{iconName}</span>;
     }
 
-    // Fallback para ícones Lucide
     switch (iconName) {
       case 'home':
         return <Home size={20} />;
@@ -102,21 +139,14 @@ const CategoryList = () => {
     );
   }
 
-  if (categories.length === 0) {
-    return (
-      <div className="py-12">
-        <h2 className="text-3xl font-semibold mb-8 text-center text-foreground">Categorias de Serviços</h2>
-        <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">Nenhuma categoria cadastrada ainda.</p>
-          <p className="text-sm text-gray-400">As categorias aparecerão aqui quando forem criadas.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="py-12">
-      <h2 className="text-3xl font-semibold mb-8 text-center text-foreground">Categorias de Serviços</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-semibold text-center text-foreground flex-1">Categorias de Serviços</h2>
+        {error && (
+          <div className="text-sm text-orange-500">⚠️ Usando categorias de exemplo</div>
+        )}
+      </div>
       
       {/* Select dropdown para dispositivos móveis */}
       <div className="block md:hidden mb-8">
