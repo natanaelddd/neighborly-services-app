@@ -66,113 +66,13 @@ const FeaturedServices = () => {
         if (error) {
           console.error('Erro ao buscar serviços:', error);
           setError(`Erro ao carregar serviços: ${error.message}`);
-          
-          // Criar serviços de exemplo quando há erro
-          const exampleServices: ServiceWithProvider[] = [
-            {
-              id: 1,
-              unitId: 'exemplo-1',
-              categoryId: 1,
-              title: 'Limpeza Residencial Premium',
-              description: 'Serviços completos de limpeza para sua casa com produtos ecológicos',
-              photoUrl: '',
-              whatsapp: '11999999999',
-              status: 'approved',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'A',
-              house_number: '101',
-              providerName: 'Maria Silva',
-              number: '101',
-              category: {
-                id: 1,
-                name: 'Limpeza',
-                icon: '🧹',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            },
-            {
-              id: 2,
-              unitId: 'exemplo-2',
-              categoryId: 2,
-              title: 'Reparos e Manutenção',
-              description: 'Consertos elétricos, hidráulicos e reparos gerais',
-              photoUrl: '',
-              whatsapp: '11888888888',
-              status: 'approved',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'B',
-              house_number: '202',
-              providerName: 'João Santos',
-              number: '202',
-              category: {
-                id: 2,
-                name: 'Reparos',
-                icon: '🔧',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            }
-          ];
-          setFeaturedServices(exampleServices);
+          setFeaturedServices([]);
           return;
         }
 
         if (!servicesData || servicesData.length === 0) {
-          console.log('Nenhum serviço encontrado no banco, criando exemplos...');
-          
-          // Criar serviços de exemplo quando não há dados
-          const exampleServices: ServiceWithProvider[] = [
-            {
-              id: 1,
-              unitId: 'exemplo-1',
-              categoryId: 1,
-              title: 'Limpeza Residencial Premium',
-              description: 'Serviços completos de limpeza para sua casa com produtos ecológicos',
-              photoUrl: '',
-              whatsapp: '11999999999',
-              status: 'approved',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'A',
-              house_number: '101',
-              providerName: 'Maria Silva',
-              number: '101',
-              category: {
-                id: 1,
-                name: 'Limpeza',
-                icon: '🧹',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            },
-            {
-              id: 2,
-              unitId: 'exemplo-2',
-              categoryId: 2,
-              title: 'Reparos e Manutenção',
-              description: 'Consertos elétricos, hidráulicos e reparos gerais',
-              photoUrl: '',
-              whatsapp: '11888888888',
-              status: 'approved',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              block: 'B',
-              house_number: '202',
-              providerName: 'João Santos',
-              number: '202',
-              category: {
-                id: 2,
-                name: 'Reparos',
-                icon: '🔧',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }
-            }
-          ];
-          setFeaturedServices(exampleServices);
+          console.log('Nenhum serviço aprovado encontrado no banco');
+          setFeaturedServices([]);
           return;
         }
 
@@ -205,6 +105,7 @@ const FeaturedServices = () => {
       } catch (error) {
         console.error('Erro inesperado ao carregar serviços:', error);
         setError('Erro inesperado ao carregar dados');
+        setFeaturedServices([]);
       } finally {
         setIsLoading(false);
       }
@@ -237,7 +138,7 @@ const FeaturedServices = () => {
             <div className="text-sm text-muted-foreground">Modo Demo Ativo</div>
           )}
           {error && (
-            <div className="text-sm text-red-500">⚠️ Usando dados de exemplo</div>
+            <div className="text-sm text-red-500">⚠️ {error}</div>
           )}
         </div>
         <ServiceList 

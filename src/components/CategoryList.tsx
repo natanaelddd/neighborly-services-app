@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Home, Settings, Info, Edit, Search, Filter, Plus, User } from "lucide-react";
@@ -44,49 +43,16 @@ const CategoryList = () => {
         if (error) {
           console.error('Erro ao buscar categorias:', error);
           setError(`Erro ao carregar categorias: ${error.message}`);
-          
-          // Criar categorias de exemplo quando há erro
-          const defaultCategories = [
-            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 6, name: "Tecnologia", icon: "💻", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          ];
-          setCategories(defaultCategories);
+          setCategories([]);
           return;
         }
 
-        if (!categoriesData || categoriesData.length === 0) {
-          console.log('Nenhuma categoria encontrada no banco, criando exemplos...');
-          
-          // Criar categorias de exemplo quando não há dados
-          const defaultCategories = [
-            { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 4, name: "Saúde", icon: "🏥", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 5, name: "Educação", icon: "📚", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-            { id: 6, name: "Tecnologia", icon: "💻", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          ];
-          setCategories(defaultCategories);
-          return;
-        }
-
-        console.log(`${categoriesData.length} categorias carregadas do banco`);
+        console.log(`${categoriesData?.length || 0} categorias carregadas do banco`);
         setCategories(categoriesData || []);
       } catch (error) {
         console.error('Erro inesperado ao carregar categorias:', error);
         setError('Erro inesperado ao carregar dados');
-        
-        // Fallback para categorias padrão
-        const defaultCategories = [
-          { id: 1, name: "Limpeza", icon: "🧹", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 2, name: "Reparos", icon: "🔧", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-          { id: 3, name: "Beleza", icon: "💄", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-        ];
-        setCategories(defaultCategories);
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }
@@ -139,12 +105,28 @@ const CategoryList = () => {
     );
   }
 
+  if (categories.length === 0) {
+    return (
+      <div className="py-12">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-semibold text-center text-foreground flex-1">Categorias de Serviços</h2>
+          {error && (
+            <div className="text-sm text-red-500">⚠️ {error}</div>
+          )}
+        </div>
+        <div className="text-center py-8">
+          <p className="text-gray-500">Nenhuma categoria cadastrada ainda.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-12">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-semibold text-center text-foreground flex-1">Categorias de Serviços</h2>
         {error && (
-          <div className="text-sm text-orange-500">⚠️ Usando categorias de exemplo</div>
+          <div className="text-sm text-orange-500">⚠️ {error}</div>
         )}
       </div>
       
