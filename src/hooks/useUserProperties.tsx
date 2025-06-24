@@ -17,6 +17,8 @@ export const useUserProperties = () => {
 
   const fetchUserProperties = async () => {
     if (!user) {
+      console.log('Nenhum usuário logado, parando busca');
+      setProperties([]);
       setIsLoading(false);
       return;
     }
@@ -60,10 +62,12 @@ export const useUserProperties = () => {
       
       if (transformedProperties.length === 0) {
         console.log('Nenhuma propriedade encontrada para o usuário');
+      } else {
+        console.log(`${transformedProperties.length} propriedade(s) carregada(s)`);
       }
       
     } catch (error) {
-      console.error('Erro ao carregar propriedades:', error);
+      console.error('Erro inesperado ao carregar propriedades:', error);
       setError("Erro inesperado ao carregar propriedades");
     } finally {
       setIsLoading(false);
@@ -71,12 +75,8 @@ export const useUserProperties = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchUserProperties();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
+    fetchUserProperties();
+  }, [user?.id]); // Reagir apenas à mudança do ID do usuário
 
   return {
     properties,

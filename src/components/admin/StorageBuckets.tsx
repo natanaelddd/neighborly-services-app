@@ -7,7 +7,7 @@ const StorageBuckets = () => {
   useEffect(() => {
     const checkBuckets = async () => {
       try {
-        // Apenas verificar se os buckets existem, não tentar criá-los
+        // Verificar se os buckets existem
         const { data: buckets, error } = await supabase.storage.listBuckets();
         
         if (error) {
@@ -18,14 +18,38 @@ const StorageBuckets = () => {
         const bucketNames = buckets?.map(bucket => bucket.name) || [];
         console.log('Buckets disponíveis:', bucketNames);
 
-        // Verificar se os buckets necessários existem
-        if (!bucketNames.includes('service-photos')) {
-          console.warn('Bucket service-photos não encontrado');
+        // Verificar buckets necessários
+        const requiredBuckets = ['service-photos', 'property-photos'];
+        const missingBuckets = requiredBuckets.filter(bucket => !bucketNames.includes(bucket));
+        
+        if (missingBuckets.length === 0) {
+          console.log('✅ Todos os buckets necessários estão configurados');
+        } else {
+          console.warn('⚠️ Buckets faltando:', missingBuckets);
         }
 
-        if (!bucketNames.includes('property-photos')) {
-          console.warn('Bucket property-photos não encontrado');
+        // Testar se conseguimos fazer upload
+        try {
+          const testFile = new Blob(['test'], { type: 'text/plain' });
+          const testFileName = `test-${Date.now()}.txt`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('service-photos')
+            .upload(testFileName, testFile);
+
+          if (!uploadError) {
+            console.log('✅ Upload de teste funcionando');
+            // Limpar arquivo de teste
+            await supabase.storage
+              .from('service-photos')
+              .remove([testFileName]);
+          } else {
+            console.warn('⚠️ Erro no upload de teste:', uploadError);
+          }
+        } catch (testError) {
+          console.warn('⚠️ Erro no teste de upload:', testError);
         }
+
       } catch (error) {
         console.error('Erro ao verificar storage buckets:', error);
       }
