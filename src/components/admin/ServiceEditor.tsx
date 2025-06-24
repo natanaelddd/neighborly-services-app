@@ -6,7 +6,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Service, Category } from "@/types";
+
+interface Service {
+  id: number;
+  unit_id: string;
+  category_id: number | null;
+  title: string;
+  description: string;
+  whatsapp: string;
+  status: string;
+  block: string;
+  house_number: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    name: string;
+    block: string;
+    house_number: string;
+  };
+  categories?: {
+    name: string;
+    icon: string;
+  };
+}
+
+interface Category {
+  id: number;
+  name: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface ServiceEditorProps {
   service: Service | null;
@@ -21,7 +51,7 @@ const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Service
     title: "",
     description: "",
     whatsapp: "",
-    categoryId: "",
+    category_id: "",
     status: "",
     block: "",
     house_number: ""
@@ -33,7 +63,7 @@ const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Service
         title: service.title,
         description: service.description,
         whatsapp: service.whatsapp,
-        categoryId: service.categoryId?.toString() || "",
+        category_id: service.category_id?.toString() || "",
         status: service.status,
         block: service.block,
         house_number: service.house_number
@@ -48,8 +78,8 @@ const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Service
       title: formData.title,
       description: formData.description,
       whatsapp: formData.whatsapp,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : 0,
-      status: formData.status as 'pending' | 'approved' | 'rejected',
+      category_id: formData.category_id ? parseInt(formData.category_id) : null,
+      status: formData.status,
       block: formData.block,
       house_number: formData.house_number
     };
@@ -133,8 +163,8 @@ const ServiceEditor = ({ service, categories, isOpen, onClose, onSave }: Service
           <div>
             <Label htmlFor="category">Categoria</Label>
             <Select 
-              value={formData.categoryId} 
-              onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+              value={formData.category_id} 
+              onValueChange={(value) => setFormData({ ...formData, category_id: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione uma categoria" />

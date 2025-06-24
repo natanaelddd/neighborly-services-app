@@ -6,7 +6,6 @@ import { Save } from "lucide-react";
 import { MenuItem } from "@/hooks/useSupabaseMenuItems";
 import MenuManagerItem from "./MenuManagerItem";
 import MenuManagerAddForm from "./MenuManagerAddForm";
-import { supabase } from "@/integrations/supabase/client";
 
 interface MenuManagerProps {
   menuItems: MenuItem[];
@@ -96,28 +95,10 @@ const MenuManager = ({
     toast.info("Visibilidade alterada, clique em Salvar para publicar.");
   };
 
-  const handleToggleRecommendations = async () => {
-    try {
-      const newValue = !showRecommendationsMenu;
-      
-      // Update in database
-      const { error } = await supabase
-        .from('system_settings')
-        .update({ setting_value: newValue })
-        .eq('setting_key', 'showRecommendationsMenu');
-
-      if (error) {
-        console.error('Erro ao atualizar configuração:', error);
-        toast.error("Erro ao atualizar configuração");
-        return;
-      }
-
-      onToggleRecommendations();
-      toast.success(`Menu de recomendações ${newValue ? "ativado" : "desativado"}`);
-    } catch (error) {
-      console.error('Erro ao alterar configuração:', error);
-      toast.error("Erro ao alterar configuração");
-    }
+  const handleToggleRecommendations = () => {
+    onToggleRecommendations();
+    localStorage.setItem("showRecommendationsMenu", JSON.stringify(!showRecommendationsMenu));
+    toast.success(`Recommendations menu ${!showRecommendationsMenu ? "enabled" : "disabled"}`);
   };
 
   // Editar label/path inline
@@ -277,7 +258,7 @@ const MenuManager = ({
       <CardHeader>
         <CardTitle>Menu Management</CardTitle>
         <CardDescription>
-          Edite nome, link, adicione, reordene ou remova itens do menu abaixo. Todas as configurações são salvas no banco de dados.
+          Edite nome, link, adicione, reordene ou remova itens do menu abaixo. Agora sincronizado com Supabase.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -330,22 +311,22 @@ const MenuManager = ({
               ))
             )}
             <div className="mt-6">
-              <h3 className="text-lg font-medium mb-2">Menu de Recomendações</h3>
+              <h3 className="text-lg font-medium mb-2">Recommendations Menu</h3>
               <div className="bg-muted/30 p-4 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm">
-                      O menu de recomendações permite adicionar serviços de pessoas que não moram no condomínio.
+                      The recommendations menu allows you to add services from people who don't live in the condominium.
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Status atual: {showRecommendationsMenu ? "Ativo" : "Inativo"}
+                      Current status: {showRecommendationsMenu ? "Active" : "Inactive"}
                     </p>
                   </div>
                   <Button
                     variant={showRecommendationsMenu ? "outline" : "default"}
                     onClick={handleToggleRecommendations}
                   >
-                    {showRecommendationsMenu ? "Desativar" : "Ativar"}
+                    {showRecommendationsMenu ? "Disable" : "Enable"}
                   </Button>
                 </div>
               </div>

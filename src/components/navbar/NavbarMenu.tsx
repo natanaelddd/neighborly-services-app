@@ -2,20 +2,19 @@
 import { Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Settings, LogOut } from "lucide-react";
+import { Menu } from "lucide-react";
 import type { MenuItem } from "@/hooks/usePublicMenuItems";
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarMenuProps {
   navigation: MenuItem[];
   isActive: (href: string) => boolean;
+  user?: any; // Passado da Navbar
 }
 
-export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
+export function NavbarMenu({ navigation, isActive, user }: NavbarMenuProps) {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const { user, profile, isAdmin, logout } = useAuth();
 
   const closeMenu = () => setIsOpen(false);
 
@@ -37,7 +36,6 @@ export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
           </Link>
         ))}
       </div>
-      
       {/* Mobile menu button */}
       <div className="lg:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -65,36 +63,7 @@ export function NavbarMenu({ navigation, isActive }: NavbarMenuProps) {
                   {item.label}
                 </Link>
               ))}
-              
-              {user ? (
-                <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                  <Link to="/user-dashboard" onClick={closeMenu}>
-                    <Button variant="outline" className="w-full justify-start">
-                      <User className="h-4 w-4 mr-2" />
-                      {profile?.name || user.email?.split('@')[0] || "Usuário"}
-                    </Button>
-                  </Link>
-                  {isAdmin && (
-                    <Link to="/admin" onClick={closeMenu}>
-                      <Button variant="outline" className="w-full justify-start">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin
-                      </Button>
-                    </Link>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start" 
-                    onClick={() => {
-                      logout();
-                      closeMenu();
-                    }}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sair
-                  </Button>
-                </div>
-              ) : (
+              {!user && (
                 <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
                   <Link to="/login" onClick={closeMenu}>
                     <Button variant="outline" className="w-full">

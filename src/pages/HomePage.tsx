@@ -3,7 +3,6 @@ import HeroSection from "@/components/HeroSection";
 import CategoryList from "@/components/CategoryList";
 import FeaturedServices from "@/components/FeaturedServices";
 import FeaturedAd from "@/components/FeaturedAd";
-import DatabaseStatus from "@/components/DatabaseStatus";
 import { useEffect } from "react";
 
 const HomePage = () => {
@@ -25,9 +24,6 @@ const HomePage = () => {
       </div>
       
       <FeaturedServices />
-      
-      {/* Debug component - remova em produção */}
-      <DatabaseStatus />
     </div>
   );
 };

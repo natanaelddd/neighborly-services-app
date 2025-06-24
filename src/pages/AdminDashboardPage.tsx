@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAdminState } from "@/hooks/useAdminState";
 import { useAdminHandlers } from "@/components/admin/AdminHandlers";
 import ServiceManager from "@/components/admin/ServiceManager";
@@ -15,26 +15,13 @@ import PropertiesManagement from "@/components/admin/PropertiesManagement";
 import { useSupabaseMenuItems } from "@/hooks/useSupabaseMenuItems";
 
 const AdminDashboardPage = () => {
-  const { isAdmin, user, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState(() => {
-    // Recuperar a aba ativa do sessionStorage ou usar padrão
-    const savedTab = sessionStorage.getItem('admin-active-tab');
-    return savedTab || 'pending-services';
-  });
-
-  console.log('AdminDashboardPage - Render with:', {
-    isAdmin,
-    user: user?.email,
-    isLoading,
-    activeTab
-  });
-
+  const { isAdmin } = useAuth();
   const {
     services,
     setServices,
     categories,
     setCategories,
-    isLoading: stateLoading,
+    isLoading,
     admins,
     setAdmins,
     showRecommendationsMenu,
@@ -80,36 +67,7 @@ const AdminDashboardPage = () => {
     reorderMenuItems,
   } = useSupabaseMenuItems();
 
-  // Salvar a aba ativa no sessionStorage sempre que mudar
-  useEffect(() => {
-    sessionStorage.setItem('admin-active-tab', activeTab);
-  }, [activeTab]);
-
-  // Debug de carregamento
-  useEffect(() => {
-    console.log('AdminDashboardPage - Loading states:', {
-      authLoading: isLoading,
-      stateLoading,
-      isMenuLoading,
-      isAdmin,
-      user: user?.email
-    });
-  }, [isLoading, stateLoading, isMenuLoading, isAdmin, user]);
-
-  if (isLoading) {
-    console.log('AdminDashboardPage - Auth still loading');
-    return (
-      <div className="container-custom py-10">
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <div className="ml-4 text-sm text-gray-600">Carregando painel administrativo...</div>
-        </div>
-      </div>
-    );
-  }
-
   if (!isAdmin) {
-    console.log('AdminDashboardPage - User is not admin');
     return (
       <div className="container-custom py-10">
         <div className="max-w-3xl mx-auto text-center">
@@ -117,15 +75,10 @@ const AdminDashboardPage = () => {
           <p className="mb-6 text-gray-600">
             Esta página é exclusiva para administradores.
           </p>
-          <p className="text-sm text-gray-500">
-            Usuário atual: {user?.email || 'Não logado'}
-          </p>
         </div>
       </div>
     );
   }
-
-  console.log('AdminDashboardPage - Rendering admin dashboard');
 
   return (
     <div className="container-custom py-8">
@@ -134,11 +87,7 @@ const AdminDashboardPage = () => {
         {isDemoMode && <span className="text-sm font-normal text-blue-600 ml-2">(Modo Demonstração)</span>}
       </h1>
       
-      <div className="mb-4 text-sm text-gray-600">
-        Bem-vindo, {user?.email}
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="pending-services">
         <div className="mb-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
             {/* Seção Principal - Serviços */}
@@ -199,7 +148,7 @@ const AdminDashboardPage = () => {
         <TabsContent value="pending-services">
           <PendingServices 
             services={services}
-            isLoading={stateLoading}
+            isLoading={isLoading}
             onApprove={serviceManager.handleApprove}
             onReject={serviceManager.handleReject}
           />
@@ -210,7 +159,7 @@ const AdminDashboardPage = () => {
           <AllServices 
             services={services}
             categories={categories}
-            isLoading={stateLoading}
+            isLoading={isLoading}
             onUpdateService={serviceManager.handleUpdateService}
             onDeleteService={serviceManager.handleDeleteService}
           />

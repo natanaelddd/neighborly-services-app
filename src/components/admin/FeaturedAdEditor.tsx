@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface FeaturedProperty {
   id: number;
@@ -27,163 +26,63 @@ interface FeaturedAdEditorProps {
 
 const FeaturedAdEditor = ({ properties: initialProperties, onSave }: FeaturedAdEditorProps) => {
   const [propertyList, setPropertyList] = useState<FeaturedProperty[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFeaturedProperties();
-  }, []);
-
-  const fetchFeaturedProperties = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('featured_properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao carregar propriedades em destaque:', error);
-        toast.error("Erro ao carregar propriedades");
-        return;
+    // Carregar propriedades do localStorage ou usar as iniciais
+    const storedProperties = localStorage.getItem('featuredProperties');
+    if (storedProperties) {
+      try {
+        setPropertyList(JSON.parse(storedProperties));
+      } catch (error) {
+        console.error('Erro ao carregar propriedades do localStorage:', error);
+        setPropertyList(initialProperties);
       }
-
-      const transformedProperties = (data || []).map(prop => ({
-        id: prop.id,
-        title: prop.title,
-        description: prop.description,
-        details: prop.details,
-        imageUrl: prop.image_url,
-        type: prop.type as 'venda' | 'aluguel',
-        price: prop.price || ""
-      }));
-
-      setPropertyList(transformedProperties);
-    } catch (error) {
-      console.error('Erro ao carregar propriedades:', error);
-      toast.error("Erro ao carregar propriedades");
-    } finally {
-      setIsLoading(false);
+    } else {
+      setPropertyList(initialProperties);
     }
+  }, [initialProperties]);
+
+  const addProperty = () => {
+    const newProperty: FeaturedProperty = {
+      id: Date.now(),
+      title: "",
+      description: "",
+      details: "",
+      imageUrl: "",
+      type: "venda",
+      price: ""
+    };
+    setPropertyList([...propertyList, newProperty]);
   };
 
-  const addProperty = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('featured_properties')
-        .insert([{
-          title: "Nova Propriedade",
-          description: "Descrição da propriedade",
-          details: "Detalhes adicionais",
-          image_url: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-          type: "venda",
-          price: ""
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Erro ao adicionar propriedade:', error);
-        toast.error("Erro ao adicionar propriedade");
-        return;
-      }
-
-      const newProperty: FeaturedProperty = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        details: data.details,
-        imageUrl: data.image_url,
-        type: data.type as 'venda' | 'aluguel',
-        price: data.price || ""
-      };
-
-      setPropertyList([...propertyList, newProperty]);
-      toast.success("Propriedade adicionada com sucesso!");
-    } catch (error) {
-      console.error('Erro ao adicionar propriedade:', error);
-      toast.error("Erro ao adicionar propriedade");
-    }
+  const removeProperty = (id: number) => {
+    setPropertyList(propertyList.filter(prop => prop.id !== id));
   };
 
-  const removeProperty = async (id: number) => {
-    try {
-      const { error } = await supabase
-        .from('featured_properties')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error('Erro ao remover propriedade:', error);
-        toast.error("Erro ao remover propriedade");
-        return;
-      }
-
-      setPropertyList(propertyList.filter(prop => prop.id !== id));
-      toast.success("Propriedade removida com sucesso!");
-    } catch (error) {
-      console.error('Erro ao remover propriedade:', error);
-      toast.error("Erro ao remover propriedade");
-    }
-  };
-
-  const updateProperty = async (id: number, field: keyof FeaturedProperty, value: string) => {
-    const updatedList = propertyList.map(prop => 
+  const updateProperty = (id: number, field: keyof FeaturedProperty, value: string) => {
+    setPropertyList(propertyList.map(prop => 
       prop.id === id ? { ...prop, [field]: value } : prop
-    );
-    setPropertyList(updatedList);
-
-    // Debounce the database update
-    try {
-      const updateData: any = {};
-      if (field === 'imageUrl') {
-        updateData.image_url = value;
-      } else {
-        updateData[field] = value;
-      }
-
-      const { error } = await supabase
-        .from('featured_properties')
-        .update(updateData)
-        .eq('id', id);
-
-      if (error) {
-        console.error('Erro ao atualizar propriedade:', error);
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar propriedade:', error);
-    }
+    ));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Chamar callback do componente pai para atualizar o estado
+    // Salvar no localStorage
+    localStorage.setItem('featuredProperties', JSON.stringify(propertyList));
+    
+    // Chamar callback do componente pai
     onSave(propertyList);
     
     toast.success("Propriedades em destaque atualizadas com sucesso!");
   };
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Propriedades em Destaque</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-center p-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Propriedades em Destaque</CardTitle>
         <CardDescription>
-          Gerencie as casas/propriedades exibidas no carousel da página inicial. As alterações são salvas automaticamente no banco de dados.
+          Gerencie as casas/propriedades exibidas no carousel da página inicial. As alterações são salvas automaticamente e aparecem imediatamente no site.
         </CardDescription>
       </CardHeader>
       <CardContent>

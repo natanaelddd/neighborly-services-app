@@ -1,7 +1,26 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Service } from "@/types";
+
+interface Service {
+  id: number;
+  unit_id: string;
+  category_id: number | null;
+  title: string;
+  description: string;
+  whatsapp: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    name: string;
+    block: string;
+    house_number: string;
+  };
+  categories?: {
+    name: string;
+    icon: string;
+  };
+}
 
 interface ServiceManagerProps {
   services: Service[];
@@ -60,13 +79,7 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
       const { error } = await supabase
         .from('services')
         .update({
-          title: updatedData.title,
-          description: updatedData.description,
-          whatsapp: updatedData.whatsapp,
-          category_id: updatedData.categoryId,
-          block: updatedData.block,
-          house_number: updatedData.house_number,
-          status: updatedData.status,
+          ...updatedData,
           updated_at: new Date().toISOString()
         })
         .eq('id', serviceId);
@@ -89,53 +102,37 @@ const ServiceManager = ({ services, setServices }: ServiceManagerProps) => {
 
   const handleDeleteService = async (serviceId: number) => {
     try {
-      console.log('Iniciando exclusão do serviço:', serviceId);
-      
-      // Primeiro, remover o serviço dos destaques na tabela featured_services
-      const { error: featuredError } = await supabase
-        .from('featured_services')
-        .delete()
-        .eq('service_id', serviceId);
-
-      if (featuredError) {
-        console.error('Erro ao remover serviço dos destaques:', featuredError);
-        // Não vamos parar aqui, continuamos com a exclusão
-      }
-
-      // Excluir fotos do serviço primeiro (se existirem)
-      const { error: photosError } = await supabase
-        .from('service_photos')
-        .delete()
-        .eq('service_id', serviceId);
-
-      if (photosError) {
-        console.error('Erro ao excluir fotos do serviço:', photosError);
-        // Não vamos parar aqui, vamos continuar com a exclusão do serviço
-      }
-
-      // Agora excluir o serviço
-      const { error: serviceError } = await supabase
+      const { error } = await supabase
         .from('services')
         .delete()
         .eq('id', serviceId);
 
-      if (serviceError) {
-        console.error('Erro ao excluir serviço:', serviceError);
-        toast.error("Erro ao excluir serviço: " + serviceError.message);
+      if (error) {
+        console.error('Erro ao excluir serviço:', error);
+        toast.error("Erro ao excluir serviço");
         return;
       }
 
-      console.log('Serviço excluído com sucesso do banco de dados');
+      // Remove o serviço deletado dos destaques (featuredServiceIds)
+      const featuredServiceIdsStr = localStorage.getItem('featuredServiceIds');
+      if (featuredServiceIdsStr) {
+        let featuredServiceIds: number[] = [];
+        try {
+          featuredServiceIds = JSON.parse(featuredServiceIdsStr);
+        } catch (_) {
+          featuredServiceIds = [];
+        }
+        if (Array.isArray(featuredServiceIds)) {
+          const updatedFeatured = featuredServiceIds.filter(id => id !== serviceId);
+          localStorage.setItem('featuredServiceIds', JSON.stringify(updatedFeatured));
+        }
+      }
 
-      // Atualizar o estado local removendo o serviço
-      const updatedServices = services.filter(service => service.id !== serviceId);
-      setServices(updatedServices);
-      
-      console.log('Estado local atualizado, serviços restantes:', updatedServices.length);
+      setServices(services.filter(service => service.id !== serviceId));
       toast.success("Serviço excluído com sucesso!");
     } catch (error) {
-      console.error('Erro inesperado ao excluir serviço:', error);
-      toast.error("Erro inesperado ao excluir serviço");
+      console.error('Erro ao excluir serviço:', error);
+      toast.error("Erro ao excluir serviço");
     }
   };
 
