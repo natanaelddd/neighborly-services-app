@@ -3,29 +3,45 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Clock, Home } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Home, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Property } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import PropertyPhotoManager from "@/components/property/PropertyPhotoManager";
+import { Link } from "react-router-dom";
 
 const UserPropertyManager = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  console.log('UserPropertyManager - Debug info:', {
+    user: user?.email,
+    profile: profile?.name,
+    userId: user?.id
+  });
 
   useEffect(() => {
     if (user) {
       fetchUserProperties();
+    } else {
+      setIsLoading(false);
     }
   }, [user]);
 
   const fetchUserProperties = async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
+      setError(null);
+      
+      console.log('Buscando propriedades para o usuário:', user.id);
       
       const { data, error } = await supabase
         .from('properties')
@@ -39,9 +55,11 @@ const UserPropertyManager = () => {
 
       if (error) {
         console.error('Erro ao buscar propriedades do usuário:', error);
-        toast.error("Erro ao carregar suas propriedades");
+        setError("Erro ao carregar suas propriedades: " + error.message);
         return;
       }
+
+      console.log('Propriedades encontradas:', data);
 
       const transformedProperties: Property[] = (data || []).map(item => ({
         ...item,
@@ -55,9 +73,14 @@ const UserPropertyManager = () => {
       }));
 
       setProperties(transformedProperties);
+      
+      if (transformedProperties.length === 0) {
+        console.log('Nenhuma propriedade encontrada para o usuário');
+      }
+      
     } catch (error) {
       console.error('Erro ao carregar propriedades:', error);
-      toast.error("Erro ao carregar propriedades");
+      setError("Erro inesperado ao carregar propriedades");
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +97,26 @@ const UserPropertyManager = () => {
     }
   };
 
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Minhas Propriedades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <AlertCircle className="w-12 h-12 mx-auto text-orange-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Acesso Restrito</h3>
+            <p className="text-gray-500 mb-4">Você precisa estar logado para ver suas propriedades.</p>
+            <Link to="/login">
+              <Button>Fazer Login</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isLoading) {
     return (
       <Card>
@@ -81,8 +124,29 @@ const UserPropertyManager = () => {
           <CardTitle>Minhas Propriedades</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center p-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="flex justify-center items-center p-6">
+            <Loader2 className="h-8 w-8 animate-spin mr-3" />
+            <span>Carregando suas propriedades...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Minhas Propriedades</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Erro ao Carregar</h3>
+            <p className="text-gray-500 mb-4">{error}</p>
+            <Button onClick={fetchUserProperties} variant="outline">
+              Tentar Novamente
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -104,9 +168,12 @@ const UserPropertyManager = () => {
             <Home className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-600 mb-2">Nenhuma propriedade cadastrada</h3>
             <p className="text-gray-500 mb-4">Cadastre sua primeira propriedade para começar.</p>
-            <Button onClick={() => window.location.href = '/nova-propriedade'}>
-              Cadastrar Propriedade
-            </Button>
+            <Link to="/properties/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Cadastrar Propriedade
+              </Button>
+            </Link>
           </div>
         ) : (
           <div className="space-y-4">
