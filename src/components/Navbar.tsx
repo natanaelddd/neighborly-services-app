@@ -18,6 +18,12 @@ const Navbar = () => {
   const location = useLocation();
   const { menuItems } = usePublicMenuItems();
 
+  console.log('Navbar - Auth state:', { 
+    user: user?.email, 
+    profile: profile?.name, 
+    isAdmin 
+  });
+
   const navigation = menuItems.filter(
     item =>
       item.visible &&
@@ -51,7 +57,7 @@ const Navbar = () => {
           </Link>
 
           {/* Menu de Navegação extraído */}
-          <NavbarMenu navigation={navigation} isActive={isActive} user={user} />
+          <NavbarMenu navigation={navigation} isActive={isActive} />
 
           {/* User Actions (desktop only) */}
           <div className="hidden lg:flex items-center space-x-4">
@@ -60,7 +66,7 @@ const Navbar = () => {
                 <Link to="/user-dashboard">
                   <Button variant="outline" size="sm">
                     <User className="h-4 w-4 mr-2" />
-                    {profile?.name || "Usuário"}
+                    {profile?.name || user.email?.split('@')[0] || "Usuário"}
                   </Button>
                 </Link>
                 {isAdmin && (

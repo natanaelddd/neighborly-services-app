@@ -3,117 +3,96 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDemoMode } from "./useDemoMode";
-
-interface Service {
-  id: number;
-  unit_id: string;
-  category_id: number | null;
-  title: string;
-  description: string;
-  whatsapp: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  block: string;  // Added missing property
-  house_number: string;  // Added missing property
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  categories?: {
-    name: string;
-    icon: string;
-  };
-}
-
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  created_at: string;
-  updated_at: string;
-}
+import { Service, Category } from "@/types";
 
 export const useAdminState = () => {
-  const { isDemoMode, mockServices, mockCategories, mockProperties } = useDemoMode();
+  const { isDemoMode, mockServices, mockCategories } = useDemoMode();
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [admins, setAdmins] = useState<string[]>(["admin@example.com"]);
   const [showRecommendationsMenu, setShowRecommendationsMenu] = useState(false);
   
-  // State for featured properties management
-  const [featuredProperties, setFeaturedProperties] = useState([
-    {
-      id: 1,
-      title: "Evidence Resort - Seu novo lar",
-      description: "Localizado em uma região privilegiada, o Evidence Resort conta com 5 blocos de casas modernas e confortáveis, projetadas para proporcionar qualidade de vida para você e sua família.",
-      details: "Nossa plataforma exclusiva conecta os moradores do condomínio, permitindo que você encontre ou ofereça serviços dentro da nossa comunidade com facilidade e segurança.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda" as const,
-      price: "A partir de R$ 450.000"
-    },
-    {
-      id: 2,
-      title: "Casa Moderna - Bloco 2",
-      description: "Casa de 3 quartos com suíte, sala ampla, cozinha planejada e área gourmet. Localizada no Bloco 2 com vista privilegiada para a área verde do condomínio.",
-      details: "Acabamento de primeira qualidade, garagem para 2 carros, jardim privativo e acesso direto à área de lazer do condomínio.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "venda" as const,
-      price: "R$ 520.000"
-    },
-    {
-      id: 3,
-      title: "Casa para Locação - Bloco 4",
-      description: "Oportunidade única de morar no Evidence Resort. Casa mobiliada de 2 quartos, ideal para casais ou pequenas famílias que buscam conforto e segurança.",
-      details: "Inclui móveis planejados, ar condicionado, área de serviço completa e vaga de garagem coberta.",
-      imageUrl: "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-      type: "aluguel" as const,
-      price: "R$ 2.800/mês"
-    }
-  ]);
+  // State for featured properties management (now from database)
+  const [featuredProperties, setFeaturedProperties] = useState([]);
 
-  // State for menu management
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, label: "Home", path: "/", visible: true },
-    { id: 2, label: "Services", path: "/services", visible: true },
-    { id: 3, label: "Categories", path: "/categories", visible: true },
-    { id: 4, label: "Properties", path: "/properties", visible: true },
-    { id: 5, label: "Recommendations", path: "/recommendations", visible: true },
-    { id: 6, label: "About", path: "/about", visible: true },
-    { id: 7, label: "Contact", path: "/contact", visible: true }
-  ]);
+  // State for menu management (removed - now handled by useSupabaseMenuItems)
+  const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
     if (isDemoMode) {
-      // Use mock data for demo
-      setServices(mockServices as Service[]);
+      // Transform mock services to match the Service interface from types/index.ts
+      const transformedMockServices: Service[] = (mockServices as any[]).map(service => ({
+        id: service.id,
+        unitId: service.unit_id || service.unitId,
+        categoryId: service.category_id || service.categoryId || 0,
+        title: service.title,
+        description: service.description,
+        photoUrl: service.photo_url || service.photoUrl,
+        whatsapp: service.whatsapp,
+        status: service.status as 'pending' | 'approved' | 'rejected',
+        rejectionReason: service.rejection_reason || service.rejectionReason,
+        createdAt: service.created_at || service.createdAt,
+        updatedAt: service.updated_at || service.updatedAt,
+        block: service.block || '',
+        house_number: service.house_number || '',
+        category: service.category
+      }));
+      
+      setServices(transformedMockServices);
       setCategories(mockCategories as Category[]);
-      setFeaturedProperties([...featuredProperties, ...mockProperties.filter(p => p.status === 'approved').map(p => ({
-        id: p.id + 10,
-        title: p.title,
-        description: p.description,
-        details: p.description,
-        imageUrl: p.property_photos?.[0]?.photo_url || "/lovable-uploads/85911a86-bc61-477f-aeef-601c1571370b.png",
-        type: p.type,
-        price: p.price || "Consulte preço"
-      }))]);
       setIsLoading(false);
     } else {
       fetchData();
-    }
-    
-    // Check if recommendations menu is enabled
-    const storedShowRecommendations = localStorage.getItem("showRecommendationsMenu");
-    if (storedShowRecommendations) {
-      setShowRecommendationsMenu(JSON.parse(storedShowRecommendations));
+      fetchSystemSettings();
+      fetchFeaturedProperties();
     }
   }, [isDemoMode]);
+
+  const fetchSystemSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('setting_key', 'showRecommendationsMenu')
+        .single();
+
+      if (!error && data) {
+        setShowRecommendationsMenu(data.setting_value as boolean);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações do sistema:', error);
+    }
+  };
+
+  const fetchFeaturedProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('featured_properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const transformedProperties = data.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          description: prop.description,
+          details: prop.details,
+          imageUrl: prop.image_url,
+          type: prop.type as 'venda' | 'aluguel',
+          price: prop.price || "Consulte preço"
+        }));
+        setFeaturedProperties(transformedProperties);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar propriedades em destaque:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      console.log('Iniciando carregamento dos dados...');
 
       // Buscar serviços com informações do usuário e categoria
       const { data: servicesData, error: servicesError } = await supabase
@@ -128,8 +107,36 @@ export const useAdminState = () => {
       if (servicesError) {
         console.error('Erro ao buscar serviços:', servicesError);
         toast.error("Erro ao carregar serviços");
+        setServices([]);
       } else {
-        setServices(servicesData || []);
+        console.log('Serviços carregados do banco:', servicesData?.length || 0);
+        // Transform the Supabase data to match our Service interface from types/index.ts
+        const transformedServices: Service[] = (servicesData || []).map(service => ({
+          id: service.id,
+          unitId: service.unit_id,
+          categoryId: service.category_id || 0,
+          title: service.title,
+          description: service.description,
+          photoUrl: service.photo_url || undefined,
+          whatsapp: service.whatsapp,
+          status: service.status as 'pending' | 'approved' | 'rejected',
+          rejectionReason: undefined,
+          createdAt: service.created_at,
+          updatedAt: service.updated_at,
+          block: service.block || service.profiles?.block || '',
+          house_number: service.house_number || service.profiles?.house_number || '',
+          // Add the category and unit relations if they exist
+          category: service.categories ? {
+            id: service.category_id || 0,
+            name: service.categories.name,
+            icon: service.categories.icon,
+            created_at: '',
+            updated_at: ''
+          } : undefined
+        }));
+        
+        console.log('Serviços transformados:', transformedServices.length);
+        setServices(transformedServices);
       }
 
       // Buscar categorias
@@ -141,7 +148,9 @@ export const useAdminState = () => {
       if (categoriesError) {
         console.error('Erro ao buscar categorias:', categoriesError);
         toast.error("Erro ao carregar categorias");
+        setCategories([]);
       } else {
+        console.log('Categorias carregadas:', categoriesData?.length || 0);
         setCategories(categoriesData || []);
       }
 
@@ -168,6 +177,8 @@ export const useAdminState = () => {
     menuItems,
     setMenuItems,
     fetchData,
+    fetchSystemSettings,
+    fetchFeaturedProperties,
     isDemoMode
   };
 };

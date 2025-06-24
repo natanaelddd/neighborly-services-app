@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // MenuItem interface igual ao restante do projeto
 export interface MenuItem {
@@ -8,9 +10,7 @@ export interface MenuItem {
   visible: boolean;
 }
 
-// Retirar qualquer lógica de botões obrigatórios!
-// Mantém só o que está salvo no localStorage ou então o menu padrão inicial
-
+// Menu padrão caso não haja dados no banco
 const defaultMenu: MenuItem[] = [
   { id: 1, label: "Home", path: "/", visible: true },
   { id: 2, label: "Services", path: "/services", visible: true },
@@ -22,53 +22,40 @@ const defaultMenu: MenuItem[] = [
 ];
 
 export function useMenuItems() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    const stored = localStorage.getItem("menuItemsOrder");
-    if (stored) {
-      try {
-        let loaded: MenuItem[] = JSON.parse(stored);
-        // Garante: se estiver salvo, usa, senão usa padrão
-        return Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu;
-      } catch {
-        return defaultMenu;
-      }
-    }
-    return defaultMenu;
-  });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenu);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Atualiza menuItems se localStorage mudar (multi-tab)
   useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === "menuItemsOrder") {
-        const stored = localStorage.getItem("menuItemsOrder");
-        if (stored) {
-          try {
-            let loaded: MenuItem[] = JSON.parse(stored);
-            setMenuItems(Array.isArray(loaded) && loaded.length > 0 ? loaded : defaultMenu);
-          } catch {
-            setMenuItems(defaultMenu);
-          }
+    const fetchMenuItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('visible', true)
+          .order('display_order', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const transformedItems: MenuItem[] = data.map(item => ({
+            id: item.id,
+            label: item.label,
+            path: item.path,
+            visible: item.visible
+          }));
+          setMenuItems(transformedItems);
         } else {
+          // Se não há dados no banco, usar menu padrão
           setMenuItems(defaultMenu);
         }
+      } catch (error) {
+        console.error('Erro ao carregar menu items:', error);
+        setMenuItems(defaultMenu);
+      } finally {
+        setIsLoading(false);
       }
     };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+
+    fetchMenuItems();
   }, []);
 
-  // Sempre sincroniza/dispara update do localStorage se mudou
-  useEffect(() => {
-    const stored = localStorage.getItem("menuItemsOrder");
-    let loaded: MenuItem[] = [];
-    try {
-      if (stored) loaded = JSON.parse(stored);
-    } catch {}
-    if (JSON.stringify(menuItems) !== JSON.stringify(loaded)) {
-      localStorage.setItem("menuItemsOrder", JSON.stringify(menuItems));
-    }
-  }, [menuItems]);
-
-  // Retorna exatamente o que foi cadastrado, sem iteração extra
-  return { menuItems, setMenuItems };
+  return { menuItems, setMenuItems, isLoading };
 }

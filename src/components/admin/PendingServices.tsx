@@ -3,27 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDemoMode } from "@/hooks/useDemoMode";
-
-interface Service {
-  id: number;
-  unit_id: string;
-  category_id: number | null;
-  title: string;
-  description: string;
-  whatsapp: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  profiles?: {
-    name: string;
-    block: string;
-    house_number: string;
-  };
-  categories?: {
-    name: string;
-    icon: string;
-  };
-}
+import { Service } from "@/types";
 
 interface PendingServicesProps {
   services: Service[];
@@ -63,17 +43,15 @@ const PendingServices = ({ services, isLoading, onApprove, onReject }: PendingSe
                     <Badge>Pendente</Badge>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {service.categories && (
+                    {service.category && (
                       <span className="inline-flex items-center gap-1 mr-4">
-                        <span>{service.categories.icon}</span>
-                        <span>{service.categories.name}</span>
+                        <span>{service.category.icon}</span>
+                        <span>{service.category.name}</span>
                       </span>
                     )}
-                    {service.profiles && (
-                      <span>
-                        por {service.profiles.name} - Bloco {service.profiles.block}, Casa {service.profiles.house_number}
-                      </span>
-                    )}
+                    <span>
+                      Bloco {service.block}, Casa {service.house_number}
+                    </span>
                   </div>
                 </CardHeader>
                 <CardContent className="pb-2">
@@ -82,7 +60,7 @@ const PendingServices = ({ services, isLoading, onApprove, onReject }: PendingSe
                     <strong>WhatsApp:</strong> {service.whatsapp}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Cadastrado em: {new Date(service.created_at).toLocaleDateString('pt-BR')}
+                    Cadastrado em: {new Date(service.createdAt).toLocaleDateString('pt-BR')}
                   </p>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
